@@ -1,0 +1,53 @@
+{
+  "name": "WCDN",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "dev:server": "cd cdn-server && bun dev",
+    "dev:frontend": "vite --port 5173",
+    "dev:all": "concurrently \"npm run dev:server\" \"npm run dev:frontend\"",
+    "start": "vite --port 5173",
+    "build": "vite build && tsc",
+    "build:server": "cd cdn-server && bun run build",
+    "serve": "vite preview",
+    "test": "vitest run",
+    "lint": "eslint",
+    "format": "prettier",
+    "check": "prettier --write . && eslint --fix"
+  },
+  "dependencies": {
+    "@radix-ui/react-select": "^2.2.5",
+    "@tailwindcss/vite": "^4.0.6",
+    "@tanstack/react-query": "^5.81.5",
+    "@tanstack/react-router": "^1.121.2",
+    "@tanstack/react-router-devtools": "^1.121.2",
+    "@tanstack/router-plugin": "^1.121.2",
+    "@tusky-io/ts-sdk": "^0.32.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.525.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^3.0.2",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^4.0.6",
+    "zustand": "^5.0.6"
+  },
+  "devDependencies": {
+    "@tanstack/eslint-config": "^0.1.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.2.0",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.2.0",
+    "jsdom": "^26.0.0",
+    "prettier": "^3.5.3",
+    "tw-animate-css": "^1.3.5",
+    "typescript": "^5.7.2",
+    "vite": "^6.1.0",
+    "vitest": "^3.0.5",
+    "web-vitals": "^4.2.4"
+  }
+}

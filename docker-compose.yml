@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  cdn-server:
+    build: ./cdn-server
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+    environment:
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    volumes:
+      - ./cdn-server:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend-dashboard
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend-dashboard:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+volumes:
+  redis_data:
