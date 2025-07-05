@@ -25,9 +25,11 @@ DELETE /api/cache/{blobId}
 ```
 
 **Parameters:**
+
 - `blobId` (path): Walrus blob ID to remove from cache
 
 **Response:**
+
 ```json
 {
   "cid": "sibZ297_DArzpYdVbxFegC3WYMLPwglE_ml0v3c8am0",
@@ -36,6 +38,7 @@ DELETE /api/cache/{blobId}
 ```
 
 **Error Responses:**
+
 ```json
 // Invalid blobId format
 {
@@ -50,6 +53,7 @@ DELETE /api/cache/{blobId}
 ```
 
 **Example:**
+
 ```bash
 curl -X DELETE \
   -H "X-API-Key: your-api-key" \
@@ -65,21 +69,20 @@ POST /api/cache/invalidate
 ```
 
 **Request Body:**
+
 ```json
 {
-  "cids": [
-    "blobId1_here",
-    "blobId2_here", 
-    "blobId3_here"
-  ]
+  "cids": ["blobId1_here", "blobId2_here", "blobId3_here"]
 }
 ```
 
 **Validation:**
+
 - `cids`: Array of 1-100 valid blob IDs
 - Each blobId must pass format validation
 
 **Response:**
+
 ```json
 {
   "successful": [
@@ -88,19 +91,18 @@ POST /api/cache/invalidate
       "status": "invalidated"
     },
     {
-      "cid": "blobId2_here", 
+      "cid": "blobId2_here",
       "status": "invalidated"
     }
   ],
-  "failed": [
-    "Invalid CID format: invalid_id_here"
-  ],
+  "failed": ["Invalid CID format: invalid_id_here"],
   "total": 3,
   "invalidated": 2
 }
 ```
 
 **Example:**
+
 ```bash
 curl -X POST \
   -H "X-API-Key: your-api-key" \
@@ -123,6 +125,7 @@ POST /api/cache/clear
 ```
 
 **Response:**
+
 ```json
 {
   "status": "cleared"
@@ -130,6 +133,7 @@ POST /api/cache/clear
 ```
 
 **Example:**
+
 ```bash
 curl -X POST \
   -H "X-API-Key: your-api-key" \
@@ -145,6 +149,7 @@ POST /api/webhook/cache-invalidate
 ```
 
 **Request Body:**
+
 ```json
 {
   "type": "file_deleted",
@@ -154,10 +159,12 @@ POST /api/webhook/cache-invalidate
 ```
 
 **Event Types:**
+
 - `file_deleted`: Remove cache for deleted file
 - `file_updated`: Remove cache for old version
 
 **Response:**
+
 ```json
 {
   "status": "processed"
@@ -165,6 +172,7 @@ POST /api/webhook/cache-invalidate
 ```
 
 **Example Use Cases:**
+
 ```bash
 # File deletion event
 curl -X POST \
@@ -179,7 +187,7 @@ curl -X POST \
 curl -X POST \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "file_updated", 
+    "type": "file_updated",
     "blobId": "new_blob_id_here",
     "oldBlobId": "old_blob_id_here"
   }' \
@@ -215,18 +223,18 @@ const cacheInvalidation = {
   url: 'http://localhost:4500/api/webhook/cache-invalidate',
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   },
   body: JSON.stringify({
     type: 'file_updated',
     blobId: newBlobId,
-    oldBlobId: oldBlobId
-  })
-};
+    oldBlobId: oldBlobId,
+  }),
+}
 
 fetch(cacheInvalidation.url, cacheInvalidation)
-  .then(response => response.json())
-  .then(data => console.log('Cache invalidated:', data));
+  .then((response) => response.json())
+  .then((data) => console.log('Cache invalidated:', data))
 ```
 
 ## 📊 Monitoring & Analytics
@@ -240,6 +248,7 @@ GET /api/metrics
 ```
 
 **Response includes:**
+
 ```json
 {
   "cache": {
@@ -296,30 +305,31 @@ async function invalidateCache(blobIds, maxRetries = 3) {
         method: 'POST',
         headers: {
           'X-API-Key': process.env.WCDN_API_KEY,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ cids: blobIds })
-      });
-      
+        body: JSON.stringify({ cids: blobIds }),
+      })
+
       if (response.ok) {
-        const result = await response.json();
-        console.log(`Invalidated ${result.invalidated}/${result.total} items`);
-        return result;
+        const result = await response.json()
+        console.log(`Invalidated ${result.invalidated}/${result.total} items`)
+        return result
       }
-      
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      
+
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     } catch (error) {
-      console.warn(`Attempt ${attempt} failed:`, error.message);
-      
+      console.warn(`Attempt ${attempt} failed:`, error.message)
+
       if (attempt === maxRetries) {
-        throw new Error(`Cache invalidation failed after ${maxRetries} attempts`);
+        throw new Error(
+          `Cache invalidation failed after ${maxRetries} attempts`,
+        )
       }
-      
+
       // Exponential backoff
-      await new Promise(resolve => 
-        setTimeout(resolve, Math.pow(2, attempt) * 1000)
-      );
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.pow(2, attempt) * 1000),
+      )
     }
   }
 }
@@ -330,29 +340,29 @@ async function invalidateCache(blobIds, maxRetries = 3) {
 ### Node.js/Express Integration
 
 ```javascript
-const express = require('express');
-const app = express();
+const express = require('express')
+const app = express()
 
 // Middleware to invalidate cache on file changes
 app.use('/api/files/:id', async (req, res, next) => {
   if (req.method === 'PUT' || req.method === 'DELETE') {
     // Get old blobId before operation
-    req.oldBlobId = await getFileBlobId(req.params.id);
+    req.oldBlobId = await getFileBlobId(req.params.id)
   }
-  next();
-});
+  next()
+})
 
 app.delete('/api/files/:id', async (req, res) => {
   // Delete file
-  await deleteFile(req.params.id);
-  
+  await deleteFile(req.params.id)
+
   // Invalidate cache
   if (req.oldBlobId) {
-    await invalidateCache([req.oldBlobId]);
+    await invalidateCache([req.oldBlobId])
   }
-  
-  res.json({ success: true });
-});
+
+  res.json({ success: true })
+})
 ```
 
 ### Python/Django Integration
@@ -366,7 +376,7 @@ class CacheInvalidationMixin:
         """Invalidate WCDN cache for given blob IDs"""
         if not blob_ids:
             return
-            
+
         response = requests.post(
             f"{settings.WCDN_BASE_URL}/api/cache/invalidate",
             headers={
@@ -375,7 +385,7 @@ class CacheInvalidationMixin:
             },
             json={'cids': blob_ids}
         )
-        
+
         response.raise_for_status()
         return response.json()
 
@@ -384,13 +394,13 @@ class FileViewSet(CacheInvalidationMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         blob_id = instance.blob_id
-        
+
         # Delete file
         super().destroy(request, *args, **kwargs)
-        
+
         # Invalidate cache
         self.invalidate_cache([blob_id])
-        
+
         return Response(status=204)
 ```
 
@@ -398,11 +408,11 @@ class FileViewSet(CacheInvalidationMixin, viewsets.ModelViewSet):
 
 ### Expected Behavior
 
-| Operation | Cache Hit Rate Impact | Recovery Time |
-|-----------|----------------------|---------------|
-| Single invalidation | < 1% decrease | < 30 seconds |
-| Bulk invalidation (10-50 items) | 2-5% decrease | 1-2 minutes |
-| Complete cache clear | 100% miss rate | 5-15 minutes |
+| Operation                       | Cache Hit Rate Impact | Recovery Time |
+| ------------------------------- | --------------------- | ------------- |
+| Single invalidation             | < 1% decrease         | < 30 seconds  |
+| Bulk invalidation (10-50 items) | 2-5% decrease         | 1-2 minutes   |
+| Complete cache clear            | 100% miss rate        | 5-15 minutes  |
 
 ### Optimization Tips
 

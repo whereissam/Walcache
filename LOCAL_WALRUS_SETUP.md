@@ -81,6 +81,7 @@ curl -X PUT "http://127.0.0.1:31416/v1/blobs?epochs=1" \
 ### Expected error responses:
 
 **Insufficient balance:**
+
 ```json
 {
   "error": "Insufficient WAL balance for storage epochs"
@@ -88,6 +89,7 @@ curl -X PUT "http://127.0.0.1:31416/v1/blobs?epochs=1" \
 ```
 
 **Invalid parameters:**
+
 ```json
 {
   "error": "Invalid epochs parameter: must be positive integer"
@@ -99,6 +101,7 @@ curl -X PUT "http://127.0.0.1:31416/v1/blobs?epochs=1" \
 When you start the publisher, watch the terminal for:
 
 ### Successful startup:
+
 ```
 [INFO] Publisher started on 127.0.0.1:31416
 [INFO] Wallet loaded: 0x...
@@ -106,12 +109,14 @@ When you start the publisher, watch the terminal for:
 ```
 
 ### Request processing:
+
 ```
 [INFO] PUT /v1/blobs - 201 - blob_id: abc123...
 [INFO] Storage cost: 0.1 WAL for 1 epochs
 ```
 
 ### Error logs:
+
 ```
 [ERROR] Insufficient balance for storage request
 [WARN] Network connectivity issues
@@ -167,6 +172,7 @@ curl "http://localhost:4500/cdn/{blob_id}"
 ## 6. Common Issues and Solutions
 
 ### Port already in use:
+
 ```bash
 # Find process using port 31416
 lsof -i :31416
@@ -176,16 +182,19 @@ kill -9 <PID>
 ```
 
 ### Wallet connection issues:
+
 - Ensure wallet file exists in sub-wallets directory
 - Check wallet has sufficient SUI for gas fees
 - Verify wallet has WAL tokens for storage
 
 ### Network connectivity:
+
 - Check internet connection for Sui network access
 - Verify firewall allows outbound connections
 - Test with curl to public Walrus endpoints
 
 ### Storage failures:
+
 - Verify wallet balance: `sui client balance`
 - Check WAL token balance
 - Ensure epochs parameter is reasonable (1-200)

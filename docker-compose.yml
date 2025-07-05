@@ -4,7 +4,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -13,7 +13,7 @@ services:
   cdn-server:
     build: ./cdn-server
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       - redis
     environment:
@@ -28,7 +28,7 @@ services:
   frontend:
     build: ./frontend-dashboard
     ports:
-      - "5173:5173"
+      - '5173:5173'
     volumes:
       - ./frontend-dashboard:/app
       - /app/node_modules

@@ -1,20 +1,20 @@
 export interface WalrusBlob {
-  cid: string;
-  data: Buffer;
-  contentType: string;
-  size: number;
-  timestamp: Date;
-  source: 'walrus' | 'ipfs';
+  cid: string
+  data: Buffer
+  contentType: string
+  size: number
+  timestamp: Date
+  source: 'walrus' | 'ipfs'
 }
 
 export class WalrusError extends Error {
   constructor(
     message: string,
     public statusCode: number = 500,
-    public code?: string
+    public code?: string,
   ) {
-    super(message);
-    this.name = 'WalrusError';
+    super(message)
+    this.name = 'WalrusError'
   }
 }
 
@@ -22,5 +22,5 @@ export const WALRUS_ERROR_CODES = {
   BLOB_NOT_AVAILABLE_YET: 'BLOB_NOT_AVAILABLE_YET',
   BLOB_NOT_FOUND: 'BLOB_NOT_FOUND',
   AGGREGATOR_ERROR: 'AGGREGATOR_ERROR',
-  UPLOAD_FAILED: 'UPLOAD_FAILED'
-} as const;
+  UPLOAD_FAILED: 'UPLOAD_FAILED',
+} as const

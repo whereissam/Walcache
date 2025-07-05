@@ -1,81 +1,114 @@
-import { useState } from 'react';
-import { useWCDNStore } from '../store/wcdnStore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Upload, Trash2, RefreshCw, AlertTriangle, Settings, Clock, Pin, Globe } from 'lucide-react';
+import { useState } from 'react'
+import { useWCDNStore } from '../store/wcdnStore'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from './ui/card'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'
+import {
+  Upload,
+  Trash2,
+  RefreshCw,
+  AlertTriangle,
+  Settings,
+  Clock,
+  Pin,
+  Globe,
+} from 'lucide-react'
 
 export function CacheManager() {
-  const [preloadCIDs, setPreloadCIDs] = useState('');
-  const [configCID, setConfigCID] = useState('');
-  const [ttlValue, setTtlValue] = useState('3600');
-  const [ttlUnit, setTtlUnit] = useState('seconds');
-  const [fallbackEnabled, setFallbackEnabled] = useState(true);
-  const { 
-    isLoading, 
-    error, 
-    preloadCIDs: preloadCIDsAction, 
+  const [preloadCIDs, setPreloadCIDs] = useState('')
+  const [configCID, setConfigCID] = useState('')
+  const [ttlValue, setTtlValue] = useState('3600')
+  const [ttlUnit, setTtlUnit] = useState('seconds')
+  const [fallbackEnabled, setFallbackEnabled] = useState(true)
+  const {
+    isLoading,
+    error,
+    preloadCIDs: preloadCIDsAction,
     clearCache,
     pinCID,
     unpinCID,
     fetchCIDStats,
-    cidInfo
-  } = useWCDNStore();
+    cidInfo,
+  } = useWCDNStore()
 
   const handlePreload = async () => {
     const cids = preloadCIDs
       .split(/[\n,]/)
-      .map(cid => cid.trim())
-      .filter(cid => cid.length > 0);
+      .map((cid) => cid.trim())
+      .filter((cid) => cid.length > 0)
 
     if (cids.length > 0) {
-      await preloadCIDsAction(cids);
-      setPreloadCIDs('');
+      await preloadCIDsAction(cids)
+      setPreloadCIDs('')
     }
-  };
+  }
 
   const handleClearCache = async () => {
-    if (window.confirm('Are you sure you want to clear all cache? This action cannot be undone.')) {
-      await clearCache();
+    if (
+      window.confirm(
+        'Are you sure you want to clear all cache? This action cannot be undone.',
+      )
+    ) {
+      await clearCache()
     }
-  };
+  }
 
   const handleConfigureCache = async () => {
-    if (!configCID.trim()) return;
-    
+    if (!configCID.trim()) return
+
     // Fetch current CID info to check if it exists
-    await fetchCIDStats(configCID.trim());
-  };
+    await fetchCIDStats(configCID.trim())
+  }
 
   const handlePinToggle = async () => {
-    if (!cidInfo?.cid) return;
-    
+    if (!cidInfo?.cid) return
+
     if (cidInfo.pinned) {
-      await unpinCID(cidInfo.cid);
+      await unpinCID(cidInfo.cid)
     } else {
-      await pinCID(cidInfo.cid);
+      await pinCID(cidInfo.cid)
     }
-    
+
     // Refresh the CID info
-    await fetchCIDStats(cidInfo.cid);
-  };
+    await fetchCIDStats(cidInfo.cid)
+  }
 
   const getTTLInSeconds = () => {
-    const value = parseInt(ttlValue);
+    const value = parseInt(ttlValue)
     switch (ttlUnit) {
-      case 'minutes': return value * 60;
-      case 'hours': return value * 3600;
-      case 'days': return value * 86400;
-      default: return value;
+      case 'minutes':
+        return value * 60
+      case 'hours':
+        return value * 3600
+      case 'days':
+        return value * 86400
+      default:
+        return value
     }
-  };
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Cache Management</h1>
-        <p className="text-sm sm:text-base text-gray-600">Configure cache settings, TTL, pinning, and manage content</p>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+          Cache Management
+        </h1>
+        <p className="text-sm sm:text-base text-gray-600">
+          Configure cache settings, TTL, pinning, and manage content
+        </p>
       </div>
 
       {/* Cache Configuration */}
@@ -99,7 +132,7 @@ export function CacheManager() {
                   onChange={(e) => setConfigCID(e.target.value)}
                   className="flex-1"
                 />
-                <Button 
+                <Button
                   onClick={handleConfigureCache}
                   disabled={isLoading || !configCID.trim()}
                   className="w-full sm:w-auto"
@@ -119,7 +152,7 @@ export function CacheManager() {
                       <Clock className="h-4 w-4 text-blue-500" />
                       <span className="text-sm font-medium">TTL Settings</span>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                       <Input
                         type="number"
                         placeholder="TTL Value"
@@ -128,7 +161,7 @@ export function CacheManager() {
                         className="flex-1"
                       />
                       <Select value={ttlUnit} onValueChange={setTtlUnit}>
-                        <SelectTrigger className="w-28">
+                        <SelectTrigger className="w-full sm:w-28">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -140,7 +173,8 @@ export function CacheManager() {
                       </Select>
                     </div>
                     <p className="text-xs text-gray-500">
-                      Current TTL: {cidInfo.ttl || 0} seconds ({getTTLInSeconds()} seconds when applied)
+                      Current TTL: {cidInfo.ttl || 0} seconds (
+                      {getTTLInSeconds()} seconds when applied)
                     </p>
                   </div>
 
@@ -148,9 +182,11 @@ export function CacheManager() {
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <Pin className="h-4 w-4 text-green-500" />
-                      <span className="text-sm font-medium">Pinning Control</span>
+                      <span className="text-sm font-medium">
+                        Pinning Control
+                      </span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                       <div>
                         <p className="text-sm font-medium">
                           Pin Status: {cidInfo.pinned ? 'Pinned' : 'Not Pinned'}
@@ -160,10 +196,11 @@ export function CacheManager() {
                         </p>
                       </div>
                       <Button
-                        variant={cidInfo.pinned ? "destructive" : "default"}
+                        variant={cidInfo.pinned ? 'destructive' : 'default'}
                         size="sm"
                         onClick={handlePinToggle}
                         disabled={isLoading}
+                        className="w-full sm:w-auto"
                       >
                         {cidInfo.pinned ? (
                           <>
@@ -185,15 +222,19 @@ export function CacheManager() {
                 <div className="mt-6 space-y-3">
                   <div className="flex items-center space-x-2">
                     <Globe className="h-4 w-4 text-purple-500" />
-                    <span className="text-sm font-medium">Fallback Gateway Settings</span>
+                    <span className="text-sm font-medium">
+                      Fallback Gateway Settings
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium">
-                        IPFS Fallback: {fallbackEnabled ? 'Enabled' : 'Disabled'}
+                        IPFS Fallback:{' '}
+                        {fallbackEnabled ? 'Enabled' : 'Disabled'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Automatically fallback to IPFS when Walrus is unavailable
+                        Automatically fallback to IPFS when Walrus is
+                        unavailable
                       </p>
                     </div>
                     <Button
@@ -208,12 +249,22 @@ export function CacheManager() {
 
                 {/* Current Status */}
                 <div className="mt-4 p-3 bg-blue-50 rounded border">
-                  <p className="text-sm font-medium text-blue-800">Current Status</p>
+                  <p className="text-sm font-medium text-blue-800">
+                    Current Status
+                  </p>
                   <div className="mt-1 text-xs text-blue-600 space-y-1">
-                    <p>• Cache Status: {cidInfo.cached ? 'Cached' : 'Not Cached'}</p>
-                    <p>• Pin Status: {cidInfo.pinned ? 'Pinned' : 'Not Pinned'}</p>
+                    <p>
+                      • Cache Status: {cidInfo.cached ? 'Cached' : 'Not Cached'}
+                    </p>
+                    <p>
+                      • Pin Status: {cidInfo.pinned ? 'Pinned' : 'Not Pinned'}
+                    </p>
                     <p>• TTL: {cidInfo.ttl || 0} seconds</p>
-                    {cidInfo.cacheDate && <p>• Cached: {new Date(cidInfo.cacheDate).toLocaleString()}</p>}
+                    {cidInfo.cacheDate && (
+                      <p>
+                        • Cached: {new Date(cidInfo.cacheDate).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -227,7 +278,8 @@ export function CacheManager() {
         <CardHeader>
           <CardTitle>Preload Content</CardTitle>
           <CardDescription>
-            Preload multiple CIDs to cache them for faster access. Enter one CID per line or separate with commas.
+            Preload multiple CIDs to cache them for faster access. Enter one CID
+            per line or separate with commas.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -243,10 +295,10 @@ export function CacheManager() {
                 onChange={(e) => setPreloadCIDs(e.target.value)}
               />
             </div>
-            
+
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-2 sm:space-y-0">
-              <Button 
-                onClick={handlePreload} 
+              <Button
+                onClick={handlePreload}
                 disabled={isLoading || !preloadCIDs.trim()}
                 className="w-full sm:w-auto"
               >
@@ -254,7 +306,12 @@ export function CacheManager() {
                 Preload CIDs
               </Button>
               <span className="text-sm text-gray-500">
-                {preloadCIDs.split(/[\n,]/).filter(cid => cid.trim().length > 0).length} CIDs
+                {
+                  preloadCIDs
+                    .split(/[\n,]/)
+                    .filter((cid) => cid.trim().length > 0).length
+                }{' '}
+                CIDs
               </span>
             </div>
           </div>
@@ -272,8 +329,8 @@ export function CacheManager() {
         <CardContent>
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={handleClearCache}
                 disabled={isLoading}
                 className="w-full sm:w-auto"
@@ -284,7 +341,9 @@ export function CacheManager() {
               <div className="flex-1 text-sm text-gray-600">
                 <div className="flex items-start sm:items-center space-x-2">
                   <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 sm:mt-0 flex-shrink-0" />
-                  <span>This will remove all cached content including pinned items</span>
+                  <span>
+                    This will remove all cached content including pinned items
+                  </span>
                 </div>
               </div>
             </div>
@@ -321,20 +380,26 @@ export function CacheManager() {
         <CardContent>
           <div className="space-y-3 text-sm">
             <div>
-              <strong>Preloading:</strong> Use preloading to cache frequently accessed content during off-peak hours. This improves response times for your users.
+              <strong>Preloading:</strong> Use preloading to cache frequently
+              accessed content during off-peak hours. This improves response
+              times for your users.
             </div>
             <div>
-              <strong>Bulk Operations:</strong> You can preload up to 100 CIDs at once. Large batches may take some time to process.
+              <strong>Bulk Operations:</strong> You can preload up to 100 CIDs
+              at once. Large batches may take some time to process.
             </div>
             <div>
-              <strong>Cache Limits:</strong> The cache has size limits. Older, less frequently accessed content may be evicted to make room for new content.
+              <strong>Cache Limits:</strong> The cache has size limits. Older,
+              less frequently accessed content may be evicted to make room for
+              new content.
             </div>
             <div>
-              <strong>Pinning:</strong> Use the CID Explorer to pin important content that should never be evicted from cache.
+              <strong>Pinning:</strong> Use the CID Explorer to pin important
+              content that should never be evicted from cache.
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

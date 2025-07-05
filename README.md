@@ -20,27 +20,29 @@ WCDN bridges Walrus decentralized storage and web apps, featuring:
 ## Multi-Chain Support
 
 ### SDK Usage
-開發者只需一行 code，即可獲取不同鏈的 CDN 連結：
+
+Developers can get CDN links for different chains with just one line of code:
 
 ```javascript
-import { getWalrusCDNUrl } from 'wcdn-sdk';
+import { getWalrusCDNUrl } from 'wcdn-sdk'
 
 // Sui
-const suiUrl = getWalrusCDNUrl(blobId, { chain: 'sui' });
+const suiUrl = getWalrusCDNUrl(blobId, { chain: 'sui' })
 
 // Ethereum
-const ethUrl = getWalrusCDNUrl(blobId, { chain: 'ethereum' });
+const ethUrl = getWalrusCDNUrl(blobId, { chain: 'ethereum' })
 
 // Solana
-const solUrl = getWalrusCDNUrl(blobId, { chain: 'solana' });
+const solUrl = getWalrusCDNUrl(blobId, { chain: 'solana' })
 ```
 
-預設支援 Sui，Ethereum，Solana（可擴展，hackathon 先 mock 狀態查詢）
+Default support for Sui, Ethereum, Solana (extensible, hackathon uses mocked status queries)
 
-### UI 功能
-- 前端 Dashboard 提供鏈選擇器（Sui/Ethereum/Solana）
-- 顯示所選鏈下 blob 的狀態（如：已上鏈、可存取、快取狀態等，mock 資料）
-- 支援多鏈 blob 狀態同步查詢，方便用戶一站式管理
+### UI Features
+
+- Frontend Dashboard provides chain selector (Sui/Ethereum/Solana)
+- Display blob status for selected chain (e.g., on-chain, accessible, cache status, etc., mocked data)
+- Support multi-chain blob status synchronization queries for convenient one-stop management
 
 ## Architecture
 
@@ -55,22 +57,25 @@ User Upload → Tusky.io → Walrus Network → WCDN Cache → Fast Access
 ## System Workflow
 
 ### File Upload
-1. 用戶在 UI 選擇鏈（Sui/Ethereum/Solana）與 vault，拖曳上傳檔案
-2. 前端將檔案與鏈資訊傳給後端
-3. 後端透過 Tusky.io API 上傳到 Walrus，回傳 blobId
-4. 後端自動快取該 blob，並標記鏈別
-5. 前端顯示 CDN URL 與多鏈狀態
+
+1. User selects chain (Sui/Ethereum/Solana) and vault in UI, drags and drops files to upload
+2. Frontend sends file and chain information to backend
+3. Backend uploads to Walrus via Tusky.io API, returns blobId
+4. Backend automatically caches the blob and marks chain type
+5. Frontend displays CDN URL and multi-chain status
 
 ### CDN Access
-1. 用戶/應用請求 `/cdn/{blobId}?chain=sui`
-2. 伺服器根據鏈別查快取，無則 fallback 至對應鏈的 Walrus aggregator
-3. 回傳內容並記錄鏈別、快取狀態
+
+1. User/application requests `/cdn/{blobId}?chain=sui`
+2. Server queries cache by chain type, falls back to corresponding chain's Walrus aggregator if not found
+3. Returns content and records chain type, cache status
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - Redis server (optional)
 - Tusky.io API key
@@ -86,7 +91,7 @@ bun install
 ### Environment
 
 ```bash
-# 支援多鏈配置
+# Multi-chain configuration support
 WALRUS_ENDPOINT_SUI=https://publisher.walrus-testnet.walrus.space
 WALRUS_ENDPOINT_ETH=https://eth-aggregator.walrus.space
 WALRUS_ENDPOINT_SOL=https://sol-aggregator.walrus.space
@@ -119,6 +124,7 @@ bun dev
 ```
 
 ### Access
+
 - Frontend Dashboard: http://localhost:5173
 - CDN Endpoint: http://localhost:4500/cdn/:cid
 - API Documentation: http://localhost:4500/api/health
@@ -131,7 +137,7 @@ bun dev
 
 ```http
 GET /cdn/:cid?chain=sui|ethereum|solana
-# 依鏈別回傳快取內容
+# Return cached content by chain type
 
 GET /api/stats/:cid
 # Get analytics for specific blob ID
@@ -146,7 +152,7 @@ GET /api/metrics
 
 ```http
 GET /api/blob-status/:cid
-# 回傳各鏈 blob 狀態（mock）
+# Return blob status for each chain (mocked)
 # Response: { sui: {...}, ethereum: {...}, solana: {...} }
 ```
 
@@ -211,17 +217,20 @@ POST /api/cache/clear
 
 ## Features
 
-### 一行 code 多鏈 CDN 連結
+### One Line Code for Multi-Chain CDN Links
+
 ```javascript
 getWalrusCDNUrl(blobId, { chain })
 ```
 
-### UI 多鏈切換
-- Dashboard 可切換 Sui/Ethereum/Solana，顯示 blob 狀態
-- 快取/上傳/管理/分析：同原有功能
-- 多鏈 aggregator fallback：自動選擇可用節點
+### UI Multi-Chain Switching
+
+- Dashboard can switch between Sui/Ethereum/Solana to display blob status
+- Cache/Upload/Management/Analytics: same as original features
+- Multi-chain aggregator fallback: automatically select available nodes
 
 ### Upload Management
+
 - **Drag & Drop**: Intuitive file upload interface
 - **Vault Organization**: Create and manage file collections
 - **Direct Walrus Upload**: Bypass vaults for pure decentralized storage
@@ -229,6 +238,7 @@ getWalrusCDNUrl(blobId, { chain })
 - **File Metadata**: Size, type, creation date, and Walrus blob ID
 
 ### CDN Performance
+
 - **Intelligent Caching**: Automatic cache population on upload
 - **Multi-tier Storage**: Redis primary, memory fallback
 - **Cache Analytics**: Hit rates, latency metrics, popular content
@@ -236,6 +246,7 @@ getWalrusCDNUrl(blobId, { chain })
 - **Preload API**: Warm cache with anticipated content
 
 ### Analytics Dashboard
+
 - **Global Metrics**: Total requests, hit rates, average latency
 - **Per-CID Stats**: Individual blob performance tracking
 - **Cache Health**: Memory usage, key counts, storage efficiency
@@ -244,10 +255,11 @@ getWalrusCDNUrl(blobId, { chain })
 ## Development
 
 ### Tech Stack
-- **前端**: React + TypeScript + Zustand
-- **後端**: Fastify + TypeScript + Redis
-- **快取**: 支援多鏈快取分區
-- **UI**: Shadcn/ui，鏈選擇器、blob 狀態面板
+
+- **Frontend**: React + TypeScript + Zustand
+- **Backend**: Fastify + TypeScript + Redis
+- **Cache**: Multi-chain cache partitioning support
+- **UI**: Shadcn/ui, chain selector, blob status panel
 
 ### Project Structure
 
@@ -277,11 +289,13 @@ WCDN/
 
 ## Hackathon Tips
 
-### 多鏈狀態可先 mock，UI/SDK 介面先做出來
-- 真正鏈上同步可後續擴展
-- 強調「一行 code 多鏈 CDN」、「UI 一鍵切換多鏈 blob 狀態」亮點
+### Multi-Chain Status Can Be Mocked First, Create UI/SDK Interface First
+
+- Real on-chain synchronization can be extended later
+- Emphasize "one line code multi-chain CDN" and "UI one-click switch multi-chain blob status" highlights
 
 ### Security Features
+
 - **API Key Authentication**: Protect sensitive operations
 - **Rate Limiting**: Prevent abuse with differentiated limits
 - **CORS Protection**: Configurable allowed origins
@@ -293,16 +307,19 @@ WCDN/
 ### Common Issues
 
 **Upload Failures**
+
 - Verify TUSKY_API_KEY is valid
 - Check file size limits (100MB vault, 10MB direct)
 - Ensure vault exists and is accessible
 
 **Cache Issues**
+
 - Verify Redis connection if using Redis cache
 - Check available memory for in-memory cache
 - Monitor cache hit rates in analytics
 
 **CDN Performance**
+
 - Multiple Walrus aggregators provide redundancy
 - Cache warming improves first-access latency
 - Pin frequently accessed content

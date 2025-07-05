@@ -18,6 +18,7 @@ WCDN (Walrus Content Delivery Network) is a high-performance CDN system that bri
 ## Development Commands
 
 ### Frontend Commands
+
 ```bash
 # Start frontend development server
 bun run dev
@@ -39,6 +40,7 @@ bun run check
 ```
 
 ### Backend Commands
+
 ```bash
 # Start backend server (from cdn-server directory)
 cd cdn-server
@@ -58,6 +60,7 @@ bun run format
 ```
 
 ### Full Development Setup
+
 ```bash
 # Start both frontend and backend
 bun run dev:all
@@ -70,13 +73,16 @@ bun run dev:server    # Backend only
 ## Key Configuration
 
 ### Environment Variables
+
 Backend requires these environment variables (create `.env` in project root):
+
 - `TUSKY_API_KEY`: Required for Tusky.io integration
 - `TUSKY_API_URL`: Tusky API endpoint (default: https://api.tusky.io)
 - `REDIS_URL`: Redis connection string (default: redis://localhost:6379)
 - `PORT`: Server port (default: 4500)
 
 ### TypeScript Configuration
+
 - Uses strict mode with bundler module resolution
 - Path aliases: `@/*` maps to `./src/*`
 - Targets ES2022 with React JSX transform
@@ -84,18 +90,21 @@ Backend requires these environment variables (create `.env` in project root):
 ## Code Architecture
 
 ### Frontend Structure
+
 - `src/components/`: React components (Dashboard, UploadManager, CacheManager, etc.)
 - `src/routes/`: TanStack Router route components
 - `src/store/wcdnStore.ts`: Zustand store with API actions and state management
 - `src/lib/utils.ts`: Utility functions
 
 ### Backend Structure
+
 - `cdn-server/src/routes/`: API endpoints (cdn.ts, api.ts, upload.ts)
 - `cdn-server/src/services/`: Business logic (cache.ts, analytics.ts, tusky.ts, walrus.ts)
 - `cdn-server/src/config/`: Configuration with Zod validation
 - `cdn-server/src/types/`: TypeScript type definitions
 
 ### Key Services
+
 - **Cache Service**: Redis + memory fallback with TTL management
 - **Analytics Service**: Request tracking and performance metrics
 - **Tusky Service**: File upload to Walrus via Tusky.io API
@@ -104,16 +113,19 @@ Backend requires these environment variables (create `.env` in project root):
 ## API Endpoints
 
 ### CDN Routes
+
 - `GET /cdn/:cid` - Serve cached Walrus content
 - `GET /api/stats/:cid` - Get analytics for specific CID
 - `GET /api/metrics` - Global CDN metrics
 
 ### Upload Routes
+
 - `POST /upload/file` - Upload file to Walrus
 - `GET /upload/vaults` - List vaults
 - `GET /upload/files` - List files in vault
 
 ### Cache Management
+
 - `POST /api/preload` - Preload CIDs into cache
 - `POST /api/pin/:cid` - Pin CID to prevent eviction
 - `POST /api/cache/clear` - Clear entire cache
@@ -121,6 +133,7 @@ Backend requires these environment variables (create `.env` in project root):
 ## State Management
 
 The frontend uses Zustand store (`wcdnStore.ts`) with:
+
 - API state (loading, error handling)
 - Cache analytics (CID stats, global metrics)
 - Upload management (vaults, files, progress tracking)
@@ -129,12 +142,14 @@ The frontend uses Zustand store (`wcdnStore.ts`) with:
 ## Dependencies
 
 ### Frontend Key Dependencies
+
 - React 19, TypeScript, TanStack Router/Query
 - Zustand for state management
 - Tailwind CSS + Shadcn/ui components
 - Tusky.io TypeScript SDK
 
 ### Backend Key Dependencies
+
 - Fastify web framework
 - Redis for caching (with ioredis client)
 - Axios for HTTP requests

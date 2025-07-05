@@ -15,7 +15,7 @@ export const WALRUS_ENDPOINTS = {
       'https://walrus-testnet-aggregator.nodes.guru',
       'https://walrus-testnet-aggregator.stakely.io',
       'https://aggregator.testnet.walrus.mirai.cloud',
-      'https://sm1-walrus-testnet-aggregator.stakesquid.com'
+      'https://sm1-walrus-testnet-aggregator.stakesquid.com',
     ],
     publishers: [
       'https://publisher.walrus-testnet.walrus.space',
@@ -26,8 +26,8 @@ export const WALRUS_ENDPOINTS = {
       'https://wal-publisher-testnet.staketab.org',
       'https://walrus-testnet-publisher.nodes.guru',
       'https://walrus-testnet-publisher.stakely.io',
-      'https://sm1-walrus-testnet-publisher.stakesquid.com'
-    ]
+      'https://sm1-walrus-testnet-publisher.stakesquid.com',
+    ],
   },
   mainnet: {
     aggregators: [
@@ -40,7 +40,7 @@ export const WALRUS_ENDPOINTS = {
       'https://walrus-aggregator.stakely.io',
       'https://aggregator.mainnet.walrus.mirai.cloud',
       'https://sm1-walrus-mainnet-aggregator.stakesquid.com',
-      'https://walrus.globalstake.io'
+      'https://walrus.globalstake.io',
     ],
     publishers: [
       'https://publisher.walrus-mainnet.walrus.space',
@@ -48,9 +48,9 @@ export const WALRUS_ENDPOINTS = {
       'https://walrus-mainnet-publisher.chainbase.online',
       'https://walrus-mainnet-publisher.everstake.one',
       'https://walrus-publisher.stakely.io',
-      'https://walrus-mainnet-publisher.nodes.guru'
-    ]
-  }
-} as const;
+      'https://walrus-mainnet-publisher.nodes.guru',
+    ],
+  },
+} as const
 
-export type WalrusNetwork = keyof typeof WALRUS_ENDPOINTS;
+export type WalrusNetwork = keyof typeof WALRUS_ENDPOINTS

@@ -1,111 +1,145 @@
-import { useState } from 'react';
-import { useWCDNStore } from '../store/wcdnStore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Search, Pin, PinOff, Clock, Activity, HardDrive, Globe, Download, Copy, ExternalLink, FileText, RefreshCw } from 'lucide-react';
-import { formatBytes, formatNumber, formatPercentage, formatLatency, formatDate, truncateCID } from '../lib/utils';
+import { useState } from 'react'
+import { useWCDNStore } from '../store/wcdnStore'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from './ui/card'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import {
+  Search,
+  Pin,
+  PinOff,
+  Clock,
+  Activity,
+  HardDrive,
+  Globe,
+  Download,
+  Copy,
+  ExternalLink,
+  FileText,
+  RefreshCw,
+} from 'lucide-react'
+import {
+  formatBytes,
+  formatNumber,
+  formatPercentage,
+  formatLatency,
+  formatDate,
+  truncateCID,
+} from '../lib/utils'
 
 export function CIDExplorer() {
-  const [searchCID, setSearchCID] = useState('');
-  const [copySuccess, setCopySuccess] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [autoRetryTimer, setAutoRetryTimer] = useState<NodeJS.Timeout | null>(null);
-  const { 
-    cidInfo, 
-    isLoading, 
-    error, 
-    fetchCIDStats, 
-    pinCID, 
-    unpinCID 
-  } = useWCDNStore();
+  const [searchCID, setSearchCID] = useState('')
+  const [copySuccess, setCopySuccess] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
+  const [autoRetryTimer, setAutoRetryTimer] = useState<NodeJS.Timeout | null>(
+    null,
+  )
+  const { cidInfo, isLoading, error, fetchCIDStats, pinCID, unpinCID } =
+    useWCDNStore()
 
   const handleSearch = () => {
     if (searchCID.trim()) {
-      setRetryCount(0);
-      clearAutoRetry();
-      fetchCIDStats(searchCID.trim());
+      setRetryCount(0)
+      clearAutoRetry()
+      fetchCIDStats(searchCID.trim())
     }
-  };
+  }
 
   const handleRetry = () => {
     if (searchCID.trim()) {
-      setRetryCount(prev => prev + 1);
-      fetchCIDStats(searchCID.trim());
+      setRetryCount((prev) => prev + 1)
+      fetchCIDStats(searchCID.trim())
     }
-  };
+  }
 
   const startAutoRetry = (delaySeconds: number = 5) => {
-    clearAutoRetry();
+    clearAutoRetry()
     const timer = setTimeout(() => {
-      handleRetry();
-    }, delaySeconds * 1000);
-    setAutoRetryTimer(timer);
-  };
+      handleRetry()
+    }, delaySeconds * 1000)
+    setAutoRetryTimer(timer)
+  }
 
   const clearAutoRetry = () => {
     if (autoRetryTimer) {
-      clearTimeout(autoRetryTimer);
-      setAutoRetryTimer(null);
+      clearTimeout(autoRetryTimer)
+      setAutoRetryTimer(null)
     }
-  };
+  }
 
   const isNotSyncedError = (errorMsg: string) => {
-    return errorMsg.includes('BLOB_NOT_AVAILABLE_YET') || 
-           errorMsg.includes('尚未同步') || 
-           errorMsg.includes('not yet synced');
-  };
+    return (
+      errorMsg.includes('BLOB_NOT_AVAILABLE_YET') ||
+      errorMsg.includes('尚未同步') ||
+      errorMsg.includes('not yet synced')
+    )
+  }
 
   const handlePin = async () => {
     if (cidInfo?.cid) {
-      await pinCID(cidInfo.cid);
+      await pinCID(cidInfo.cid)
     }
-  };
+  }
 
   const handleUnpin = async () => {
     if (cidInfo?.cid) {
-      await unpinCID(cidInfo.cid);
+      await unpinCID(cidInfo.cid)
     }
-  };
+  }
 
   const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
+      await navigator.clipboard.writeText(text)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
     } catch (err) {
-      console.error('Failed to copy: ', err);
+      console.error('Failed to copy: ', err)
     }
-  };
+  }
 
   const getSourceDisplayName = (source?: string) => {
     switch (source) {
-      case 'walrus': return 'Walrus Network';
-      case 'ipfs': return 'IPFS Gateway';
-      default: return 'Unknown';
+      case 'walrus':
+        return 'Walrus Network'
+      case 'ipfs':
+        return 'IPFS Gateway'
+      default:
+        return 'Unknown'
     }
-  };
+  }
 
   const getSourceColor = (source?: string) => {
     switch (source) {
-      case 'walrus': return 'text-blue-600';
-      case 'ipfs': return 'text-purple-600';
-      default: return 'text-gray-600';
+      case 'walrus':
+        return 'text-blue-600'
+      case 'ipfs':
+        return 'text-purple-600'
+      default:
+        return 'text-gray-600'
     }
-  };
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">CID Explorer</h1>
-        <p className="text-sm sm:text-base text-gray-600">Search and manage individual content by CID</p>
+        <p className="text-sm sm:text-base text-gray-600">
+          Search and manage individual content by CID
+        </p>
       </div>
 
       {/* Search */}
       <Card>
         <CardHeader>
           <CardTitle>Search CID</CardTitle>
-          <CardDescription>Enter a Walrus CID to view its cache status and statistics</CardDescription>
+          <CardDescription>
+            Enter a Walrus CID to view its cache status and statistics
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
@@ -116,7 +150,11 @@ export function CIDExplorer() {
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               className="flex-1"
             />
-            <Button onClick={handleSearch} disabled={isLoading} className="w-full sm:w-auto">
+            <Button
+              onClick={handleSearch}
+              disabled={isLoading}
+              className="w-full sm:w-auto"
+            >
               <Search className="h-4 w-4 mr-2" />
               Search
             </Button>
@@ -144,20 +182,23 @@ export function CIDExplorer() {
                   <p className="text-yellow-800 font-medium">資料尚未同步</p>
                 </div>
                 <p className="text-sm text-yellow-700">
-                  此 blob 可能還未同步到 Walrus aggregator。這是正常現象，通常需要 1-2 分鐘完成同步。
+                  此 blob 可能還未同步到 Walrus
+                  aggregator。這是正常現象，通常需要 1-2 分鐘完成同步。
                 </p>
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                  <Button 
+                  <Button
                     onClick={handleRetry}
                     disabled={isLoading}
                     size="sm"
                     className="w-full sm:w-auto"
                   >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                    <RefreshCw
+                      className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`}
+                    />
                     重試 {retryCount > 0 && `(${retryCount})`}
                   </Button>
                   {!autoRetryTimer && !isLoading && (
-                    <Button 
+                    <Button
                       onClick={() => startAutoRetry(10)}
                       variant="outline"
                       size="sm"
@@ -168,7 +209,7 @@ export function CIDExplorer() {
                     </Button>
                   )}
                   {autoRetryTimer && (
-                    <Button 
+                    <Button
                       onClick={clearAutoRetry}
                       variant="outline"
                       size="sm"
@@ -179,7 +220,9 @@ export function CIDExplorer() {
                   )}
                 </div>
                 <div className="text-xs text-yellow-600 space-y-1">
-                  <p>💡 <strong>建議：</strong></p>
+                  <p>
+                    💡 <strong>建議：</strong>
+                  </p>
                   <ul className="list-disc list-inside space-y-1 ml-4">
                     <li>等待 1-2 分鐘後重試</li>
                     <li>確認 blob ID 是否正確</li>
@@ -198,13 +241,15 @@ export function CIDExplorer() {
                     <li>Walrus aggregator 服務異常</li>
                   </ul>
                 </div>
-                <Button 
+                <Button
                   onClick={handleRetry}
                   disabled={isLoading}
                   size="sm"
                   variant="outline"
                 >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`}
+                  />
                   重試
                 </Button>
               </div>
@@ -238,9 +283,9 @@ export function CIDExplorer() {
                 </div>
                 <div className="flex space-x-2">
                   {cidInfo.pinned ? (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={handleUnpin}
                       disabled={isLoading}
                       className="w-full sm:w-auto"
@@ -249,9 +294,9 @@ export function CIDExplorer() {
                       Unpin
                     </Button>
                   ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={handlePin}
                       disabled={isLoading}
                       className="w-full sm:w-auto"
@@ -277,7 +322,7 @@ export function CIDExplorer() {
                     {cidInfo.pinned ? 'Pinned' : 'Not Pinned'}
                   </p>
                 </div>
-                
+
                 {cidInfo.cacheDate && (
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
@@ -292,20 +337,22 @@ export function CIDExplorer() {
                     </p>
                   </div>
                 )}
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Globe className="h-4 w-4 text-purple-500" />
                     <span className="text-sm font-medium">Source</span>
                   </div>
-                  <div className={`text-lg font-bold ${getSourceColor(cidInfo.source)}`}>
+                  <div
+                    className={`text-lg font-bold ${getSourceColor(cidInfo.source)}`}
+                  >
                     {getSourceDisplayName(cidInfo.source)}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Content origin
                   </p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Activity className="h-4 w-4 text-orange-500" />
@@ -315,7 +362,12 @@ export function CIDExplorer() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(`http://localhost:4500/cdn/${cidInfo.cid}`, '_blank')}
+                      onClick={() =>
+                        window.open(
+                          `http://localhost:4500/cdn/${cidInfo.cid}`,
+                          '_blank',
+                        )
+                      }
                       className="w-full"
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
@@ -324,7 +376,11 @@ export function CIDExplorer() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => copyToClipboard(`http://localhost:4500/cdn/${cidInfo.cid}`)}
+                      onClick={() =>
+                        copyToClipboard(
+                          `http://localhost:4500/cdn/${cidInfo.cid}`,
+                        )
+                      }
                       className="w-full"
                     >
                       <Copy className="h-4 w-4 mr-2" />
@@ -340,7 +396,9 @@ export function CIDExplorer() {
           <Card>
             <CardHeader>
               <CardTitle>Blob Metadata</CardTitle>
-              <CardDescription>Technical details about the content</CardDescription>
+              <CardDescription>
+                Technical details about the content
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -352,11 +410,9 @@ export function CIDExplorer() {
                   <div className="text-lg font-bold">
                     {cidInfo.contentType || 'application/octet-stream'}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    MIME type
-                  </p>
+                  <p className="text-xs text-muted-foreground">MIME type</p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <HardDrive className="h-4 w-4 text-gray-500" />
@@ -365,11 +421,9 @@ export function CIDExplorer() {
                   <div className="text-lg font-bold">
                     {formatBytes(cidInfo.size || 0)}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    File size
-                  </p>
+                  <p className="text-xs text-muted-foreground">File size</p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Download className="h-4 w-4 text-gray-500" />
@@ -391,19 +445,25 @@ export function CIDExplorer() {
             <Card>
               <CardHeader>
                 <CardTitle>Usage Statistics</CardTitle>
-                <CardDescription>Request patterns and performance metrics</CardDescription>
+                <CardDescription>
+                  Request patterns and performance metrics
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">Total Requests</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      Total Requests
+                    </span>
                     <div className="text-xl sm:text-2xl font-bold">
                       {formatNumber(cidInfo.stats.requests)}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">Hit Rate</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      Hit Rate
+                    </span>
                     <div className="text-xl sm:text-2xl font-bold">
                       {formatPercentage(cidInfo.stats.hitRate)}
                     </div>
@@ -411,32 +471,40 @@ export function CIDExplorer() {
                       {cidInfo.stats.hits} hits, {cidInfo.stats.misses} misses
                     </p>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">Avg Latency</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      Avg Latency
+                    </span>
                     <div className="text-xl sm:text-2xl font-bold">
                       {formatLatency(cidInfo.stats.avgLatency)}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">Total Size</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      Total Size
+                    </span>
                     <div className="text-xl sm:text-2xl font-bold">
                       {formatBytes(cidInfo.stats.totalSize)}
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">First Access</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      First Access
+                    </span>
                     <div className="text-base sm:text-lg font-semibold">
                       {formatDate(cidInfo.stats.firstAccess)}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">Last Access</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      Last Access
+                    </span>
                     <div className="text-base sm:text-lg font-semibold">
                       {formatDate(cidInfo.stats.lastAccess)}
                     </div>
@@ -450,9 +518,12 @@ export function CIDExplorer() {
           {!cidInfo.stats && (
             <Card>
               <CardContent className="text-center py-8">
-                <p className="text-gray-500">No usage statistics available for this CID.</p>
+                <p className="text-gray-500">
+                  No usage statistics available for this CID.
+                </p>
                 <p className="text-sm text-gray-400 mt-2">
-                  Statistics will appear after the first request to this content.
+                  Statistics will appear after the first request to this
+                  content.
                 </p>
               </CardContent>
             </Card>
@@ -460,5 +531,5 @@ export function CIDExplorer() {
         </div>
       )}
     </div>
-  );
+  )
 }

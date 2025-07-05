@@ -7,12 +7,14 @@
 ## 📝 Key Concepts
 
 ### Immutability & Versioning
+
 - **Content Immutability**: All Walrus blobs are immutable; changing content creates a new blobId
 - **Automatic Versioning**: Each file change generates a new version with a unique blobId
 - **Cache Safety**: Cache invalidation removes old blobId entries, never overwrites content
 - **Metadata Pointers**: Tusky manages version pointers and file metadata
 
 ### Consistency Guarantees
+
 - **Eventual Consistency**: Cache invalidation propagates across nodes within ~5-10 seconds
 - **Strong Consistency**: Content retrieval by blobId is always consistent (immutable)
 - **Metadata Consistency**: Tusky ensures file metadata and version pointers are consistent
@@ -700,12 +702,14 @@ Audit Logging Events:
 ## 🔧 Developer Experience
 
 ### API Documentation
+
 - **Interactive Docs**: Swagger/OpenAPI at `/docs`
 - **Code Examples**: Multiple languages (curl, JS, Python, PHP)
 - **Error Reference**: Complete error code catalog
 - **Rate Limit Guide**: Usage patterns and best practices
 
 ### Common Troubleshooting
+
 ```
 ❓ "File not updating?"
    → Check if you're using the NEW blobId (content is immutable)
@@ -726,6 +730,7 @@ Audit Logging Events:
 ## 🌐 Multi-Region & Edge Deployment
 
 ### Edge Cache Architecture
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                            Global Edge Network                                  │
@@ -755,6 +760,7 @@ Audit Logging Events:
 ## 📊 Advanced Monitoring & Alerting
 
 ### Self-Healing Capabilities
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                              Auto-Recovery System                               │

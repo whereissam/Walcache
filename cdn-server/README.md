@@ -60,11 +60,13 @@ bun run format
 ## 📡 API Endpoints
 
 ### CDN Routes
+
 - `GET /cdn/:cid` - Serve cached Walrus content
 - `GET /api/stats/:cid` - Get analytics for specific CID
 - `GET /api/metrics` - Global CDN metrics
 
 ### Upload Routes
+
 - `POST /upload/file` - Upload file to Walrus via Tusky.io
 - `POST /upload/walrus` - Direct upload to Walrus network
 - `GET /upload/vaults` - List Tusky.io vaults
@@ -72,6 +74,7 @@ bun run format
 - `DELETE /upload/files/:id` - Delete file from vault
 
 ### Cache Management
+
 - `POST /api/preload` - Preload CIDs into cache
 - `POST /api/pin/:cid` - Pin CID to prevent eviction
 - `DELETE /api/pin/:cid` - Unpin CID
@@ -79,6 +82,7 @@ bun run format
 - `GET /api/cache/stats` - Get cache statistics
 
 ### Health & Monitoring
+
 - `GET /health` - Server health check
 - `GET /upload/health` - Upload service health check
 
@@ -87,24 +91,28 @@ bun run format
 ### Core Services
 
 #### Cache Service (`/services/cache.ts`)
+
 - **Redis + Memory** dual-layer caching
 - **TTL management** with configurable expiration
 - **Hit/miss tracking** for analytics
 - **LRU eviction** with pinning support
 
 #### Walrus Service (`/services/walrus.ts`)
+
 - **Multi-endpoint** support with health checking
 - **Automatic failover** between aggregators
 - **Content retrieval** with retry logic
 - **Blob verification** across networks
 
 #### Tusky Service (`/services/tusky.ts`)
+
 - **File upload** to Walrus via Tusky.io API
 - **Vault management** (create, list, manage)
 - **File operations** (upload, list, delete)
 - **Multi-chain support** for different networks
 
 #### Analytics Service (`/services/analytics.ts`)
+
 - **Request tracking** (hits, misses, latency)
 - **Performance metrics** aggregation
 - **Cache efficiency** monitoring
@@ -113,6 +121,7 @@ bun run format
 ### Middleware
 
 #### Authentication (`/middleware/auth.ts`)
+
 - **API key validation** for protected endpoints
 - **Rate limiting** per API key
 - **Request logging** and audit trail
@@ -120,30 +129,35 @@ bun run format
 ### Configuration
 
 #### Main Config (`/config/index.ts`)
+
 - **Zod validation** for environment variables
 - **Type-safe configuration** management
 - **Default values** and validation rules
 
 #### Walrus Endpoints (`/config/walrus-endpoints.ts`)
-- **Endpoint health monitoring** 
+
+- **Endpoint health monitoring**
 - **Automatic failover** configuration
 - **Load balancing** across aggregators
 
 ## 📊 Monitoring & Analytics
 
 ### Cache Metrics
+
 - **Hit Rate**: Percentage of requests served from cache
 - **Memory Usage**: Redis and local memory consumption
 - **Key Count**: Number of cached items
 - **Eviction Rate**: How often items are removed
 
 ### Performance Metrics
+
 - **Request Latency**: Average response times
 - **Upload Success Rate**: File upload reliability
 - **Endpoint Health**: Walrus aggregator status
 - **Error Rates**: Failed requests by type
 
 ### Access via API
+
 ```bash
 # Global metrics
 curl http://localhost:4500/api/metrics
@@ -158,6 +172,7 @@ curl http://localhost:4500/api/cache/stats
 ## 🔧 Configuration Options
 
 ### Cache Configuration
+
 ```typescript
 // Adjust in /config/index.ts
 cache: {
@@ -168,6 +183,7 @@ cache: {
 ```
 
 ### Upload Configuration
+
 ```typescript
 // Tusky.io settings
 tusky: {
@@ -178,6 +194,7 @@ tusky: {
 ```
 
 ### Walrus Configuration
+
 ```typescript
 // Aggregator endpoints
 walrus: {
@@ -207,6 +224,7 @@ docker run -p 4500:4500 \
 ### Common Issues
 
 #### Redis Connection Failed
+
 ```bash
 # Check Redis is running
 redis-cli ping
@@ -220,6 +238,7 @@ sudo systemctl start redis
 ```
 
 #### Tusky.io API Errors
+
 ```bash
 # Verify API key
 curl -H "Authorization: Bearer YOUR_API_KEY" \
@@ -229,15 +248,18 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
 ```
 
 #### CORS Issues
+
 - The server includes CORS headers for frontend access
 - If issues persist, check `Access-Control-Allow-Origin` settings
 
 #### Upload Failures
+
 - Verify file size limits (default: 10MB)
 - Check network connectivity to Walrus endpoints
 - Monitor logs for specific error messages
 
 ### Debug Mode
+
 ```bash
 # Enable verbose logging
 NODE_ENV=development bun dev
@@ -249,16 +271,19 @@ tail -f logs/wcdn.log
 ## 🔒 Security
 
 ### API Key Management
+
 - Use strong, unique API keys
 - Rotate keys regularly
 - Never commit keys to version control
 
 ### Rate Limiting
+
 - Default: 100 requests per minute per API key
 - Configurable per endpoint
 - Automatic IP-based blocking for abuse
 
 ### Input Validation
+
 - All inputs validated with Zod schemas
 - File type and size restrictions
 - Sanitized error messages
@@ -266,11 +291,13 @@ tail -f logs/wcdn.log
 ## 📈 Performance Optimization
 
 ### Cache Optimization
+
 - **Monitor hit rates** - Aim for >70% cache hit rate
-- **Tune TTL values** - Balance freshness vs performance  
+- **Tune TTL values** - Balance freshness vs performance
 - **Pin frequently accessed content** - Prevent important content eviction
 
 ### Upload Optimization
+
 - **Use appropriate file sizes** - Compress large files before upload
 - **Batch operations** - Group multiple uploads when possible
 - **Monitor endpoint health** - Switch aggregators if performance degrades

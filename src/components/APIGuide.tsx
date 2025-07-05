@@ -1,27 +1,42 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Copy, ExternalLink, Code, Download, Globe, Terminal } from 'lucide-react';
+import { useState } from 'react'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from './ui/card'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import {
+  Copy,
+  ExternalLink,
+  Code,
+  Download,
+  Globe,
+  Terminal,
+} from 'lucide-react'
 
 export function APIGuide() {
-  const [copySuccess, setCopySuccess] = useState<string>('');
-  const [exampleCID, setExampleCID] = useState('qbnfgi_e3qsbmxtmhb2mbkmvjc5pnf8efvydnf4b3ra');
+  const [copySuccess, setCopySuccess] = useState<string>('')
+  const [exampleCID, setExampleCID] = useState(
+    'qbnfgi_e3qsbmxtmhb2mbkmvjc5pnf8efvydnf4b3ra',
+  )
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopySuccess(label);
-      setTimeout(() => setCopySuccess(''), 2000);
+      await navigator.clipboard.writeText(text)
+      setCopySuccess(label)
+      setTimeout(() => setCopySuccess(''), 2000)
     } catch (err) {
-      console.error('Failed to copy: ', err);
+      console.error('Failed to copy: ', err)
     }
-  };
+  }
 
   const curlExample = `curl -X GET "http://localhost:4500/cdn/${exampleCID}" \\
   -H "Accept: */*" \\
   -H "User-Agent: MyApp/1.0" \\
-  --output downloaded-file`;
+  --output downloaded-file`
 
   const jsExample = `// Using fetch API
 const response = await fetch('http://localhost:4500/cdn/${exampleCID}');
@@ -31,7 +46,7 @@ const blob = await response.blob();
 import axios from 'axios';
 const response = await axios.get('http://localhost:4500/cdn/${exampleCID}', {
   responseType: 'blob'
-});`;
+});`
 
   const pythonExample = `import requests
 
@@ -43,7 +58,7 @@ if response.status_code == 200:
 
 # Check cache status
 stats = requests.get('http://localhost:4500/api/stats/${exampleCID}').json()
-print(f"Cached: {stats['cached']}, Hit Rate: {stats['stats']['hitRate']}")`;
+print(f"Cached: {stats['cached']}, Hit Rate: {stats['stats']['hitRate']}")`
 
   const phpExample = `<?php
 $cid = '${exampleCID}';
@@ -59,7 +74,7 @@ if ($content !== false) {
 $stats_url = "http://localhost:4500/api/stats/" . $cid;
 $stats = json_decode(file_get_contents($stats_url), true);
 echo "Cached: " . ($stats['cached'] ? 'Yes' : 'No');
-?>`;
+?>`
 
   const sdkExample = `import { getCDNUrl, preloadCIDs, getCIDInfo, configure } from "@walrus/cdn";
 
@@ -81,7 +96,7 @@ await preloadCIDs([
 
 // Get detailed info for a CID
 const info = await getCIDInfo("${exampleCID}");
-console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
+console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -115,7 +130,12 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
                 />
                 <Button
                   variant="outline"
-                  onClick={() => window.open(`http://localhost:4500/cdn/${exampleCID}`, '_blank')}
+                  onClick={() =>
+                    window.open(
+                      `http://localhost:4500/cdn/${exampleCID}`,
+                      '_blank',
+                    )
+                  }
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Test
@@ -124,14 +144,19 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
             </div>
             <div className="p-3 bg-blue-50 rounded border">
               <p className="text-sm">
-                <strong>CDN URL:</strong> 
+                <strong>CDN URL:</strong>
                 <code className="ml-2 px-2 py-1 bg-white rounded text-xs">
                   http://localhost:4500/cdn/{exampleCID}
                 </code>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => copyToClipboard(`http://localhost:4500/cdn/${exampleCID}`, 'URL')}
+                  onClick={() =>
+                    copyToClipboard(
+                      `http://localhost:4500/cdn/${exampleCID}`,
+                      'URL',
+                    )
+                  }
                   className="ml-2 h-6 w-6 p-0"
                 >
                   <Copy className="h-3 w-3" />
@@ -146,7 +171,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
       <Card>
         <CardHeader>
           <CardTitle>API Endpoints</CardTitle>
-          <CardDescription>Complete reference for all available endpoints</CardDescription>
+          <CardDescription>
+            Complete reference for all available endpoints
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
@@ -170,17 +197,22 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
                     </Button>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Serve cached Walrus content by CID. Returns file content with appropriate headers.
+                    Serve cached Walrus content by CID. Returns file content
+                    with appropriate headers.
                   </p>
                 </div>
-                
+
                 <div className="p-3 border rounded">
                   <div className="flex items-center justify-between mb-2">
-                    <code className="text-sm font-mono">GET /api/stats/:cid</code>
+                    <code className="text-sm font-mono">
+                      GET /api/stats/:cid
+                    </code>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => copyToClipboard('/api/stats/:cid', 'Endpoint')}
+                      onClick={() =>
+                        copyToClipboard('/api/stats/:cid', 'Endpoint')
+                      }
                       className="h-6 w-6 p-0"
                     >
                       <Copy className="h-3 w-3" />
@@ -197,7 +229,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => copyToClipboard('/api/metrics', 'Endpoint')}
+                      onClick={() =>
+                        copyToClipboard('/api/metrics', 'Endpoint')
+                      }
                       className="h-6 w-6 p-0"
                     >
                       <Copy className="h-3 w-3" />
@@ -223,24 +257,31 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => copyToClipboard('POST /api/preload', 'Endpoint')}
+                      onClick={() =>
+                        copyToClipboard('POST /api/preload', 'Endpoint')
+                      }
                       className="h-6 w-6 p-0"
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Preload multiple CIDs into cache. Body: <code>{"{ cids: string[] }"}</code>
+                    Preload multiple CIDs into cache. Body:{' '}
+                    <code>{'{ cids: string[] }'}</code>
                   </p>
                 </div>
 
                 <div className="p-3 border rounded">
                   <div className="flex items-center justify-between mb-2">
-                    <code className="text-sm font-mono">POST /api/pin/:cid</code>
+                    <code className="text-sm font-mono">
+                      POST /api/pin/:cid
+                    </code>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => copyToClipboard('POST /api/pin/:cid', 'Endpoint')}
+                      onClick={() =>
+                        copyToClipboard('POST /api/pin/:cid', 'Endpoint')
+                      }
                       className="h-6 w-6 p-0"
                     >
                       <Copy className="h-3 w-3" />
@@ -253,19 +294,21 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
 
                 <div className="p-3 border rounded">
                   <div className="flex items-center justify-between mb-2">
-                    <code className="text-sm font-mono">DELETE /api/pin/:cid</code>
+                    <code className="text-sm font-mono">
+                      DELETE /api/pin/:cid
+                    </code>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => copyToClipboard('DELETE /api/pin/:cid', 'Endpoint')}
+                      onClick={() =>
+                        copyToClipboard('DELETE /api/pin/:cid', 'Endpoint')
+                      }
                       className="h-6 w-6 p-0"
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Unpin CID from cache.
-                  </p>
+                  <p className="text-sm text-gray-600">Unpin CID from cache.</p>
                 </div>
               </div>
             </div>
@@ -282,7 +325,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
               <Terminal className="h-5 w-5 mr-2" />
               cURL Example
             </CardTitle>
-            <CardDescription>Download content using command line</CardDescription>
+            <CardDescription>
+              Download content using command line
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="relative">
@@ -299,7 +344,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
               </Button>
             </div>
             {copySuccess === 'cURL' && (
-              <p className="text-xs text-green-600 mt-2">Copied to clipboard!</p>
+              <p className="text-xs text-green-600 mt-2">
+                Copied to clipboard!
+              </p>
             )}
           </CardContent>
         </Card>
@@ -311,7 +358,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
               <Code className="h-5 w-5 mr-2" />
               JavaScript/Node.js
             </CardTitle>
-            <CardDescription>Fetch content in JavaScript applications</CardDescription>
+            <CardDescription>
+              Fetch content in JavaScript applications
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="relative">
@@ -328,7 +377,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
               </Button>
             </div>
             {copySuccess === 'JavaScript' && (
-              <p className="text-xs text-green-600 mt-2">Copied to clipboard!</p>
+              <p className="text-xs text-green-600 mt-2">
+                Copied to clipboard!
+              </p>
             )}
           </CardContent>
         </Card>
@@ -340,7 +391,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
               <Code className="h-5 w-5 mr-2" />
               Python
             </CardTitle>
-            <CardDescription>Download content with Python requests</CardDescription>
+            <CardDescription>
+              Download content with Python requests
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="relative">
@@ -357,7 +410,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
               </Button>
             </div>
             {copySuccess === 'Python' && (
-              <p className="text-xs text-green-600 mt-2">Copied to clipboard!</p>
+              <p className="text-xs text-green-600 mt-2">
+                Copied to clipboard!
+              </p>
             )}
           </CardContent>
         </Card>
@@ -386,7 +441,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
               </Button>
             </div>
             {copySuccess === 'PHP' && (
-              <p className="text-xs text-green-600 mt-2">Copied to clipboard!</p>
+              <p className="text-xs text-green-600 mt-2">
+                Copied to clipboard!
+              </p>
             )}
           </CardContent>
         </Card>
@@ -404,13 +461,15 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
           <div className="space-y-4">
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
               <p className="text-sm text-yellow-800">
-                <strong>Note:</strong> The SDK is currently in development. 
-                You can use the REST API endpoints directly for now.
+                <strong>Note:</strong> The SDK is currently in development. You
+                can use the REST API endpoints directly for now.
               </p>
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold mb-2">Installation (Future)</h4>
+              <h4 className="text-sm font-semibold mb-2">
+                Installation (Future)
+              </h4>
               <div className="relative">
                 <pre className="text-sm bg-gray-100 p-3 rounded">
                   <code>npm install @walrus/cdn</code>
@@ -418,7 +477,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => copyToClipboard('npm install @walrus/cdn', 'Install')}
+                  onClick={() =>
+                    copyToClipboard('npm install @walrus/cdn', 'Install')
+                  }
                   className="absolute top-2 right-2"
                 >
                   <Copy className="h-4 w-4" />
@@ -427,7 +488,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold mb-2">Usage Example (Planned)</h4>
+              <h4 className="text-sm font-semibold mb-2">
+                Usage Example (Planned)
+              </h4>
               <div className="relative">
                 <pre className="text-xs bg-gray-900 text-green-400 p-4 rounded overflow-x-auto">
                   <code>{sdkExample}</code>
@@ -442,7 +505,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
                 </Button>
               </div>
               {copySuccess === 'SDK' && (
-                <p className="text-xs text-green-600 mt-2">Copied to clipboard!</p>
+                <p className="text-xs text-green-600 mt-2">
+                  Copied to clipboard!
+                </p>
               )}
             </div>
           </div>
@@ -460,23 +525,29 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
             <div>
               <h4 className="font-semibold text-blue-600">🚀 Performance</h4>
               <ul className="list-disc list-inside space-y-1 text-gray-600">
-                <li>Preload frequently accessed content during off-peak hours</li>
+                <li>
+                  Preload frequently accessed content during off-peak hours
+                </li>
                 <li>Pin critical content to prevent cache eviction</li>
-                <li>Use HEAD requests to check cache status before downloading</li>
+                <li>
+                  Use HEAD requests to check cache status before downloading
+                </li>
                 <li>Monitor cache hit rates and adjust TTL accordingly</li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-green-600">🔄 Reliability</h4>
               <ul className="list-disc list-inside space-y-1 text-gray-600">
                 <li>IPFS fallback is automatically enabled for redundancy</li>
-                <li>Handle HTTP 404 responses gracefully for missing content</li>
+                <li>
+                  Handle HTTP 404 responses gracefully for missing content
+                </li>
                 <li>Implement retry logic for temporary network issues</li>
                 <li>Monitor /api/metrics for service health</li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-purple-600">⚡ Integration</h4>
               <ul className="list-disc list-inside space-y-1 text-gray-600">
@@ -490,5 +561,5 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`;
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

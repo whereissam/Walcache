@@ -7,16 +7,18 @@
 ### 🛠 後端處理 (已實作)
 
 #### 1. 明確錯誤代碼
+
 ```typescript
 export const WALRUS_ERROR_CODES = {
   BLOB_NOT_AVAILABLE_YET: 'BLOB_NOT_AVAILABLE_YET',
   BLOB_NOT_FOUND: 'BLOB_NOT_FOUND',
   AGGREGATOR_ERROR: 'AGGREGATOR_ERROR',
-  UPLOAD_FAILED: 'UPLOAD_FAILED'
-};
+  UPLOAD_FAILED: 'UPLOAD_FAILED',
+}
 ```
 
 #### 2. 自動重試機制
+
 ```typescript
 async fetchBlobWithRetry(cid: string, maxRetries: number = 3, interval: number = 2000) {
   // 自動重試 3 次，每次間隔 2 秒
@@ -26,6 +28,7 @@ async fetchBlobWithRetry(cid: string, maxRetries: number = 3, interval: number =
 ```
 
 #### 3. 詳細錯誤回應
+
 ```json
 {
   "error": "Blob qbnfgi_... 尚未同步到 aggregator，請稍後再試",
@@ -37,21 +40,26 @@ async fetchBlobWithRetry(cid: string, maxRetries: number = 3, interval: number =
 ### 🎨 前端處理 (已實作)
 
 #### 1. 智能錯誤識別
+
 ```typescript
 const isNotSyncedError = (errorMsg: string) => {
-  return errorMsg.includes('BLOB_NOT_AVAILABLE_YET') || 
-         errorMsg.includes('尚未同步') || 
-         errorMsg.includes('not yet synced');
-};
+  return (
+    errorMsg.includes('BLOB_NOT_AVAILABLE_YET') ||
+    errorMsg.includes('尚未同步') ||
+    errorMsg.includes('not yet synced')
+  )
+}
 ```
 
 #### 2. 友善的 UI 體驗
+
 - **🟡 黃色警告框**: "資料尚未同步" (非錯誤)
 - **🔄 手動重試按鈕**: 立即重試 + 重試計數
 - **⏰ 自動重試**: 10秒後自動重試一次
 - **💡 使用建議**: 具體的等待時間和操作指引
 
 #### 3. 錯誤分類處理
+
 - **同步錯誤**: 黃色提示 + 重試選項
 - **其他錯誤**: 紅色錯誤 + 基本重試
 
@@ -60,17 +68,19 @@ const isNotSyncedError = (errorMsg: string) => {
 現在用你的 blob ID 測試: `qbnfgi_e3qsbmxtmhb2mbkmvjc5pnf8efvydnf4b3ra`
 
 ### 啟動服務
+
 ```bash
 # Terminal 1: 後端
 cd cdn-server && bun dev
 
-# Terminal 2: 前端  
+# Terminal 2: 前端
 npm run dev
 ```
 
 ### 測試場景
 
 #### 1. 直接 API 測試
+
 ```bash
 # 測試 CDN 端點
 curl "http://localhost:4500/cdn/qbnfgi_e3qsbmxtmhb2mbkmvjc5pnf8efvydnf4b3ra"
@@ -81,6 +91,7 @@ curl "http://localhost:4500/cdn/qbnfgi_e3qsbmxtmhb2mbkmvjc5pnf8efvydnf4b3ra"
 ```
 
 #### 2. 前端體驗測試
+
 1. 開啟 http://localhost:5173/explorer
 2. 輸入你的 blob ID
 3. 觀察錯誤處理：
@@ -89,6 +100,7 @@ curl "http://localhost:4500/cdn/qbnfgi_e3qsbmxtmhb2mbkmvjc5pnf8efvydnf4b3ra"
    - **不存在**: 紅色錯誤提示
 
 #### 3. 自動重試測試
+
 1. 如果顯示"尚未同步"
 2. 點擊 "10秒後自動重試"
 3. 觀察自動重試行為
@@ -96,6 +108,7 @@ curl "http://localhost:4500/cdn/qbnfgi_e3qsbmxtmhb2mbkmvjc5pnf8efvydnf4b3ra"
 ## 📊 預期的用戶體驗
 
 ### 場景 A: Blob 已同步 ✅
+
 ```
 🟢 顯示完整 blob 資訊
 📊 快取狀態、大小、類型等
@@ -103,6 +116,7 @@ curl "http://localhost:4500/cdn/qbnfgi_e3qsbmxtmhb2mbkmvjc5pnf8efvydnf4b3ra"
 ```
 
 ### 場景 B: Blob 尚未同步 ⏳
+
 ```
 🟡 "資料尚未同步" 友善提示
 💡 1-2 分鐘同步時間說明
@@ -111,8 +125,9 @@ curl "http://localhost:4500/cdn/qbnfgi_e3qsbmxtmhb2mbkmvjc5pnf8efvydnf4b3ra"
 ```
 
 ### 場景 C: Blob 不存在 ❌
+
 ```
-🔴 "Blob 不存在" 錯誤提示  
+🔴 "Blob 不存在" 錯誤提示
 📋 可能原因列表
 🔄 基本重試選項
 ```

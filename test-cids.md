@@ -3,11 +3,12 @@
 ## Method 1: Upload via Dashboard
 
 1. Start the WCDN services:
+
 ```bash
 # Terminal 1: Backend
 cd cdn-server && bun dev
 
-# Terminal 2: Frontend  
+# Terminal 2: Frontend
 npm run dev
 ```
 
@@ -37,6 +38,7 @@ walrus store test-file.jpg
 ## Method 4: Use Public Test CIDs
 
 Try these public Walrus test CIDs (if they exist):
+
 - Check Walrus documentation for public test content
 - Use sample files from Walrus examples
 
@@ -45,11 +47,13 @@ Try these public Walrus test CIDs (if they exist):
 Once you have a CID, test these URLs:
 
 1. **Direct CDN access:**
+
    ```
    http://localhost:4500/cdn/YOUR_CID
    ```
 
 2. **CID information:**
+
    ```
    http://localhost:4500/api/stats/YOUR_CID
    ```
