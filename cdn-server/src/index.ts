@@ -8,6 +8,7 @@ import { apiRoutes } from './routes/api.js';
 import { uploadRoutes } from './routes/upload.js';
 import { cacheService } from './services/cache.js';
 import { analyticsService } from './services/analytics.js';
+import { endpointHealthService } from './services/endpoint-health.js';
 
 const fastify = Fastify({
   logger: {
@@ -49,6 +50,7 @@ async function start() {
   try {
     await cacheService.initialize();
     await analyticsService.initialize();
+    await endpointHealthService.initialize();
     
     const server = await buildServer();
     

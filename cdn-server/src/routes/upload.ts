@@ -3,6 +3,9 @@ import { z } from 'zod';
 import { tuskyService } from '../services/tusky.js';
 import { cacheService } from '../services/cache.js';
 import { analyticsService } from '../services/analytics.js';
+import { requireAuth, optionalAuth, type AuthenticatedRequest } from '../middleware/auth.js';
+import { config } from '../config/index.js';
+import { WALRUS_ENDPOINTS } from '../config/walrus-endpoints.js';
 
 const uploadFileSchema = z.object({
   vaultId: z.string().optional(),
@@ -23,12 +26,119 @@ export async function uploadRoutes(fastify: FastifyInstance) {
   // Register multipart support
   await fastify.register(import('@fastify/multipart'), {
     limits: {
-      fileSize: 100 * 1024 * 1024, // 100MB limit
+      fileSize: 10 * 1024 * 1024, // 10MB limit (Walrus default)
+    }
+  });
+
+  // Direct upload to Walrus (official API)
+  fastify.post('/walrus', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const data = await request.file();
+      
+      if (!data) {
+        return reply.status(400).send({ error: 'No file provided' });
+      }
+
+      const buffer = await data.toBuffer();
+      const fileName = data.filename || 'unnamed-file';
+      const contentType = data.mimetype || 'application/octet-stream';
+
+      // Use Walrus publisher directly (following official docs)
+      const network = config.WALRUS_NETWORK as 'testnet' | 'mainnet';
+      const publishers = WALRUS_ENDPOINTS[network].publishers;
+      
+      let lastError: Error | null = null;
+      
+      // Try each publisher until one works
+      for (const publisherUrl of publishers) {
+        try {
+          fastify.log.info(`Trying to upload to ${publisherUrl}...`);
+          
+          // Upload using Walrus official API
+          const response = await fetch(`${publisherUrl}/v1/blobs?epochs=1`, {
+            method: 'PUT',
+            body: buffer,
+            headers: {
+              'Content-Type': 'application/octet-stream'
+            }
+          });
+
+          if (response.ok) {
+            const walrusResponse = await response.json();
+            fastify.log.info('Walrus upload successful:', walrusResponse);
+            
+            // Extract blobId from response
+            let blobId: string;
+            let suiRef: string;
+            let status: string;
+            
+            if ('newlyCreated' in walrusResponse) {
+              blobId = walrusResponse.newlyCreated.blobObject.blobId;
+              suiRef = walrusResponse.newlyCreated.blobObject.id;
+              status = 'newly_created';
+            } else if ('alreadyCertified' in walrusResponse) {
+              blobId = walrusResponse.alreadyCertified.blobId;
+              suiRef = walrusResponse.alreadyCertified.event.txDigest;
+              status = 'already_certified';
+            } else {
+              throw new Error('Unexpected Walrus response format');
+            }
+
+            // Cache the uploaded blob
+            const cachedBlob = {
+              cid: blobId,
+              data: buffer,
+              contentType,
+              size: buffer.length,
+              timestamp: new Date(),
+              cached: new Date(),
+              ttl: 3600,
+              pinned: false
+            };
+
+            await cacheService.set(blobId, cachedBlob);
+
+            // Record analytics
+            analyticsService.recordFetch(blobId, false, 0, buffer.length);
+
+            return reply.send({
+              success: true,
+              blobId,
+              suiRef,
+              status,
+              size: buffer.length,
+              fileName,
+              contentType,
+              cdnUrl: `http://localhost:4500/cdn/${blobId}`,
+              directUrl: `${config.WALRUS_AGGREGATOR}/v1/blobs/${blobId}`,
+              cached: true,
+              publisherUsed: publisherUrl
+            });
+          } else {
+            const errorText = await response.text();
+            throw new Error(`Publisher responded with ${response.status}: ${errorText}`);
+          }
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          fastify.log.warn(`Publisher ${publisherUrl} failed:`, lastError.message);
+          continue;
+        }
+      }
+
+      // If all publishers failed
+      throw lastError || new Error('All publishers failed');
+
+    } catch (error) {
+      fastify.log.error('Direct Walrus upload error:', error);
+      return reply.status(500).send({
+        error: 'Upload failed',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
   // Upload file to Tusky/Walrus
-  fastify.post<{ Querystring: UploadQueryParams }>('/file', async (request: FastifyRequest<{ Querystring: UploadQueryParams }>, reply: FastifyReply) => {
+  fastify.post<{ Querystring: UploadQueryParams }>('/file', { preHandler: requireAuth }, async (request: AuthenticatedRequest<{ Querystring: UploadQueryParams }>, reply: FastifyReply) => {
     if (!tuskyService.isConfigured()) {
       return reply.status(503).send({
         error: 'Tusky service not configured',
@@ -76,8 +186,11 @@ export async function uploadRoutes(fastify: FastifyInstance) {
 
       return reply.send({
         success: true,
-        file: tuskyFile,
-        cdnUrl: `http://localhost:4500/cdn/${tuskyFile.blobId}`,
+        file: {
+          ...tuskyFile,
+          cdnUrl: `http://localhost:4500/cdn/${tuskyFile.blobId}`,
+          downloadUrl: `http://localhost:4500/upload/files/${tuskyFile.id}/download`
+        },
         cached: true
       });
 
@@ -117,7 +230,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
   });
 
   // Create vault
-  fastify.post('/vaults', async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.post('/vaults', { preHandler: requireAuth }, async (request: AuthenticatedRequest, reply: FastifyReply) => {
     if (!tuskyService.isConfigured()) {
       return reply.status(503).send({
         error: 'Tusky service not configured'
@@ -158,14 +271,16 @@ export async function uploadRoutes(fastify: FastifyInstance) {
         request.query.parentId
       );
 
-      // Add CDN URLs and download URLs to files
-      const filesWithCDN = files.map(file => ({
-        ...file,
-        cdnUrl: `http://localhost:4500/cdn/${file.blobId}`,
-        downloadUrl: `http://localhost:4500/upload/files/${file.id}/download`
-      }));
+      // Filter out deleted files and add CDN URLs
+      const activeFiles = files
+        .filter(file => file.status === 'active')
+        .map(file => ({
+          ...file,
+          cdnUrl: `http://localhost:4500/cdn/${file.blobId}`,
+          downloadUrl: `http://localhost:4500/upload/files/${file.id}/download`
+        }));
 
-      return reply.send({ files: filesWithCDN });
+      return reply.send({ files: activeFiles });
     } catch (error) {
       fastify.log.error('Get files error:', error);
       return reply.status(500).send({
@@ -176,7 +291,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
   });
 
   // Delete file
-  fastify.delete<{ Params: { fileId: string } }>('/files/:fileId', async (request: FastifyRequest<{ Params: { fileId: string } }>, reply: FastifyReply) => {
+  fastify.delete<{ Params: { fileId: string } }>('/files/:fileId', { preHandler: requireAuth }, async (request: AuthenticatedRequest<{ Params: { fileId: string } }>, reply: FastifyReply) => {
     if (!tuskyService.isConfigured()) {
       return reply.status(503).send({
         error: 'Tusky service not configured'
@@ -239,21 +354,26 @@ export async function uploadRoutes(fastify: FastifyInstance) {
       }
       
       // Fallback: Try to fetch from Walrus aggregator directly
-      try {
-        const response = await fetch(`https://aggregator.walrus.wal.app/v1/${file.blobId}`);
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer();
-          const data = Buffer.from(arrayBuffer);
-          
-          reply.header('Content-Type', file.type || 'application/octet-stream');
-          reply.header('Content-Length', data.length.toString());
-          reply.header('Content-Disposition', `inline; filename="${file.name}"`);
-          reply.header('X-Source', 'walrus-direct');
-          
-          return reply.send(data);
+      const network = config.WALRUS_NETWORK as 'testnet' | 'mainnet';
+      const aggregators = WALRUS_ENDPOINTS[network].aggregators;
+      
+      for (const aggregatorUrl of aggregators) {
+        try {
+          const response = await fetch(`${aggregatorUrl}/v1/blobs/${file.blobId}`);
+          if (response.ok) {
+            const arrayBuffer = await response.arrayBuffer();
+            const data = Buffer.from(arrayBuffer);
+            
+            reply.header('Content-Type', file.type || 'application/octet-stream');
+            reply.header('Content-Length', data.length.toString());
+            reply.header('Content-Disposition', `inline; filename="${file.name}"`);
+            reply.header('X-Source', `walrus-${aggregatorUrl}`);
+            
+            return reply.send(data);
+          }
+        } catch (walrusError) {
+          fastify.log.warn(`Walrus aggregator ${aggregatorUrl} failed:`, walrusError);
         }
-      } catch (walrusError) {
-        fastify.log.warn('Direct Walrus fetch failed:', walrusError);
       }
       
       // If Walrus fails, return file metadata with error

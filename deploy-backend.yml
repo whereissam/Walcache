@@ -1,0 +1,51 @@
+# Docker Compose for Production Backend
+version: '3.8'
+
+services:
+  wcdn-backend:
+    build:
+      context: ./cdn-server
+      dockerfile: Dockerfile
+    ports:
+      - "4500:4500"
+    environment:
+      - NODE_ENV=production
+      - PORT=4500
+      - REDIS_URL=redis://redis:6379
+      - WALRUS_ENDPOINT=https://publisher.walrus.wal.app
+      - WALRUS_AGGREGATOR=https://aggregator.walrus.wal.app
+      - IPFS_GATEWAY=https://ipfs.io/ipfs/
+      - ENABLE_IPFS_FALLBACK=true
+      - CACHE_TTL=3600
+      - MAX_CACHE_SIZE=1000
+      - TUSKY_API_URL=https://api.tusky.io/v1
+      - TUSKY_API_KEY=${TUSKY_API_KEY}
+      - ALLOWED_ORIGINS=https://your-frontend-domain.com,https://cdn.your-domain.com
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - wcdn-backend
+    restart: unless-stopped
+
+volumes:
+  redis_data:

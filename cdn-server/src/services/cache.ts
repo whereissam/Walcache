@@ -51,7 +51,19 @@ class CacheService {
       try {
         const cached = await this.redis.get(key);
         if (cached) {
-          return JSON.parse(cached);
+          const parsed = JSON.parse(cached);
+          // Convert data back to Buffer if it was serialized
+          if (parsed.data && parsed.data.type === 'Buffer' && Array.isArray(parsed.data.data)) {
+            parsed.data = Buffer.from(parsed.data.data);
+          }
+          // Convert Date strings back to Date objects
+          if (typeof parsed.timestamp === 'string') {
+            parsed.timestamp = new Date(parsed.timestamp);
+          }
+          if (typeof parsed.cached === 'string') {
+            parsed.cached = new Date(parsed.cached);
+          }
+          return parsed;
         }
       } catch (error) {
         console.warn('Redis get error, falling back to memory:', error);

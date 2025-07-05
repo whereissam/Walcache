@@ -3,11 +3,25 @@ import { useWCDNStore } from '../store/wcdnStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Upload, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Upload, Trash2, RefreshCw, AlertTriangle, Settings, Clock, Pin, Globe } from 'lucide-react';
 
 export function CacheManager() {
   const [preloadCIDs, setPreloadCIDs] = useState('');
-  const { isLoading, error, preloadCIDs: preloadCIDsAction, clearCache } = useWCDNStore();
+  const [configCID, setConfigCID] = useState('');
+  const [ttlValue, setTtlValue] = useState('3600');
+  const [ttlUnit, setTtlUnit] = useState('seconds');
+  const [fallbackEnabled, setFallbackEnabled] = useState(true);
+  const { 
+    isLoading, 
+    error, 
+    preloadCIDs: preloadCIDsAction, 
+    clearCache,
+    pinCID,
+    unpinCID,
+    fetchCIDStats,
+    cidInfo
+  } = useWCDNStore();
 
   const handlePreload = async () => {
     const cids = preloadCIDs
@@ -27,12 +41,186 @@ export function CacheManager() {
     }
   };
 
+  const handleConfigureCache = async () => {
+    if (!configCID.trim()) return;
+    
+    // Fetch current CID info to check if it exists
+    await fetchCIDStats(configCID.trim());
+  };
+
+  const handlePinToggle = async () => {
+    if (!cidInfo?.cid) return;
+    
+    if (cidInfo.pinned) {
+      await unpinCID(cidInfo.cid);
+    } else {
+      await pinCID(cidInfo.cid);
+    }
+    
+    // Refresh the CID info
+    await fetchCIDStats(cidInfo.cid);
+  };
+
+  const getTTLInSeconds = () => {
+    const value = parseInt(ttlValue);
+    switch (ttlUnit) {
+      case 'minutes': return value * 60;
+      case 'hours': return value * 3600;
+      case 'days': return value * 86400;
+      default: return value;
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">Cache Management</h1>
-        <p className="text-sm sm:text-base text-gray-600">Preload content and manage cache settings</p>
+        <p className="text-sm sm:text-base text-gray-600">Configure cache settings, TTL, pinning, and manage content</p>
       </div>
+
+      {/* Cache Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cache Configuration</CardTitle>
+          <CardDescription>
+            Configure TTL, pinning, and fallback settings for specific CIDs
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                CID to Configure
+              </label>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                <Input
+                  placeholder="Enter CID (e.g., bafybeihabcxyz123...)"
+                  value={configCID}
+                  onChange={(e) => setConfigCID(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={handleConfigureCache}
+                  disabled={isLoading || !configCID.trim()}
+                  className="w-full sm:w-auto"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Load CID
+                </Button>
+              </div>
+            </div>
+
+            {cidInfo && cidInfo.cid === configCID.trim() && (
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* TTL Configuration */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4 text-blue-500" />
+                      <span className="text-sm font-medium">TTL Settings</span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Input
+                        type="number"
+                        placeholder="TTL Value"
+                        value={ttlValue}
+                        onChange={(e) => setTtlValue(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Select value={ttlUnit} onValueChange={setTtlUnit}>
+                        <SelectTrigger className="w-28">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="seconds">Seconds</SelectItem>
+                          <SelectItem value="minutes">Minutes</SelectItem>
+                          <SelectItem value="hours">Hours</SelectItem>
+                          <SelectItem value="days">Days</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Current TTL: {cidInfo.ttl || 0} seconds ({getTTLInSeconds()} seconds when applied)
+                    </p>
+                  </div>
+
+                  {/* Pinning Configuration */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Pin className="h-4 w-4 text-green-500" />
+                      <span className="text-sm font-medium">Pinning Control</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">
+                          Pin Status: {cidInfo.pinned ? 'Pinned' : 'Not Pinned'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Pinned content won't be evicted from cache
+                        </p>
+                      </div>
+                      <Button
+                        variant={cidInfo.pinned ? "destructive" : "default"}
+                        size="sm"
+                        onClick={handlePinToggle}
+                        disabled={isLoading}
+                      >
+                        {cidInfo.pinned ? (
+                          <>
+                            <Pin className="h-4 w-4 mr-2" />
+                            Unpin
+                          </>
+                        ) : (
+                          <>
+                            <Pin className="h-4 w-4 mr-2" />
+                            Pin
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fallback Configuration */}
+                <div className="mt-6 space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Globe className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm font-medium">Fallback Gateway Settings</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">
+                        IPFS Fallback: {fallbackEnabled ? 'Enabled' : 'Disabled'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Automatically fallback to IPFS when Walrus is unavailable
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFallbackEnabled(!fallbackEnabled)}
+                    >
+                      {fallbackEnabled ? 'Disable' : 'Enable'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Current Status */}
+                <div className="mt-4 p-3 bg-blue-50 rounded border">
+                  <p className="text-sm font-medium text-blue-800">Current Status</p>
+                  <div className="mt-1 text-xs text-blue-600 space-y-1">
+                    <p>• Cache Status: {cidInfo.cached ? 'Cached' : 'Not Cached'}</p>
+                    <p>• Pin Status: {cidInfo.pinned ? 'Pinned' : 'Not Pinned'}</p>
+                    <p>• TTL: {cidInfo.ttl || 0} seconds</p>
+                    {cidInfo.cacheDate && <p>• Cached: {new Date(cidInfo.cacheDate).toLocaleString()}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Preload Content */}
       <Card>

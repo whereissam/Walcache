@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Database, Search, Settings, BarChart3, Upload, Menu, X } from 'lucide-react';
+import { Database, Search, Settings, BarChart3, Upload, Menu, X, Code, Globe, PlayCircle } from 'lucide-react';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -62,6 +62,33 @@ export default function Header() {
             >
               <Upload className="h-4 w-4" />
               <span>Upload</span>
+            </Link>
+
+            <Link 
+              to="/demo"
+              className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+              activeProps={{ className: "text-blue-600 bg-blue-50" }}
+            >
+              <PlayCircle className="h-4 w-4" />
+              <span>Demo</span>
+            </Link>
+
+            <Link 
+              to="/multichain"
+              className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+              activeProps={{ className: "text-blue-600 bg-blue-50" }}
+            >
+              <Globe className="h-4 w-4" />
+              <span>Multi-Chain</span>
+            </Link>
+
+            <Link 
+              to="/api"
+              className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+              activeProps={{ className: "text-blue-600 bg-blue-50" }}
+            >
+              <Code className="h-4 w-4" />
+              <span>API</span>
             </Link>
           </nav>
 
@@ -131,6 +158,36 @@ export default function Header() {
               >
                 <Upload className="h-5 w-5" />
                 <span>Upload Files</span>
+              </Link>
+
+              <Link 
+                to="/demo"
+                className="flex items-center space-x-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 px-3 py-2 rounded-md text-base font-medium"
+                activeProps={{ className: "text-blue-600 bg-blue-50" }}
+                onClick={closeMobileMenu}
+              >
+                <PlayCircle className="h-5 w-5" />
+                <span>Upload Demo</span>
+              </Link>
+
+              <Link 
+                to="/multichain"
+                className="flex items-center space-x-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 px-3 py-2 rounded-md text-base font-medium"
+                activeProps={{ className: "text-blue-600 bg-blue-50" }}
+                onClick={closeMobileMenu}
+              >
+                <Globe className="h-5 w-5" />
+                <span>Multi-Chain Demo</span>
+              </Link>
+
+              <Link 
+                to="/api"
+                className="flex items-center space-x-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 px-3 py-2 rounded-md text-base font-medium"
+                activeProps={{ className: "text-blue-600 bg-blue-50" }}
+                onClick={closeMobileMenu}
+              >
+                <Code className="h-5 w-5" />
+                <span>API Guide</span>
               </Link>
 
               {/* Mobile Status */}

@@ -108,34 +108,19 @@ class TuskyService {
       const vaults = data.items || [];
       console.log(`Found ${vaults.length} vaults via API`);
       
-      // Map API response to our interface and get file counts
-      const mappedVaults = await Promise.all(
-        vaults.map(async (vault: any) => {
-          // Get file count for each vault
-          let filesCount = 0;
-          try {
-            console.log(`Getting file count for vault ${vault.id}...`);
-            const files = await this.getFiles(vault.id);
-            filesCount = files.length;
-            console.log(`Vault ${vault.name} has ${filesCount} files`);
-          } catch (error) {
-            console.warn(`Failed to get file count for vault ${vault.id}:`, error);
-          }
-          
-          return {
-            id: vault.id,
-            name: vault.name,
-            description: vault.description || undefined,
-            isEncrypted: vault.encrypted || false,
-            createdAt: new Date(parseInt(vault.createdAt)).toISOString(),
-            updatedAt: new Date(parseInt(vault.updatedAt)).toISOString(),
-            isOwner: true,
-            membersCount: 1,
-            filesCount,
-            storageUsed: vault.size || 0,
-          };
-        })
-      );
+      // Map API response to our interface (skip expensive file counting for now)
+      const mappedVaults = vaults.map((vault: any) => ({
+        id: vault.id,
+        name: vault.name,
+        description: vault.description || undefined,
+        isEncrypted: vault.encrypted || false,
+        createdAt: new Date(parseInt(vault.createdAt)).toISOString(),
+        updatedAt: new Date(parseInt(vault.updatedAt)).toISOString(),
+        isOwner: true,
+        membersCount: 1,
+        filesCount: vault.filesCount || 0, // Use API provided count if available
+        storageUsed: vault.size || 0,
+      }));
       
       console.log('Vaults mapped successfully');
       return mappedVaults;
@@ -203,6 +188,22 @@ class TuskyService {
       // Get the file metadata
       const fileMetadata = await tusky.file.get(uploadId);
       
+      console.log('File metadata after upload:', JSON.stringify(fileMetadata, null, 2));
+      
+      // Verify blobId exists on Walrus before returning
+      if (fileMetadata.blobId) {
+        try {
+          const walrusResponse = await fetch(`https://aggregator.walrus-testnet.walrus.space/v1/blobs/${fileMetadata.blobId}`, { method: 'HEAD' });
+          if (!walrusResponse.ok) {
+            console.warn(`Uploaded file blobId ${fileMetadata.blobId} not found on Walrus aggregator`);
+          } else {
+            console.log(`Verified blobId ${fileMetadata.blobId} exists on Walrus`);
+          }
+        } catch (error) {
+          console.warn(`Failed to verify blobId ${fileMetadata.blobId} on Walrus:`, error);
+        }
+      }
+      
       return {
         id: fileMetadata.id,
         name: fileMetadata.name,
@@ -251,26 +252,38 @@ class TuskyService {
       const files = data.items || [];
       console.log(`Found ${files.length} files via API`);
       
-      // Map API response to our interface
-      return files.map((file: any) => ({
-        id: file.id,
-        name: file.name,
-        size: file.size,
-        type: file.mimeType || 'application/octet-stream',
-        vaultId: file.vaultId,
-        parentId: file.parentId,
-        blobId: file.blobId,
-        storedEpoch: file.storedEpoch || 0,
-        certifiedEpoch: file.certifiedEpoch || 0,
-        ref: file.ref || '',
-        erasureCodeType: file.erasureCodeType || '',
-        status: file.status || 'active',
-        createdAt: new Date(parseInt(file.createdAt)).toISOString(),
-        updatedAt: new Date(parseInt(file.updatedAt)).toISOString(),
-      }));
+      // Map API response to our interface and filter active files only
+      return files
+        .filter((file: any) => file.status === 'active')
+        .map((file: any) => ({
+          id: file.id,
+          name: file.name,
+          size: file.size,
+          type: file.mimeType || 'application/octet-stream',
+          vaultId: file.vaultId,
+          parentId: file.parentId,
+          blobId: file.blobId,
+          storedEpoch: file.storedEpoch || 0,
+          certifiedEpoch: file.certifiedEpoch || 0,
+          ref: file.ref || '',
+          erasureCodeType: file.erasureCodeType || '',
+          status: file.status || 'active',
+          createdAt: new Date(parseInt(file.createdAt)).toISOString(),
+          updatedAt: new Date(parseInt(file.updatedAt)).toISOString(),
+        }));
     } catch (error) {
       console.error('Error getting files:', error);
       throw new Error(`Failed to get files: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async getFileCount(vaultId: string): Promise<number> {
+    try {
+      const files = await this.getFiles(vaultId);
+      return files.length;
+    } catch (error) {
+      console.warn(`Failed to get file count for vault ${vaultId}:`, error);
+      return 0;
     }
   }
 

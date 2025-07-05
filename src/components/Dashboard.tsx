@@ -11,10 +11,14 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip 
+  Tooltip,
+  LineChart,
+  Line,
+  Area,
+  AreaChart
 } from 'recharts';
-import { formatBytes, formatNumber, formatPercentage, formatLatency, truncateCID } from '../lib/utils';
-import { Activity, Database, Clock, HardDrive, Zap } from 'lucide-react';
+import { formatBytes, formatNumber, formatPercentage, formatLatency, truncateCID, formatDate } from '../lib/utils';
+import { Activity, Database, Clock, HardDrive, Zap, TrendingUp, Globe, Users } from 'lucide-react';
 
 export function Dashboard() {
   const { 
@@ -56,13 +60,33 @@ export function Dashboard() {
   const topCIDsData = topCIDs.map(cid => ({
     name: truncateCID(cid.cid),
     requests: cid.requests,
-    latency: cid.avgLatency
+    latency: cid.avgLatency,
+    hitRate: cid.hitRate * 100,
+    size: cid.totalSize
   }));
+
+  // Generate sample latency trend data (in real app, this would come from analytics)
+  const latencyTrendData = Array.from({ length: 24 }, (_, i) => ({
+    hour: `${i}:00`,
+    latency: Math.random() * 200 + 50,
+    requests: Math.floor(Math.random() * 100) + 10
+  }));
+
+  // Geographic data simulation (in real app, this would come from IP analysis)
+  const geoData = [
+    { region: 'North America', requests: 4520, percentage: 45 },
+    { region: 'Europe', requests: 3200, percentage: 32 },
+    { region: 'Asia Pacific', requests: 1800, percentage: 18 },
+    { region: 'Others', requests: 500, percentage: 5 }
+  ];
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-        <h1 className="text-2xl sm:text-3xl font-bold">WCDN Dashboard</h1>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">WCDN Dashboard</h1>
+          <p className="text-sm text-gray-600 mt-1">Real-time cache analytics and performance monitoring</p>
+        </div>
         <div className="flex items-center space-x-2 text-sm text-gray-500">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           <span>Live</span>
@@ -140,15 +164,16 @@ export function Dashboard() {
             <CardDescription>Distribution of cache hits vs misses</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
                   data={hitRateData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
-                  paddingAngle={5}
+                  fill="#8884d8"
                   dataKey="value"
                 >
                   {hitRateData.map((entry, index) => (
@@ -165,22 +190,79 @@ export function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Top CIDs</CardTitle>
-            <CardDescription>Most frequently requested content</CardDescription>
+            <CardTitle>Geographic Distribution</CardTitle>
+            <CardDescription>Request sources by region</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={topCIDsData}>
+            <div className="space-y-3">
+              {geoData.map((region, index) => (
+                <div key={region.region} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: `hsl(${index * 90}, 70%, 50%)` }}
+                    />
+                    <span className="text-sm font-medium">{region.region}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold">{formatNumber(region.requests)}</div>
+                    <div className="text-xs text-gray-500">{region.percentage}%</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Performance Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Latency Trend (24h)</CardTitle>
+            <CardDescription>Average response time over the last 24 hours</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={latencyTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hour" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value: number) => [formatLatency(value), 'Latency']}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="latency" 
+                  stroke="#3b82f6" 
+                  strokeWidth={2}
+                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Top CIDs Performance</CardTitle>
+            <CardDescription>Most frequently requested content with hit rates</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={topCIDsData.slice(0, 5)}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value: number, name: string) => [
-                    name === 'requests' ? formatNumber(value) : formatLatency(value),
-                    name === 'requests' ? 'Requests' : 'Avg Latency'
-                  ]}
+                  formatter={(value: number, name: string) => {
+                    if (name === 'requests') return [formatNumber(value), 'Requests'];
+                    if (name === 'hitRate') return [`${value.toFixed(1)}%`, 'Hit Rate'];
+                    return [formatLatency(value), 'Avg Latency'];
+                  }}
                 />
                 <Bar dataKey="requests" fill="#3b82f6" />
+                <Bar dataKey="hitRate" fill="#10b981" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

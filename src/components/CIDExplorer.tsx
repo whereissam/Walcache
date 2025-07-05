@@ -3,11 +3,14 @@ import { useWCDNStore } from '../store/wcdnStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Search, Pin, PinOff, Clock, Activity, HardDrive } from 'lucide-react';
+import { Search, Pin, PinOff, Clock, Activity, HardDrive, Globe, Download, Copy, ExternalLink, FileText, RefreshCw } from 'lucide-react';
 import { formatBytes, formatNumber, formatPercentage, formatLatency, formatDate, truncateCID } from '../lib/utils';
 
 export function CIDExplorer() {
   const [searchCID, setSearchCID] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [autoRetryTimer, setAutoRetryTimer] = useState<NodeJS.Timeout | null>(null);
   const { 
     cidInfo, 
     isLoading, 
@@ -19,8 +22,38 @@ export function CIDExplorer() {
 
   const handleSearch = () => {
     if (searchCID.trim()) {
+      setRetryCount(0);
+      clearAutoRetry();
       fetchCIDStats(searchCID.trim());
     }
+  };
+
+  const handleRetry = () => {
+    if (searchCID.trim()) {
+      setRetryCount(prev => prev + 1);
+      fetchCIDStats(searchCID.trim());
+    }
+  };
+
+  const startAutoRetry = (delaySeconds: number = 5) => {
+    clearAutoRetry();
+    const timer = setTimeout(() => {
+      handleRetry();
+    }, delaySeconds * 1000);
+    setAutoRetryTimer(timer);
+  };
+
+  const clearAutoRetry = () => {
+    if (autoRetryTimer) {
+      clearTimeout(autoRetryTimer);
+      setAutoRetryTimer(null);
+    }
+  };
+
+  const isNotSyncedError = (errorMsg: string) => {
+    return errorMsg.includes('BLOB_NOT_AVAILABLE_YET') || 
+           errorMsg.includes('尚未同步') || 
+           errorMsg.includes('not yet synced');
   };
 
   const handlePin = async () => {
@@ -32,6 +65,32 @@ export function CIDExplorer() {
   const handleUnpin = async () => {
     if (cidInfo?.cid) {
       await unpinCID(cidInfo.cid);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  };
+
+  const getSourceDisplayName = (source?: string) => {
+    switch (source) {
+      case 'walrus': return 'Walrus Network';
+      case 'ipfs': return 'IPFS Gateway';
+      default: return 'Unknown';
+    }
+  };
+
+  const getSourceColor = (source?: string) => {
+    switch (source) {
+      case 'walrus': return 'text-blue-600';
+      case 'ipfs': return 'text-purple-600';
+      default: return 'text-gray-600';
     }
   };
 
@@ -77,8 +136,79 @@ export function CIDExplorer() {
       {/* Error State */}
       {error && (
         <Card>
-          <CardContent className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">Error: {error}</p>
+          <CardContent className="space-y-4">
+            {isNotSyncedError(error) ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                  <p className="text-yellow-800 font-medium">資料尚未同步</p>
+                </div>
+                <p className="text-sm text-yellow-700">
+                  此 blob 可能還未同步到 Walrus aggregator。這是正常現象，通常需要 1-2 分鐘完成同步。
+                </p>
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                  <Button 
+                    onClick={handleRetry}
+                    disabled={isLoading}
+                    size="sm"
+                    className="w-full sm:w-auto"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                    重試 {retryCount > 0 && `(${retryCount})`}
+                  </Button>
+                  {!autoRetryTimer && !isLoading && (
+                    <Button 
+                      onClick={() => startAutoRetry(10)}
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      10秒後自動重試
+                    </Button>
+                  )}
+                  {autoRetryTimer && (
+                    <Button 
+                      onClick={clearAutoRetry}
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                    >
+                      取消自動重試
+                    </Button>
+                  )}
+                </div>
+                <div className="text-xs text-yellow-600 space-y-1">
+                  <p>💡 <strong>建議：</strong></p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li>等待 1-2 分鐘後重試</li>
+                    <li>確認 blob ID 是否正確</li>
+                    <li>檢查此內容是否剛上傳</li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+                <p className="text-red-800 font-medium">錯誤: {error}</p>
+                <div className="text-sm text-red-700 space-y-2">
+                  <p className="font-medium">可能的原因：</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>此 blob ID 不存在於 Walrus 網路</li>
+                    <li>網路連線問題</li>
+                    <li>Walrus aggregator 服務異常</li>
+                  </ul>
+                </div>
+                <Button 
+                  onClick={handleRetry}
+                  disabled={isLoading}
+                  size="sm"
+                  variant="outline"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                  重試
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -92,9 +222,19 @@ export function CIDExplorer() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                 <div className="flex-1 min-w-0">
                   <CardTitle className="text-lg">CID Information</CardTitle>
-                  <CardDescription className="font-mono text-xs sm:text-sm break-all">
-                    {cidInfo.cid}
-                  </CardDescription>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <CardDescription className="font-mono text-xs sm:text-sm break-all">
+                      {cidInfo.cid}
+                    </CardDescription>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(cidInfo.cid)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex space-x-2">
                   {cidInfo.pinned ? (
@@ -124,7 +264,7 @@ export function CIDExplorer() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <HardDrive className="h-4 w-4 text-blue-500" />
@@ -144,7 +284,7 @@ export function CIDExplorer() {
                       <Clock className="h-4 w-4 text-green-500" />
                       <span className="text-sm font-medium">Cache Date</span>
                     </div>
-                    <div className="text-xl sm:text-2xl font-bold">
+                    <div className="text-lg font-bold">
                       {formatDate(cidInfo.cacheDate)}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -155,21 +295,91 @@ export function CIDExplorer() {
                 
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <Activity className="h-4 w-4 text-purple-500" />
-                    <span className="text-sm font-medium">Quick Access</span>
+                    <Globe className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm font-medium">Source</span>
                   </div>
-                  <div className="text-xl sm:text-2xl font-bold">
-                    <a 
-                      href={`http://localhost:4500/cdn/${cidInfo.cid}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 underline break-all"
-                    >
-                      View Content
-                    </a>
+                  <div className={`text-lg font-bold ${getSourceColor(cidInfo.source)}`}>
+                    {getSourceDisplayName(cidInfo.source)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Open in new tab
+                    Content origin
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Activity className="h-4 w-4 text-orange-500" />
+                    <span className="text-sm font-medium">Actions</span>
+                  </div>
+                  <div className="flex flex-col space-y-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(`http://localhost:4500/cdn/${cidInfo.cid}`, '_blank')}
+                      className="w-full"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Content
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(`http://localhost:4500/cdn/${cidInfo.cid}`)}
+                      className="w-full"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      {copySuccess ? 'Copied!' : 'Copy URL'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Blob Metadata */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Blob Metadata</CardTitle>
+              <CardDescription>Technical details about the content</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium">Content Type</span>
+                  </div>
+                  <div className="text-lg font-bold">
+                    {cidInfo.contentType || 'application/octet-stream'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    MIME type
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <HardDrive className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium">Size</span>
+                  </div>
+                  <div className="text-lg font-bold">
+                    {formatBytes(cidInfo.size || 0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    File size
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Download className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium">Gateway Status</span>
+                  </div>
+                  <div className="text-lg font-bold">
+                    {cidInfo.cached ? 'Available' : 'Not Cached'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    CDN availability
                   </p>
                 </div>
               </div>

@@ -1,16 +1,46 @@
 # WCDN (Walrus Content Delivery Network)
 
-A high-performance CDN system that caches Walrus decentralized storage content for faster access, with integrated file upload capabilities via Tusky.io.
+A high-performance CDN system for Walrus decentralized storage, supporting multi-chain blob status, fast access, and file upload via Tusky.io.
 
 ## Overview
 
-WCDN provides a seamless bridge between the Walrus decentralized storage network and traditional web applications by offering:
+WCDN bridges Walrus decentralized storage and web apps, featuring:
 
-- **CDN Layer**: Intelligent caching of Walrus blobs with Redis/memory fallback
-- **File Upload System**: Upload files to Walrus via Tusky.io integration
-- **Vault Management**: Organize files in encrypted or public vaults
-- **Analytics Dashboard**: Monitor cache performance and usage statistics
-- **Multi-tier Fallback**: Reliable content delivery with multiple Walrus aggregators
+- **CDN Layer**: Intelligent caching of Walrus blobs (Redis/memory fallback)
+- **Multi-Chain Sync**: Query and display blob status across Sui, Ethereum, Solana (mocked for hackathon)
+- **One-Line SDK**: Instantly get CDN URL for any blob on any supported chain
+- **File Upload**: Upload files to Walrus via Tusky.io
+- **Vault Management**: Organize files in encrypted/public vaults
+- **Analytics Dashboard**: Monitor cache and usage stats
+- **Multi-tier Fallback**: Reliable delivery with multiple Walrus aggregators
+- **Security & Auth**: API key protection for sensitive ops
+- **Cache Invalidation**: Auto/manual cache management
+- **Endpoint Health Monitoring**: Automatic failover for Walrus endpoints
+
+## Multi-Chain Support
+
+### SDK Usage
+開發者只需一行 code，即可獲取不同鏈的 CDN 連結：
+
+```javascript
+import { getWalrusCDNUrl } from 'wcdn-sdk';
+
+// Sui
+const suiUrl = getWalrusCDNUrl(blobId, { chain: 'sui' });
+
+// Ethereum
+const ethUrl = getWalrusCDNUrl(blobId, { chain: 'ethereum' });
+
+// Solana
+const solUrl = getWalrusCDNUrl(blobId, { chain: 'solana' });
+```
+
+預設支援 Sui，Ethereum，Solana（可擴展，hackathon 先 mock 狀態查詢）
+
+### UI 功能
+- 前端 Dashboard 提供鏈選擇器（Sui/Ethereum/Solana）
+- 顯示所選鏈下 blob 的狀態（如：已上鏈、可存取、快取狀態等，mock 資料）
+- 支援多鏈 blob 狀態同步查詢，方便用戶一站式管理
 
 ## Architecture
 
@@ -20,88 +50,88 @@ User Upload → Tusky.io → Walrus Network → WCDN Cache → Fast Access
    React UI    Tusky API    Blob Storage   CDN Server   End Users
 ```
 
-### Core Components
-
-- **Frontend**: React + TypeScript dashboard with TanStack Router
-- **Backend**: Fastify server with Redis caching and analytics
-- **Storage**: Walrus decentralized network via Tusky.io
-- **State Management**: Zustand with DevTools integration
-- **UI Components**: Shadcn/ui with responsive design
+📊 **[View Detailed Architecture Chart](./ARCHITECTURE.md)** - Complete system diagrams, data flows, and security layers
 
 ## System Workflow
 
-### File Upload Process
+### File Upload
+1. 用戶在 UI 選擇鏈（Sui/Ethereum/Solana）與 vault，拖曳上傳檔案
+2. 前端將檔案與鏈資訊傳給後端
+3. 後端透過 Tusky.io API 上傳到 Walrus，回傳 blobId
+4. 後端自動快取該 blob，並標記鏈別
+5. 前端顯示 CDN URL 與多鏈狀態
 
-1. **User Interface**: Select vault and drag/drop files in React dashboard
-2. **File Processing**: Frontend uploads to backend with multipart form data
-3. **Tusky Integration**: Backend forwards to Tusky.io API for Walrus storage
-4. **Blob Storage**: Tusky stores file on Walrus network, returns blob ID (CID)
-5. **Auto-caching**: Backend immediately caches the uploaded file for fast access
-6. **UI Update**: Frontend displays file with CDN URL and management options
-
-### CDN Access Flow
-
-1. **Request**: User/app requests `/cdn/{blobId}`
-2. **Cache Check**: Server checks Redis cache first, then memory cache
-3. **Cache Hit**: Returns cached content immediately with appropriate headers
-4. **Cache Miss**: Fetches from Walrus aggregator, caches result, returns content
-5. **Fallback**: Multiple Walrus aggregators ensure availability
-6. **Analytics**: Records hit/miss statistics and latency metrics
+### CDN Access
+1. 用戶/應用請求 `/cdn/{blobId}?chain=sui`
+2. 伺服器根據鏈別查快取，無則 fallback 至對應鏈的 Walrus aggregator
+3. 回傳內容並記錄鏈別、快取狀態
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
-
 - Node.js 18+
-- Redis server (optional, memory fallback available)
+- Redis server (optional)
 - Tusky.io API key
 
 ### Installation
 
-1. **Clone and install dependencies:**
 ```bash
 git clone <repository>
 cd WCDN
-npm install
+bun install
 ```
 
-2. **Configure environment:**
+### Environment
+
 ```bash
-# Copy example env file
-cp .env.example .env
+# 支援多鏈配置
+WALRUS_ENDPOINT_SUI=https://publisher.walrus-testnet.walrus.space
+WALRUS_ENDPOINT_ETH=https://eth-aggregator.walrus.space
+WALRUS_ENDPOINT_SOL=https://sol-aggregator.walrus.space
 
-# Edit .env with your settings
-TUSKY_API_KEY=your_tusky_api_key
-TUSKY_API_URL=https://api.tusky.io/v1
+# Cache Configuration
 REDIS_URL=redis://localhost:6379
+CACHE_TTL=3600
+MAX_CACHE_SIZE=1000
+
+# Security & Authentication
+API_KEY_SECRET=your-secure-api-key-here-change-this-in-production
+ALLOWED_ORIGINS=http://localhost:4500,http://localhost:5173,https://yourdomain.com
+
+# Tusky.io Integration
+TUSKY_API_KEY=your_tusky_api_key
+TUSKY_API_URL=https://api.tusky.io
+TUSKY_DEFAULT_VAULT_ID=your-default-vault-id
 ```
 
-3. **Start development servers:**
+### Start Development
+
 ```bash
 # Terminal 1: Start backend CDN server (port 4500)
 cd cdn-server
-npm install
-npm run dev
+bun install
+bun dev
 
 # Terminal 2: Start frontend (port 5173)
-npm run dev
+bun dev
 ```
 
-4. **Access the application:**
+### Access
 - Frontend Dashboard: http://localhost:5173
 - CDN Endpoint: http://localhost:4500/cdn/:cid
 - API Documentation: http://localhost:4500/api/health
+
+📝 **[Local Walrus Setup Guide](./LOCAL_WALRUS_SETUP.md)** - Complete guide for setting up local Walrus publisher for development
 
 ## API Reference
 
 ### CDN Endpoints
 
 ```http
-GET /cdn/:cid
-# Serve cached Walrus content by blob ID
-# Response: File content with appropriate MIME type
+GET /cdn/:cid?chain=sui|ethereum|solana
+# 依鏈別回傳快取內容
 
 GET /api/stats/:cid
 # Get analytics for specific blob ID
@@ -112,20 +142,35 @@ GET /api/metrics
 # Response: { global, cache, topCIDs }
 ```
 
+### Multi-Chain Blob Status
+
+```http
+GET /api/blob-status/:cid
+# 回傳各鏈 blob 狀態（mock）
+# Response: { sui: {...}, ethereum: {...}, solana: {...} }
+```
+
 ### Upload Endpoints
 
 ```http
 POST /upload/file?vaultId=:id
-# Upload file to Walrus via Tusky
+# Upload file to Walrus via Tusky (requires API key)
+# Header: X-API-Key: your-api-key
 # Body: multipart/form-data with file
 # Response: { success, file, cdnUrl, cached }
+
+POST /upload/walrus
+# Direct upload to Walrus network (bypasses vaults)
+# Body: multipart/form-data with file
+# Response: { success, blobId, cdnUrl, directUrl, cached }
 
 GET /upload/vaults
 # List user's vaults with file counts
 # Response: { vaults }
 
 POST /upload/vaults
-# Create new vault
+# Create new vault (requires API key)
+# Header: X-API-Key: your-api-key
 # Body: { name, description }
 # Response: { vault }
 
@@ -134,7 +179,8 @@ GET /upload/files?vaultId=:id
 # Response: { files }
 
 DELETE /upload/files/:fileId
-# Delete file from vault and cache
+# Delete file from vault and cache (requires API key)
+# Header: X-API-Key: your-api-key
 # Response: { success, message }
 ```
 
@@ -142,52 +188,45 @@ DELETE /upload/files/:fileId
 
 ```http
 POST /api/preload
-# Preload multiple CIDs into cache
+# Preload multiple CIDs into cache (requires API key)
+# Header: X-API-Key: your-api-key
 # Body: { cids: string[] }
 # Response: { cached, errors, total }
 
 POST /api/pin/:cid
-# Pin CID to prevent cache eviction
+# Pin CID to prevent cache eviction (requires API key)
+# Header: X-API-Key: your-api-key
 # Response: { success }
 
 DELETE /api/pin/:cid
-# Unpin CID from cache
+# Unpin CID from cache (requires API key)
+# Header: X-API-Key: your-api-key
 # Response: { success }
 
 POST /api/cache/clear
-# Clear entire cache
+# Clear entire cache (requires API key)
+# Header: X-API-Key: your-api-key
 # Response: { success }
-```
-
-## Configuration
-
-### Environment Variables
-
-```bash
-# Tusky.io Configuration
-TUSKY_API_KEY=your_api_key_here
-TUSKY_API_URL=https://api.tusky.io/v1
-TUSKY_DEFAULT_VAULT_ID=optional_default_vault
-
-# Cache Configuration
-REDIS_URL=redis://localhost:6379
-CACHE_TTL=3600
-MAX_CACHE_SIZE=1000
-
-# Server Configuration
-PORT=4500
-HOST=0.0.0.0
-NODE_ENV=development
 ```
 
 ## Features
 
+### 一行 code 多鏈 CDN 連結
+```javascript
+getWalrusCDNUrl(blobId, { chain })
+```
+
+### UI 多鏈切換
+- Dashboard 可切換 Sui/Ethereum/Solana，顯示 blob 狀態
+- 快取/上傳/管理/分析：同原有功能
+- 多鏈 aggregator fallback：自動選擇可用節點
+
 ### Upload Management
 - **Drag & Drop**: Intuitive file upload interface
 - **Vault Organization**: Create and manage file collections
+- **Direct Walrus Upload**: Bypass vaults for pure decentralized storage
 - **Progress Tracking**: Real-time upload progress indicators
 - **File Metadata**: Size, type, creation date, and Walrus blob ID
-- **Bulk Operations**: Multiple file selection and management
 
 ### CDN Performance
 - **Intelligent Caching**: Automatic cache population on upload
@@ -202,13 +241,13 @@ NODE_ENV=development
 - **Cache Health**: Memory usage, key counts, storage efficiency
 - **Top Content**: Most requested blobs and performance leaders
 
-### Reliability Features
-- **Multi-aggregator Fallback**: Multiple Walrus endpoints
-- **Error Handling**: Graceful degradation and user feedback
-- **Retry Logic**: Automatic retry for transient failures
-- **Health Monitoring**: Service status and configuration validation
-
 ## Development
+
+### Tech Stack
+- **前端**: React + TypeScript + Zustand
+- **後端**: Fastify + TypeScript + Redis
+- **快取**: 支援多鏈快取分區
+- **UI**: Shadcn/ui，鏈選擇器、blob 狀態面板
 
 ### Project Structure
 
@@ -226,17 +265,28 @@ WCDN/
 │   │   ├── config/        # Configuration
 │   │   └── types/         # TypeScript definitions
 │   └── package.json
+├── packages/sdk/          # Multi-chain SDK
+│   ├── src/
+│   │   ├── index.ts       # Main SDK exports
+│   │   ├── client.ts      # WCDN client
+│   │   └── types.ts       # Type definitions
+│   └── package.json
 ├── public/                # Static assets
 └── package.json           # Frontend dependencies
 ```
 
-### Key Technologies
+## Hackathon Tips
 
-- **Frontend**: React 18, TypeScript, TanStack Router, Zustand
-- **Backend**: Fastify, TypeScript, Redis, Node.js
-- **Storage**: Walrus network, Tusky.io API
-- **UI**: Shadcn/ui, Tailwind CSS, Lucide icons
-- **Build**: Vite, ESLint, Prettier
+### 多鏈狀態可先 mock，UI/SDK 介面先做出來
+- 真正鏈上同步可後續擴展
+- 強調「一行 code 多鏈 CDN」、「UI 一鍵切換多鏈 blob 狀態」亮點
+
+### Security Features
+- **API Key Authentication**: Protect sensitive operations
+- **Rate Limiting**: Prevent abuse with differentiated limits
+- **CORS Protection**: Configurable allowed origins
+- **Input Validation**: Comprehensive request validation with Zod
+- **Cache Isolation**: Secure cache invalidation and access control
 
 ## Troubleshooting
 
@@ -244,7 +294,7 @@ WCDN/
 
 **Upload Failures**
 - Verify TUSKY_API_KEY is valid
-- Check file size limits (100MB default)
+- Check file size limits (100MB vault, 10MB direct)
 - Ensure vault exists and is accessible
 
 **Cache Issues**
@@ -256,11 +306,6 @@ WCDN/
 - Multiple Walrus aggregators provide redundancy
 - Cache warming improves first-access latency
 - Pin frequently accessed content
-
-**Network Connectivity**
-- Walrus network availability can vary
-- Fallback mechanisms provide resilience
-- Check aggregator status if issues persist
 
 ### Health Checks
 
@@ -275,22 +320,6 @@ curl http://localhost:4500/api/cache/stats
 curl http://localhost:4500/cdn/your_blob_id
 ```
 
-## Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-### Development Guidelines
-
-- Follow TypeScript strict mode
-- Use ESLint and Prettier for code formatting
-- Write tests for new features
-- Update documentation for API changes
-- Follow semantic versioning
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -301,4 +330,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Tusky.io](https://tusky.io/) - Walrus integration platform
 - [Fastify](https://fastify.io/) - High-performance web framework
 - [React](https://react.dev/) - Frontend framework
-

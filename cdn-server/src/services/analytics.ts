@@ -19,7 +19,7 @@ class AnalyticsService {
     }, 60000);
   }
 
-  recordFetch(cid: string, hit: boolean, latency: number, size?: number): void {
+  recordFetch(cid: string, hit: boolean, latency: number, size?: number, clientIP?: string, userAgent?: string): void {
     if (!this.enabled) return;
 
     const event: AnalyticsEvent = {
@@ -28,7 +28,9 @@ class AnalyticsService {
       timestamp: new Date(),
       hit,
       latency,
-      size
+      size,
+      clientIP,
+      userAgent
     };
 
     this.events.push(event);

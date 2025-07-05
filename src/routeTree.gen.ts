@@ -10,8 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UploadRouteImport } from './routes/upload'
+import { Route as MultichainRouteImport } from './routes/multichain'
 import { Route as ExplorerRouteImport } from './routes/explorer'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as CacheRouteImport } from './routes/cache'
+import { Route as ApiRouteImport } from './routes/api'
 import { Route as IndexRouteImport } from './routes/index'
 
 const UploadRoute = UploadRouteImport.update({
@@ -19,14 +22,29 @@ const UploadRoute = UploadRouteImport.update({
   path: '/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MultichainRoute = MultichainRouteImport.update({
+  id: '/multichain',
+  path: '/multichain',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExplorerRoute = ExplorerRouteImport.update({
   id: '/explorer',
   path: '/explorer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CacheRoute = CacheRouteImport.update({
   id: '/cache',
   path: '/cache',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRoute = ApiRouteImport.update({
+  id: '/api',
+  path: '/api',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,35 +55,69 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api': typeof ApiRoute
   '/cache': typeof CacheRoute
+  '/demo': typeof DemoRoute
   '/explorer': typeof ExplorerRoute
+  '/multichain': typeof MultichainRoute
   '/upload': typeof UploadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api': typeof ApiRoute
   '/cache': typeof CacheRoute
+  '/demo': typeof DemoRoute
   '/explorer': typeof ExplorerRoute
+  '/multichain': typeof MultichainRoute
   '/upload': typeof UploadRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api': typeof ApiRoute
   '/cache': typeof CacheRoute
+  '/demo': typeof DemoRoute
   '/explorer': typeof ExplorerRoute
+  '/multichain': typeof MultichainRoute
   '/upload': typeof UploadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cache' | '/explorer' | '/upload'
+  fullPaths:
+    | '/'
+    | '/api'
+    | '/cache'
+    | '/demo'
+    | '/explorer'
+    | '/multichain'
+    | '/upload'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cache' | '/explorer' | '/upload'
-  id: '__root__' | '/' | '/cache' | '/explorer' | '/upload'
+  to:
+    | '/'
+    | '/api'
+    | '/cache'
+    | '/demo'
+    | '/explorer'
+    | '/multichain'
+    | '/upload'
+  id:
+    | '__root__'
+    | '/'
+    | '/api'
+    | '/cache'
+    | '/demo'
+    | '/explorer'
+    | '/multichain'
+    | '/upload'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiRoute: typeof ApiRoute
   CacheRoute: typeof CacheRoute
+  DemoRoute: typeof DemoRoute
   ExplorerRoute: typeof ExplorerRoute
+  MultichainRoute: typeof MultichainRoute
   UploadRoute: typeof UploadRoute
 }
 
@@ -78,6 +130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/multichain': {
+      id: '/multichain'
+      path: '/multichain'
+      fullPath: '/multichain'
+      preLoaderRoute: typeof MultichainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explorer': {
       id: '/explorer'
       path: '/explorer'
@@ -85,11 +144,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExplorerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cache': {
       id: '/cache'
       path: '/cache'
       fullPath: '/cache'
       preLoaderRoute: typeof CacheRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api': {
+      id: '/api'
+      path: '/api'
+      fullPath: '/api'
+      preLoaderRoute: typeof ApiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,8 +177,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiRoute: ApiRoute,
   CacheRoute: CacheRoute,
+  DemoRoute: DemoRoute,
   ExplorerRoute: ExplorerRoute,
+  MultichainRoute: MultichainRoute,
   UploadRoute: UploadRoute,
 }
 export const routeTree = rootRouteImport

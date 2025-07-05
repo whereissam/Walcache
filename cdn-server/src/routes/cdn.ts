@@ -1,5 +1,4 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import axios from 'axios';
 import { walrusService } from '../services/walrus.js';
 import { cacheService } from '../services/cache.js';
 import { analyticsService } from '../services/analytics.js';
@@ -25,7 +24,9 @@ export async function cdnRoutes(fastify: FastifyInstance) {
       
       if (cached) {
         const latency = Date.now() - startTime;
-        analyticsService.recordFetch(cid, true, latency, cached.size);
+        const clientIP = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || request.ip;
+        const userAgent = request.headers['user-agent'];
+        analyticsService.recordFetch(cid, true, latency, cached.size, clientIP as string, userAgent);
         
         reply.header('Content-Type', cached.contentType);
         reply.header('Content-Length', cached.size.toString());
@@ -36,9 +37,9 @@ export async function cdnRoutes(fastify: FastifyInstance) {
         return reply.send(cached.data);
       }
 
-      // If not in cache, try to fetch from Walrus
+      // If not in cache, try to fetch from Walrus with retry
       try {
-        const blob = await walrusService.fetchBlob(cid);
+        const blob = await walrusService.fetchBlobWithRetry(cid, 3, 2000);
         
         if (blob) {
           const cachedBlob: CachedBlob = {
@@ -55,12 +56,27 @@ export async function cdnRoutes(fastify: FastifyInstance) {
           await cacheService.set(cid, cachedBlob);
           
           const latency = Date.now() - startTime;
-          analyticsService.recordFetch(cid, false, latency, blob.size);
+          const clientIP = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || request.ip;
+          const userAgent = request.headers['user-agent'];
+          analyticsService.recordFetch(cid, false, latency, blob.size, clientIP as string, userAgent);
 
           reply.header('Content-Type', blob.contentType);
           reply.header('Content-Length', blob.size.toString());
           reply.header('X-Cache', 'MISS');
           reply.header('X-Fetch-Time', `${latency}ms`);
+          reply.header('X-Source', blob.source);
+          
+          // Trigger webhook for successful blob download
+          analyticsService.sendWebhook({
+            type: 'download',
+            cid: blob.cid,
+            timestamp: new Date(),
+            source: blob.source,
+            size: blob.size,
+            latency,
+            clientIP: clientIP as string,
+            userAgent
+          });
           
           return reply.send(blob.data);
         }
@@ -68,82 +84,41 @@ export async function cdnRoutes(fastify: FastifyInstance) {
         fastify.log.warn('Walrus fetch failed, will try direct aggregator access:', walrusError);
       }
 
-      // If Walrus service fails, try to use axios with relaxed SSL for better compatibility
-      const aggregatorEndpoints = [
-        `https://aggregator.walrus.wal.app/v1/${cid}`,
-        `https://aggregator-devnet.walrus.space/v1/${cid}`,
-        `https://wal-aggregator-devnet.staketab.org/v1/${cid}`
-      ];
-
-      for (const aggregatorUrl of aggregatorEndpoints) {
-        try {
-          fastify.log.info(`Trying aggregator: ${aggregatorUrl}`);
-          
-          // Use axios with custom agent for better SSL compatibility
-          const axiosResponse = await axios.get(aggregatorUrl, {
-            timeout: 15000,
-            responseType: 'arraybuffer',
-            headers: {
-              'User-Agent': 'WCDN/1.0'
-            },
-            // For HTTPS requests, we may need to configure SSL
-            httpsAgent: new (await import('https')).Agent({
-              rejectUnauthorized: false // This allows self-signed certificates
-            })
-          });
-          
-          if (axiosResponse.status === 200) {
-            const data = Buffer.from(axiosResponse.data);
-            const contentType = axiosResponse.headers['content-type'] || 'application/octet-stream';
-            
-            // Cache the result
-            const cachedBlob: CachedBlob = {
-              cid,
-              data,
-              contentType,
-              size: data.length,
-              timestamp: new Date(),
-              cached: new Date(),
-              ttl: 3600,
-              pinned: false
-            };
-            
-            await cacheService.set(cid, cachedBlob);
-            
-            const latency = Date.now() - startTime;
-            analyticsService.recordFetch(cid, false, latency, data.length);
-            
-            reply.header('Content-Type', contentType);
-            reply.header('Content-Length', data.length.toString());
-            reply.header('X-Cache', 'MISS');
-            reply.header('X-Fetch-Time', `${latency}ms`);
-            reply.header('X-Source', `walrus-aggregator-${aggregatorUrl.split('//')[1].split('.')[0]}`);
-            
-            return reply.send(data);
-          } else {
-            fastify.log.warn(`Aggregator ${aggregatorUrl} returned ${axiosResponse.status}: ${axiosResponse.statusText}`);
-          }
-        } catch (aggregatorError) {
-          fastify.log.warn(`Aggregator ${aggregatorUrl} failed:`, aggregatorError);
-        }
-      }
+      // If Walrus service fails completely, return the structured error response
       
-      return reply.status(404).send({ error: 'Blob not found on Walrus network' });
+      return reply.status(404).send({ 
+        error: 'BLOB_NOT_FOUND',
+        code: 'BLOB_NOT_FOUND',
+        message: 'Blob not found on Walrus network or aggregators have not synced it yet.',
+        suggestions: [
+          'Verify the blob ID is correct',
+          'Wait for aggregator synchronization (usually 1-2 minutes)',
+          'Check if the blob was recently uploaded',
+          'Try again in a few minutes'
+        ],
+        retryAfter: 120 // seconds
+      });
       
     } catch (error) {
       const latency = Date.now() - startTime;
-      analyticsService.recordFetch(cid, false, latency);
+      const clientIP = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || request.ip;
+      const userAgent = request.headers['user-agent'];
+      analyticsService.recordFetch(cid, false, latency, undefined, clientIP as string, userAgent);
       
       fastify.log.error('CDN fetch error:', error);
       
-      if (error instanceof Error && 'statusCode' in error) {
-        return reply.status(error.statusCode as number).send({ 
-          error: error.message 
+      if (error instanceof Error && 'statusCode' in error && 'code' in error) {
+        const walrusError = error as any;
+        return reply.status(walrusError.statusCode).send({ 
+          error: walrusError.message,
+          code: walrusError.code,
+          retryAfter: walrusError.code === 'BLOB_NOT_AVAILABLE_YET' ? 120 : undefined
         });
       }
       
       return reply.status(500).send({ 
-        error: 'Internal server error' 
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR'
       });
     }
   });

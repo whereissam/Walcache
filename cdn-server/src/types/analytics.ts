@@ -1,11 +1,14 @@
 export interface AnalyticsEvent {
-  type: 'fetch' | 'preload' | 'pin' | 'unpin';
+  type: 'fetch' | 'preload' | 'pin' | 'unpin' | 'download';
   cid?: string;
   cids?: string[];
   timestamp: Date;
   hit?: boolean;
   latency?: number;
   size?: number;
+  source?: string;
+  clientIP?: string;
+  userAgent?: string;
 }
 
 export interface CIDStats {
