@@ -1,9 +1,22 @@
 {
-  "name": "wcdn-server",
+  "name": "walcache-server",
   "version": "1.0.0",
-  "description": "WCDN CDN Server - Fastify + Walrus integration",
+  "description": "Walcache CDN Server - Fastify + Walrus integration with intelligent caching",
   "main": "dist/index.js",
   "type": "module",
+  "homepage": "https://github.com/whereissam/Walcache#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/whereissam/Walcache.git",
+    "directory": "cdn-server"
+  },
+  "bugs": {
+    "url": "https://github.com/whereissam/Walcache/issues"
+  },
+  "author": {
+    "name": "whereissam",
+    "url": "https://github.com/whereissam"
+  },
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "build": "tsc",

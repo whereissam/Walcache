@@ -1,8 +1,8 @@
-# WCDN Architecture Chart
+# Walcache Architecture Chart
 
 ## 🏗️ System Overview
 
-> **Core Design Principle**: WCDN leverages Walrus's immutable blob storage where content is identified by cryptographic hashes (blobIds). File "updates" always generate new blobIds, ensuring content immutability, natural versioning, and cache safety.
+> **Core Design Principle**: Walcache leverages Walrus's immutable blob storage where content is identified by cryptographic hashes (blobIds). File "updates" always generate new blobIds, ensuring content immutability, natural versioning, and cache safety.
 
 ## 📝 Key Concepts
 
@@ -21,7 +21,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              WCDN (Walrus CDN)                                  │
+│                              Walcache (Walrus CDN)                                  │
 │                         High-Performance Decentralized CDN                      │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
@@ -782,4 +782,4 @@ Audit Logging Events:
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-This comprehensive architecture chart covers all the major components, data flows, security layers, and monitoring aspects of the WCDN system. Each diagram shows how the different parts work together to provide a robust, secure, and high-performance CDN solution for Walrus decentralized storage.
+This comprehensive architecture chart covers all the major components, data flows, security layers, and monitoring aspects of the Walcache system. Each diagram shows how the different parts work together to provide a robust, secure, and high-performance CDN solution for Walrus decentralized storage.

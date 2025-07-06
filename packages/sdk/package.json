@@ -1,7 +1,7 @@
 {
-  "name": "wcdn-sdk",
+  "name": "walcache-sdk",
   "version": "1.0.0",
-  "description": "🚀 Multi-chain Walrus CDN SDK - One-line function to get CDN URLs for Sui, Ethereum, Solana",
+  "description": "🚀 Multi-chain Walcache SDK - One-line function to get CDN URLs for Sui, Ethereum, Solana",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -41,16 +41,19 @@
     "solana",
     "hackathon"
   ],
-  "author": "WCDN Team",
+  "author": {
+    "name": "whereissam",
+    "url": "https://github.com/whereissam"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/wcdn.git",
+    "url": "https://github.com/whereissam/Walcache.git",
     "directory": "packages/sdk"
   },
-  "homepage": "https://github.com/your-org/wcdn#readme",
+  "homepage": "https://github.com/whereissam/Walcache#readme",
   "bugs": {
-    "url": "https://github.com/your-org/wcdn/issues"
+    "url": "https://github.com/whereissam/Walcache/issues"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",

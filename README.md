@@ -1,8 +1,39 @@
-# Walcache
+<div align="center">
+  <img src="https://github.com/whereissam/Walcache/blob/main/src/assets/walcache-logo.jpeg?raw=true" alt="Walcache Logo" width="120" height="120" />
+  
+  # Walcache
+  
+  **High-performance CDN for Walrus decentralized storage**
+  
+  *Supporting multi-chain blob status, fast access, and file upload via Tusky.io*
+  
+  [![GitHub](https://img.shields.io/badge/GitHub-Walcache-blue?style=flat-square&logo=github)](https://github.com/whereissam/Walcache)
+  [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+  [![React](https://img.shields.io/badge/React-19-blue?style=flat-square&logo=react)](https://reactjs.org/)
+  
+</div>
 
-A high-performance CDN system for Walrus decentralized storage, supporting multi-chain blob status, fast access, and file upload via Tusky.io.
+![](https://i.imgur.com/Tg9D5UZ.jpeg)
 
-## Overview
+---
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Multi-Chain Support](#multi-chain-support)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [API Reference](#api-reference)
+- [Development](#development)
+- [Contributing](#contributing)
+
+---
+
+## 🚀 Overview
 
 Walcache bridges Walrus decentralized storage and web apps, featuring:
 
@@ -17,7 +48,7 @@ Walcache bridges Walrus decentralized storage and web apps, featuring:
 - **Cache Invalidation**: Auto/manual cache management
 - **Endpoint Health Monitoring**: Automatic failover for Walrus endpoints
 
-## Multi-Chain Support
+## ⛓️ Multi-Chain Support
 
 ### SDK Usage
 
@@ -44,7 +75,7 @@ Default support for Sui, Ethereum, Solana (extensible, hackathon uses mocked sta
 - Display blob status for selected chain (e.g., on-chain, accessible, cache status, etc., mocked data)
 - Support multi-chain blob status synchronization queries for convenient one-stop management
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 User Upload → Tusky.io → Walrus Network → Walcache Cache → Fast Access

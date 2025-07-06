@@ -1,7 +1,31 @@
 {
   "name": "walcache",
+  "version": "1.0.0",
+  "description": "High-performance CDN for Walrus decentralized storage with intelligent caching and analytics",
   "private": true,
   "type": "module",
+  "homepage": "https://github.com/whereissam/Walcache#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/whereissam/Walcache.git"
+  },
+  "bugs": {
+    "url": "https://github.com/whereissam/Walcache/issues"
+  },
+  "author": {
+    "name": "whereissam",
+    "url": "https://github.com/whereissam"
+  },
+  "keywords": [
+    "walrus",
+    "cdn",
+    "decentralized-storage",
+    "blockchain",
+    "caching",
+    "sui",
+    "ethereum",
+    "solana"
+  ],
   "scripts": {
     "dev": "vite --port 5173",
     "dev:server": "cd cdn-server && bun dev",

@@ -1,11 +1,11 @@
-# WCDN (Walrus Content Delivery Network)
+# Walcache (Walrus Content Delivery Network)
 ## 讓去中心化儲存像 Web2 一樣簡單快速
 
 ---
 
 ## 🎯 專案名稱 & Slogan
 
-### **WCDN - Walrus Content Delivery Network**
+### **Walcache - Walrus Content Delivery Network**
 > **"One Line Code, Multi-Chain CDN"**
 > 
 > **"讓 Web3 儲存真正落地，開發者和用戶都能無痛享受去中心化儲存的好處"**
@@ -37,7 +37,7 @@
 ## 🎯 產品定位 & 價值
 
 ### 產品定位
-> **WCDN 是專為 Walrus 去中心化儲存打造的高效 CDN 系統，支援多鏈同步、智能快取、無縫上傳與統一管理**
+> **Walcache 是專為 Walrus 去中心化儲存打造的高效 CDN 系統，支援多鏈同步、智能快取、無縫上傳與統一管理**
 
 ### 核心價值主張
 1. **🔥 極簡開發體驗**
@@ -91,7 +91,7 @@
 
 ### 架構概覽
 ```
-用戶應用 → WCDN SDK → WCDN 後端 → Redis 快取 → Walrus 網路
+用戶應用 → Walcache SDK → Walcache 後端 → Redis 快取 → Walrus 網路
                                    ↓
                             Tusky.io 上傳服務
 ```
@@ -105,7 +105,7 @@
 
 ### 多鏈整合
 ```
-WCDN Client
+Walcache Client
 ├── Sui Verifier (Testnet Ready)
 ├── Ethereum Verifier (Sepolia Support)
 ├── Solana Verifier (Devnet Ready)
@@ -162,7 +162,7 @@ const multiChainResult = await verifyMultiChain(
 > **市面上沒有人做到一行程式碼多鏈 CDN，同時支援快取、上傳、管理、分析**
 
 ### 與競品比較
-| 功能 | WCDN | 傳統 CDN | 其他 Web3 儲存 |
+| 功能 | Walcache | 傳統 CDN | 其他 Web3 儲存 |
 |------|------|----------|---------------|
 | 多鏈支援 | ✅ 原生支援 | ❌ 不支援 | ⚠️ 單鏈 |
 | 一行整合 | ✅ 極簡 SDK | ⚠️ 複雜配置 | ❌ 需要多個 SDK |
@@ -205,27 +205,27 @@ const multiChainResult = await verifyMultiChain(
 ## 🎯 結語 & Call to Action
 
 ### 📈 市場影響力
-> **WCDN 讓去中心化儲存真正落地，讓 Web3 儲存像 Web2 一樣簡單、快速、可擴展**
+> **Walcache 讓去中心化儲存真正落地，讓 Web3 儲存像 Web2 一樣簡單、快速、可擴展**
 
-### 🌟 為什麼選擇 WCDN？
+### 🌟 為什麼選擇 Walcache？
 1. **💻 開發者友善**：學習成本近乎零，一行程式碼搞定
 2. **⚡ 用戶體驗優先**：毫秒級響應，傳統 CDN 級別性能
 3. **🔮 未來準備**：多鏈生態，隨著 Web3 成長而成長
 4. **🏢 企業可靠**：安全、監控、支援一應俱全
 
 ### 🤝 加入我們
-- **🔗 GitHub**：https://github.com/your-org/wcdn
-- **📚 文檔**：https://docs.wcdn.space
-- **💬 Discord**：https://discord.gg/wcdn
-- **📧 聯絡**：team@wcdn.space
+- **🔗 GitHub**：https://github.com/whereissam/Walcache
+- **📚 文檔**：https://docs.walcache.space
+- **💬 Discord**：https://discord.gg/walcache
+- **📧 聯絡**：team@walcache.space
 
 ### 🚀 立即體驗
 ```bash
 # 安裝 SDK
-npm install wcdn-sdk
+npm install walcache-sdk
 
 # 開始使用
-import { getWalrusCDNUrl } from 'wcdn-sdk'
+import { getWalrusCDNUrl } from 'walcache-sdk'
 const url = getWalrusCDNUrl(blobId, { chain: 'sui' })
 ```
 
@@ -234,19 +234,19 @@ const url = getWalrusCDNUrl(blobId, { chain: 'sui' })
 ## 📞 聯絡方式
 
 ### 團隊聯絡
-- **📧 Email**：team@wcdn.space
-- **🐦 Twitter**：@WCDN_Official
-- **💼 LinkedIn**：WCDN Team
+- **📧 Email**：team@walcache.space
+- **🐦 Twitter**：@Walcache_Official
+- **💼 LinkedIn**：Walcache Team
 
 ### 技術支援
-- **📖 文檔**：https://docs.wcdn.space
+- **📖 文檔**：https://docs.walcache.space
 - **💬 Discord**：技術討論與支援
 - **🐛 Issues**：GitHub Issues 回報問題
 
 ### 商務合作
-- **🤝 合作夥伴**：partnerships@wcdn.space
-- **🏢 企業方案**：enterprise@wcdn.space
-- **💰 投資詢問**：investors@wcdn.space
+- **🤝 合作夥伴**：partnerships@walcache.space
+- **🏢 企業方案**：enterprise@walcache.space
+- **💰 投資詢問**：investors@walcache.space
 
 ---
 
@@ -262,4 +262,4 @@ const url = getWalrusCDNUrl(blobId, { chain: 'sui' })
 3. **企業級可靠** - 安全、快速、穩定
 4. **開源生態** - 與社群共同成長
 
-**🚀 WCDN - 讓 Web3 儲存像 Web2 一樣簡單快速！**
+**🚀 Walcache - 讓 Web3 儲存像 Web2 一樣簡單快速！**

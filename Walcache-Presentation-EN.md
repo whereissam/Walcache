@@ -1,11 +1,11 @@
-# WCDN (Walrus Content Delivery Network)
+# Walcache (Walrus Content Delivery Network)
 ## Making Decentralized Storage as Simple and Fast as Web2
 
 ---
 
 ## 🎯 Project Title & Slogan
 
-### **WCDN - Walrus Content Delivery Network**
+### **Walcache - Walrus Content Delivery Network**
 > **"One Line Code, Multi-Chain CDN"**
 > 
 > **"Making Web3 storage truly accessible - developers and users can seamlessly enjoy the benefits of decentralized storage"**
@@ -37,7 +37,7 @@
 ## 🎯 Product Positioning & Value
 
 ### Product Positioning
-> **WCDN is a high-performance CDN system built specifically for Walrus decentralized storage, supporting multi-chain synchronization, intelligent caching, seamless uploads, and unified management**
+> **Walcache is a high-performance CDN system built specifically for Walrus decentralized storage, supporting multi-chain synchronization, intelligent caching, seamless uploads, and unified management**
 
 ### Core Value Propositions
 1. **🔥 Ultra-Simple Development Experience**
@@ -91,7 +91,7 @@
 
 ### Architecture Overview
 ```
-User Application → WCDN SDK → WCDN Backend → Redis Cache → Walrus Network
+User Application → Walcache SDK → Walcache Backend → Redis Cache → Walrus Network
                                         ↓
                                  Tusky.io Upload Service
 ```
@@ -105,7 +105,7 @@ User Application → WCDN SDK → WCDN Backend → Redis Cache → Walrus Networ
 
 ### Multi-Chain Integration
 ```
-WCDN Client
+Walcache Client
 ├── Sui Verifier (Testnet Ready)
 ├── Ethereum Verifier (Sepolia Support)
 ├── Solana Verifier (Devnet Ready)
@@ -162,7 +162,7 @@ const multiChainResult = await verifyMultiChain(
 > **No one in the market has achieved one-line code multi-chain CDN while simultaneously supporting caching, uploads, management, and analytics**
 
 ### Competitive Comparison
-| Feature | WCDN | Traditional CDN | Other Web3 Storage |
+| Feature | Walcache | Traditional CDN | Other Web3 Storage |
 |---------|------|-----------------|-------------------|
 | Multi-Chain Support | ✅ Native Support | ❌ Not Supported | ⚠️ Single Chain |
 | One-Line Integration | ✅ Ultra-Simple SDK | ⚠️ Complex Config | ❌ Multiple SDKs Needed |
@@ -205,9 +205,9 @@ const multiChainResult = await verifyMultiChain(
 ## 🎯 Conclusion & Call to Action
 
 ### 📈 Market Impact
-> **WCDN makes decentralized storage truly accessible, making Web3 storage as simple, fast, and scalable as Web2**
+> **Walcache makes decentralized storage truly accessible, making Web3 storage as simple, fast, and scalable as Web2**
 
-### 🌟 Why Choose WCDN?
+### 🌟 Why Choose Walcache?
 1. **💻 Developer-Friendly**: Near-zero learning curve, one line of code solution
 2. **⚡ User Experience First**: Millisecond response times, traditional CDN-level performance
 3. **🔮 Future-Ready**: Multi-chain ecosystem, grows with Web3
@@ -235,8 +235,8 @@ const url = getWalrusCDNUrl(blobId, { chain: 'sui' })
 
 ### Team Contact
 - **📧 Email**: team@wcdn.space
-- **🐦 Twitter**: @WCDN_Official
-- **💼 LinkedIn**: WCDN Team
+- **🐦 Twitter**: @Walcache_Official
+- **💼 LinkedIn**: Walcache Team
 
 ### Technical Support
 - **📖 Documentation**: https://docs.wcdn.space
@@ -262,7 +262,7 @@ const url = getWalrusCDNUrl(blobId, { chain: 'sui' })
 3. **Enterprise-Grade Reliability** - Secure, fast, stable
 4. **Open Source Ecosystem** - Growing with the community
 
-**🚀 WCDN - Making Web3 Storage as Simple and Fast as Web2!**
+**🚀 Walcache - Making Web3 Storage as Simple and Fast as Web2!**
 
 ---
 
