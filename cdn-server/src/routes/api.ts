@@ -215,6 +215,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
         global: globalStats,
         cache: cacheStats,
         topCIDs,
+        geographic: analyticsService.getGeographicStats(),
       })
     },
   )

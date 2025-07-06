@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useWCDNStore } from '../store/wcdnStore'
+import { useWalcacheStore } from '../store/walcacheStore'
 import {
   Card,
   CardContent,
@@ -40,7 +40,7 @@ export function CIDExplorer() {
     null,
   )
   const { cidInfo, isLoading, error, fetchCIDStats, pinCID, unpinCID } =
-    useWCDNStore()
+    useWalcacheStore()
 
   const handleSearch = () => {
     if (searchCID.trim()) {
@@ -102,15 +102,22 @@ export function CIDExplorer() {
     }
   }
 
-  const getSourceDisplayName = (source?: string) => {
-    switch (source) {
-      case 'walrus':
+  const getSourceDisplayName = (source?: string, cid?: string) => {
+    // If source is provided, use it
+    if (source === 'walrus') return 'Walrus Network'
+    if (source === 'ipfs') return 'IPFS Gateway'
+    
+    // Auto-detect from CID format if source is unknown
+    if (cid) {
+      if (cid.startsWith('bafkrei') || cid.startsWith('Qm')) {
+        return 'IPFS/Walrus'
+      }
+      if (/^[a-zA-Z0-9-_]{20,}={0,2}$/.test(cid)) {
         return 'Walrus Network'
-      case 'ipfs':
-        return 'IPFS Gateway'
-      default:
-        return 'Unknown'
+      }
     }
+    
+    return 'Unknown'
   }
 
   const getSourceColor = (source?: string) => {
@@ -346,7 +353,7 @@ export function CIDExplorer() {
                   <div
                     className={`text-lg font-bold ${getSourceColor(cidInfo.source)}`}
                   >
-                    {getSourceDisplayName(cidInfo.source)}
+                    {getSourceDisplayName(cidInfo.source, cidInfo.cid)}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Content origin

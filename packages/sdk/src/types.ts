@@ -243,6 +243,8 @@ export interface ChainNodeConfig {
   isAvailable: boolean
   /** Node capabilities */
   capabilities?: string[]
+  /** Geographic region for optimal routing */
+  region?: 'europe' | 'north-america' | 'asia' | 'global'
 }
 
 /**
@@ -337,4 +339,48 @@ export interface MultiChainVerificationResult {
   hasAccess: boolean
   /** Recommended CDN endpoint based on verification */
   recommendedEndpoint?: string
+}
+
+/**
+ * Upload options for Walrus uploader
+ */
+export interface UploadOptions {
+  /** Vault ID for organization */
+  vaultId?: string
+  /** File encryption preference */
+  encryption?: 'auto' | 'enabled' | 'disabled'
+  /** Additional metadata */
+  metadata?: Record<string, any>
+}
+
+/**
+ * Upload result from Walrus
+ */
+export interface UploadResult {
+  /** Uploaded blob ID */
+  blobId: string
+  /** File information */
+  file: {
+    name: string
+    size: number
+    type: string
+  }
+  /** Upload metadata */
+  metadata?: Record<string, any>
+  /** CDN URL for the uploaded content */
+  cdnUrl?: string
+}
+
+/**
+ * Cache status information
+ */
+export interface CacheStatus {
+  /** Whether content is cached */
+  cached: boolean
+  /** Cache level (memory, redis, etc.) */
+  level?: 'memory' | 'redis' | 'disk'
+  /** Cache timestamp */
+  cachedAt?: Date
+  /** Time to live in seconds */
+  ttl?: number
 }

@@ -1,10 +1,10 @@
-# WCDN (Walrus Content Delivery Network)
+# Walcache
 
 A high-performance CDN system for Walrus decentralized storage, supporting multi-chain blob status, fast access, and file upload via Tusky.io.
 
 ## Overview
 
-WCDN bridges Walrus decentralized storage and web apps, featuring:
+Walcache bridges Walrus decentralized storage and web apps, featuring:
 
 - **CDN Layer**: Intelligent caching of Walrus blobs (Redis/memory fallback)
 - **Multi-Chain Sync**: Query and display blob status across Sui, Ethereum, Solana (mocked for hackathon)
@@ -47,7 +47,7 @@ Default support for Sui, Ethereum, Solana (extensible, hackathon uses mocked sta
 ## Architecture
 
 ```
-User Upload → Tusky.io → Walrus Network → WCDN Cache → Fast Access
+User Upload → Tusky.io → Walrus Network → Walcache Cache → Fast Access
      ↓              ↓            ↓             ↓            ↓
    React UI    Tusky API    Blob Storage   CDN Server   End Users
 ```
@@ -84,7 +84,7 @@ User Upload → Tusky.io → Walrus Network → WCDN Cache → Fast Access
 
 ```bash
 git clone <repository>
-cd WCDN
+cd Walcache
 bun install
 ```
 
@@ -264,7 +264,7 @@ getWalrusCDNUrl(blobId, { chain })
 ### Project Structure
 
 ```
-WCDN/
+Walcache/
 ├── src/                    # Frontend React application
 │   ├── components/         # UI components
 │   ├── store/             # Zustand state management
@@ -280,7 +280,7 @@ WCDN/
 ├── packages/sdk/          # Multi-chain SDK
 │   ├── src/
 │   │   ├── index.ts       # Main SDK exports
-│   │   ├── client.ts      # WCDN client
+│   │   ├── client.ts      # Walcache client
 │   │   └── types.ts       # Type definitions
 │   └── package.json
 ├── public/                # Static assets

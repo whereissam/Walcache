@@ -22,7 +22,7 @@ import {
   Database,
   Activity,
 } from 'lucide-react'
-import { useWCDNStore } from '../store/wcdnStore'
+import { useWalcacheStore } from '../store/walcacheStore'
 
 // Real SDK integration
 const WCDN_API_BASE = 'http://localhost:4500'
@@ -112,7 +112,7 @@ export function MultiChainNFTDemo() {
     fetchCIDStats,
     cidInfo,
     isLoading,
-  } = useWCDNStore()
+  } = useWalcacheStore()
 
   // Real latency tracking
   const [chainLatencies, setChainLatencies] = useState<

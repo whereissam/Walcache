@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useWCDNStore } from '../store/wcdnStore'
+import { useWalcacheStore } from '../store/walcacheStore'
 import {
   Card,
   CardContent,
@@ -42,7 +42,7 @@ export function CacheManager() {
     unpinCID,
     fetchCIDStats,
     cidInfo,
-  } = useWCDNStore()
+  } = useWalcacheStore()
 
   const handlePreload = async () => {
     const cids = preloadCIDs

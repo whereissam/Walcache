@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useWCDNStore } from '../store/wcdnStore'
+import { useWalcacheStore } from '../store/walcacheStore'
 import {
   Card,
   CardContent,
@@ -94,7 +94,7 @@ export function UploadManager() {
     checkBlobOnWalrus,
     deleteFile,
     setError,
-  } = useWCDNStore()
+  } = useWalcacheStore()
 
   useEffect(() => {
     fetchVaults()

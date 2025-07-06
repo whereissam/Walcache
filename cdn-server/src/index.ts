@@ -20,7 +20,16 @@ async function buildServer() {
   await fastify.register(helmet)
 
   await fastify.register(cors, {
-    origin: config.ALLOWED_ORIGINS.split(','),
+    origin: config.NODE_ENV === 'development' 
+      ? (origin, cb) => {
+          // In development, allow any localhost origin
+          if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+            cb(null, true)
+          } else {
+            cb(null, false)
+          }
+        }
+      : config.ALLOWED_ORIGINS.split(','),
     credentials: true,
   })
 

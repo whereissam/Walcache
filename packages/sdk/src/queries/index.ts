@@ -492,5 +492,4 @@ export class QueryManager {
 // Export singleton instance
 export const queryManager = new QueryManager()
 
-// Export individual engines for custom configurations
-export { SuiQueryEngine, EthereumQueryEngine, SolanaQueryEngine }
+// Classes are already exported above with 'export class'

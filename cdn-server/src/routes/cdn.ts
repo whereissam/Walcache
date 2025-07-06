@@ -8,6 +8,102 @@ interface CDNParams {
   cid: string
 }
 
+/**
+ * Determine if content should be displayed inline in browser
+ * instead of being downloaded
+ */
+function shouldDisplayInline(contentType: string): boolean {
+  if (!contentType) return false
+  
+  const inlineTypes = [
+    // Images
+    'image/',
+    // Videos
+    'video/',
+    // Audio
+    'audio/',
+    // Text documents
+    'text/plain',
+    'text/html',
+    'text/css',
+    'text/javascript',
+    'text/xml',
+    // PDFs
+    'application/pdf',
+    // JSON/XML
+    'application/json',
+    'application/xml',
+    // Web formats
+    'application/javascript',
+    'application/xhtml+xml',
+    'image/svg+xml',
+  ]
+  
+  return inlineTypes.some(type => contentType.startsWith(type))
+}
+
+/**
+ * Get proper file extension from content type
+ */
+function getFileExtension(contentType: string): string {
+  const extensionMap: Record<string, string> = {
+    // Images
+    'image/jpeg': 'jpg',
+    'image/jpg': 'jpg', 
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/avif': 'avif',
+    'image/svg+xml': 'svg',
+    'image/bmp': 'bmp',
+    'image/tiff': 'tiff',
+    // Videos
+    'video/mp4': 'mp4',
+    'video/webm': 'webm',
+    'video/ogg': 'ogv',
+    'video/avi': 'avi',
+    'video/mov': 'mov',
+    // Audio
+    'audio/mp3': 'mp3',
+    'audio/mpeg': 'mp3',
+    'audio/wav': 'wav',
+    'audio/ogg': 'ogg',
+    'audio/aac': 'aac',
+    'audio/flac': 'flac',
+    // Documents
+    'application/pdf': 'pdf',
+    'text/plain': 'txt',
+    'text/html': 'html',
+    'text/css': 'css',
+    'text/javascript': 'js',
+    'application/javascript': 'js',
+    'application/json': 'json',
+    'text/xml': 'xml',
+    'application/xml': 'xml',
+    // Archives
+    'application/zip': 'zip',
+    'application/x-tar': 'tar',
+    'application/gzip': 'gz',
+    // Office
+    'application/msword': 'doc',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    'application/vnd.ms-excel': 'xls',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  }
+
+  return extensionMap[contentType] || 'bin'
+}
+
+/**
+ * Generate proper filename for download
+ */
+function generateFilename(cid: string, contentType: string): string {
+  const extension = getFileExtension(contentType)
+  // Use first 12 characters of CID for shorter, cleaner filename
+  const shortCid = cid.slice(0, 12)
+  return `walrus-${shortCid}.${extension}`
+}
+
 export async function cdnRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: CDNParams }>(
     '/:cid',
@@ -48,6 +144,18 @@ export async function cdnRoutes(fastify: FastifyInstance) {
           reply.header('X-Cache', 'HIT')
           reply.header('X-Cache-Date', cached.cached.toISOString())
           reply.header('X-TTL', cached.ttl.toString())
+          
+          // Set Content-Disposition with proper filename
+          const filename = generateFilename(cached.cid, cached.contentType)
+          if (shouldDisplayInline(cached.contentType)) {
+            reply.header('Content-Disposition', `inline; filename="${filename}"`)
+          } else {
+            reply.header('Content-Disposition', `attachment; filename="${filename}"`)
+          }
+          
+          // Add cache control headers for better browser caching
+          reply.header('Cache-Control', 'public, max-age=3600, immutable')
+          reply.header('ETag', `"${cached.cid}"`)
 
           return reply.send(cached.data)
         }
@@ -90,6 +198,18 @@ export async function cdnRoutes(fastify: FastifyInstance) {
             reply.header('X-Cache', 'MISS')
             reply.header('X-Fetch-Time', `${latency}ms`)
             reply.header('X-Source', blob.source)
+            
+            // Set Content-Disposition with proper filename
+            const filename = generateFilename(blob.cid, blob.contentType)
+            if (shouldDisplayInline(blob.contentType)) {
+              reply.header('Content-Disposition', `inline; filename="${filename}"`)
+            } else {
+              reply.header('Content-Disposition', `attachment; filename="${filename}"`)
+            }
+            
+            // Add cache control headers for better browser caching
+            reply.header('Cache-Control', 'public, max-age=3600, immutable')
+            reply.header('ETag', `"${blob.cid}"`)
 
             // Trigger webhook for successful blob download
             analyticsService.sendWebhook({

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import {
-  Database,
   Search,
   Settings,
   BarChart3,
@@ -12,6 +11,7 @@ import {
   Globe,
   PlayCircle,
 } from 'lucide-react'
+import walcacheLogo from '../assets/walcache-logo.jpeg'
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -35,11 +35,15 @@ export default function Header() {
               className="flex items-center space-x-2"
               onClick={closeMobileMenu}
             >
-              <Database className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">WCDN</span>
+              <img 
+                src={walcacheLogo} 
+                alt="Walcache Logo" 
+                className="h-8 w-8 rounded-lg"
+              />
+              <span className="text-xl font-bold text-gray-900">Walcache</span>
             </Link>
             <span className="ml-2 text-sm text-gray-500 hidden sm:inline">
-              Walrus CDN Layer
+              Walrus CDN
             </span>
           </div>
 

@@ -133,6 +133,7 @@ export class EthereumVerifier implements ChainVerifier {
               ],
             }
           : undefined,
+        error: !hasAccess ? 'Asset verification failed: Invalid address format or RPC call failed' : undefined,
         verifiedAt: new Date(),
       }
     } catch (error) {
@@ -351,5 +352,4 @@ export class VerifierRegistry {
 // Export singleton instance
 export const verifierRegistry = new VerifierRegistry()
 
-// Export for custom configurations
-export { SuiVerifier, EthereumVerifier, SolanaVerifier }
+// Classes are already exported above with 'export class'

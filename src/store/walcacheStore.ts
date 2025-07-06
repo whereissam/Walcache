@@ -20,6 +20,7 @@ interface GlobalStats {
   globalHitRate: number
   avgLatency: number
   uniqueCIDs: number
+  geographic?: Array<{ region: string; requests: number; percentage: number }>
 }
 
 interface CacheStats {
@@ -84,7 +85,7 @@ interface UploadProgress {
   error?: string
 }
 
-interface WCDNState {
+interface WalcacheState {
   // Data
   cidStats: Record<string, CIDStats>
   globalStats: GlobalStats | null
@@ -152,7 +153,7 @@ interface WCDNState {
 }
 
 const API_BASE = 'http://localhost:4500/api'
-const API_KEY = 'dev-secret-wcdn-2024' // Match the backend API key
+const API_KEY = 'dev-secret-wcdn-2024' // Match the backend API key from .env
 
 // Walrus aggregators for verification
 const WALRUS_AGGREGATORS = [
@@ -179,7 +180,7 @@ const WALRUS_AGGREGATORS = [
   { url: 'https://walrus.globalstake.io', network: 'mainnet' as const },
 ]
 
-export const useWCDNStore = create<WCDNState>()(
+export const useWalcacheStore = create<WalcacheState>()(
   devtools(
     (set, get) => ({
       // Initial state
@@ -484,8 +485,8 @@ export const useWCDNStore = create<WCDNState>()(
         }
       },
 
-      uploadFile: async (file: File, vaultId?: string): Promise<TuskyFile> => {
-        const uploadId = Math.random().toString(36).substring(2)
+      uploadFile: async (file: File, vaultId?: string, existingUploadId?: string): Promise<{ file: TuskyFile; uploadId: string }> => {
+        const uploadId = existingUploadId || Math.random().toString(36).substring(2)
 
         set((state) => ({
           uploads: {
@@ -545,7 +546,7 @@ export const useWCDNStore = create<WCDNState>()(
             })
           }, 3000)
 
-          return data.file
+          return { file: data.file, uploadId }
         } catch (error) {
           set((state) => ({
             uploads: {
@@ -634,24 +635,10 @@ export const useWCDNStore = create<WCDNState>()(
 
       // Upload file and verify it's available on Walrus
       uploadAndVerify: async (file: File, vaultId?: string) => {
-        const uploadId = Math.random().toString(36).substring(2)
-
-        // Start upload progress tracking
-        set((state) => ({
-          uploads: {
-            ...state.uploads,
-            [uploadId]: {
-              fileName: file.name,
-              progress: 0,
-              status: 'uploading',
-            },
-          },
-        }))
-
         try {
-          // Step 1: Upload file
+          // Step 1: Upload file (this creates its own progress tracking)
           console.log(`📤 Uploading ${file.name}...`)
-          const uploadedFile = await get().uploadFile(file, vaultId)
+          const { file: uploadedFile, uploadId } = await get().uploadFile(file, vaultId)
 
           // Step 2: Update progress to show verifying
           set((state) => ({

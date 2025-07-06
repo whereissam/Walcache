@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useWCDNStore } from '../store/wcdnStore'
+import { useWalcacheStore } from '../store/walcacheStore'
 import {
   Card,
   CardContent,
@@ -50,7 +50,7 @@ export function Dashboard() {
     isLoading,
     error,
     fetchGlobalStats,
-  } = useWCDNStore()
+  } = useWalcacheStore()
 
   useEffect(() => {
     fetchGlobalStats()
@@ -96,19 +96,19 @@ export function Dashboard() {
     requests: Math.floor(Math.random() * 100) + 10,
   }))
 
-  // Geographic data simulation (in real app, this would come from IP analysis)
-  const geoData = [
-    { region: 'North America', requests: 4520, percentage: 45 },
-    { region: 'Europe', requests: 3200, percentage: 32 },
-    { region: 'Asia Pacific', requests: 1800, percentage: 18 },
-    { region: 'Others', requests: 500, percentage: 5 },
+  // Geographic data from real analytics service
+  const geoData = globalStats?.geographic || [
+    { region: 'Europe', requests: 0, percentage: 100 },
+    { region: 'North America', requests: 0, percentage: 0 },
+    { region: 'Asia Pacific', requests: 0, percentage: 0 },
+    { region: 'Others', requests: 0, percentage: 0 },
   ]
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">WCDN Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Walcache Dashboard</h1>
           <p className="text-sm text-gray-600 mt-1">
             Real-time cache analytics and performance monitoring
           </p>

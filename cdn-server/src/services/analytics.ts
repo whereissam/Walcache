@@ -5,6 +5,7 @@ class AnalyticsService {
   private stats: Map<string, CIDStats> = new Map()
   private events: AnalyticsEvent[] = []
   private enabled: boolean = config.ENABLE_ANALYTICS
+  private geoStats: Map<string, number> = new Map()
 
   async initialize(): Promise<void> {
     if (!this.enabled) {
@@ -42,6 +43,12 @@ class AnalyticsService {
 
     this.events.push(event)
     this.updateCIDStats(cid, hit, latency, size)
+    
+    // Track geographic distribution
+    if (clientIP) {
+      const region = this.getRegionFromIP(clientIP)
+      this.geoStats.set(region, (this.geoStats.get(region) || 0) + 1)
+    }
   }
 
   recordPreload(cids: string[]): void {
@@ -172,6 +179,45 @@ class AnalyticsService {
     } catch (error) {
       console.warn('Webhook failed:', error)
     }
+  }
+
+  private getRegionFromIP(ip: string): string {
+    // Simple IP-based region detection (in production, use a proper GeoIP service)
+    if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+      return 'Europe' // Default to Europe for local development (French user)
+    }
+    
+    // Basic IP range detection (simplified)
+    const firstOctet = parseInt(ip.split('.')[0] || '0')
+    
+    if (firstOctet >= 80 && firstOctet <= 95) return 'Europe'
+    if (firstOctet >= 24 && firstOctet <= 50) return 'North America'
+    if (firstOctet >= 110 && firstOctet <= 126) return 'Asia Pacific'
+    
+    return 'Europe' // Default to Europe for French deployment
+  }
+
+  getGeographicStats(): Array<{ region: string; requests: number; percentage: number }> {
+    const totalRequests = Array.from(this.geoStats.values()).reduce((sum, count) => sum + count, 0)
+    
+    if (totalRequests === 0) {
+      // Return default data for French deployment when no real data exists
+      return [
+        { region: 'Europe', requests: 0, percentage: 100 },
+        { region: 'North America', requests: 0, percentage: 0 },
+        { region: 'Asia Pacific', requests: 0, percentage: 0 },
+        { region: 'Others', requests: 0, percentage: 0 },
+      ]
+    }
+
+    const geoArray = Array.from(this.geoStats.entries()).map(([region, requests]) => ({
+      region,
+      requests,
+      percentage: Math.round((requests / totalRequests) * 100)
+    }))
+
+    // Sort by requests (highest first)
+    return geoArray.sort((a, b) => b.requests - a.requests)
   }
 }
 

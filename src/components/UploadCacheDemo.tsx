@@ -8,6 +8,12 @@ import {
 } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip'
 import { ChainSelector, type SupportedChain } from './ChainSelector'
 import {
   Upload,
@@ -28,33 +34,60 @@ import {
   Sparkles,
 } from 'lucide-react'
 
-// Real API integration
-const WCDN_API_BASE = 'http://localhost:4500'
-const API_KEY = 'dev-secret-wcdn-2024'
+// Real SDK integration - import types only to avoid build issues
+import type { WalrusCDNClient } from '../../packages/sdk/src/index.js'
 
-// SDK integration for URL generation
-const getWalrusCDNUrl = (
-  blobId: string,
-  options?: { chain?: SupportedChain; customEndpoint?: string },
-) => {
-  const WALRUS_AGGREGATOR_ENDPOINTS = {
-    sui: 'https://aggregator.walrus-testnet.walrus.space',
-    ethereum: 'https://eth-aggregator.walrus.space', // mock for hackathon
-    solana: 'https://sol-aggregator.walrus.space', // mock for hackathon
+// Safe environment configuration
+import { ENV_CONFIG } from '../config/env.js'
+
+const WALCACHE_CONFIG = {
+  baseUrl: ENV_CONFIG.baseUrl,
+  apiKey: ENV_CONFIG.apiKey
+}
+
+// SDK will be initialized lazily to avoid build issues
+let cdnClient: WalrusCDNClient | null = null
+
+// Initialize SDK lazily
+async function getSDKClient() {
+  if (!cdnClient) {
+    const { WalrusCDNClient, configure } = await import('../../packages/sdk/src/index.js')
+    
+    configure({
+      baseUrl: WALCACHE_CONFIG.baseUrl,
+      apiKey: WALCACHE_CONFIG.apiKey
+    })
+
+    cdnClient = new WalrusCDNClient({
+      baseUrl: WALCACHE_CONFIG.baseUrl,
+      apiKey: WALCACHE_CONFIG.apiKey,
+      timeout: 30000
+    })
   }
+  return cdnClient
+}
 
+// Use real SDK for URL generation  
+async function getWalrusCDNUrl(
+  blobId: string,
+  options?: { chain?: string; customEndpoint?: string },
+) {
   if (options?.customEndpoint) {
     return `${options.customEndpoint}/v1/blobs/${blobId}`
   }
 
-  const chain = options?.chain ?? 'sui'
-  const endpoint = WALRUS_AGGREGATOR_ENDPOINTS[chain]
-
-  if (!endpoint) {
-    throw new Error(`Unsupported chain: ${chain}`)
+  try {
+    // Use real SDK function
+    const { getWalrusCDNUrl: getSDKWalrusCDNUrl } = await import('../../packages/sdk/src/index.js')
+    return getSDKWalrusCDNUrl(blobId, {
+      chain: options?.chain ?? 'sui',
+      params: { cache: true, network: 'testnet' }
+    })
+  } catch (error) {
+    console.warn('Failed to load SDK, using fallback URL generation:', error)
+    // Fallback URL generation
+    return `${WALCACHE_CONFIG.baseUrl}/cdn/${blobId}?chain=${options?.chain ?? 'sui'}`
   }
-
-  return `${endpoint}/v1/blobs/${blobId}`
 }
 
 interface UploadResult {
@@ -80,7 +113,7 @@ interface CacheStatus {
   size: number
 }
 
-// Real upload function using WCDN API
+// Real upload function using Walcache API
 async function realUploadToWalrusWithCache(
   file: File,
   chain: SupportedChain,
@@ -88,50 +121,48 @@ async function realUploadToWalrusWithCache(
   const startTime = Date.now()
 
   try {
-    console.log(`🚀 Starting real upload to Walrus (${chain})...`)
+    console.log(`🚀 Starting real SDK upload to Walrus (${chain})...`)
 
+    // Use real SDK for upload - first try direct Walrus upload via fetch
     const formData = new FormData()
     formData.append('file', file)
 
-    // Upload directly to Walrus via WCDN backend
-    const response = await fetch(`${WCDN_API_BASE}/upload/walrus`, {
+    const response = await fetch(`${WALCACHE_CONFIG.baseUrl}/upload/walrus`, {
       method: 'POST',
       headers: {
-        'X-API-Key': API_KEY,
+        'X-API-Key': WALCACHE_CONFIG.apiKey,
       },
       body: formData,
     })
 
-    const uploadTime = Date.now() - startTime
-
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Upload failed:', errorText)
-      return {
-        success: false,
-        blobId: '',
-        cdnUrl: '',
-        directUrl: '',
-        cached: false,
-        chain,
-        size: file.size,
-        contentType: file.type,
-        uploadTime,
-        error: `Upload failed: ${response.status} ${errorText}`,
-      }
+      throw new Error(`Upload failed: ${response.status} ${errorText}`)
     }
 
     const result = await response.json()
-    console.log(`✅ Real upload completed in ${uploadTime}ms`)
+    
+    const uploadTime = Date.now() - startTime
+    console.log(`✅ SDK upload completed in ${uploadTime}ms`)
     console.log('Upload result:', result)
+
+    // Generate optimized CDN URL using SDK
+    const cdnUrl = await getWalrusCDNUrl(result.blobId, { chain })
+    
+    // Preload into cache for faster access using SDK
+    try {
+      const client = await getSDKClient()
+      await client.preloadCIDs([result.blobId])
+      console.log('✅ Content preloaded into cache')
+    } catch (error) {
+      console.warn('⚠️ Cache preload failed:', error)
+    }
 
     return {
       success: true,
       blobId: result.blobId,
-      cdnUrl: result.cdnUrl || `${WCDN_API_BASE}/cdn/${result.blobId}`,
-      directUrl:
-        result.directUrl ||
-        `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${result.blobId}`,
+      cdnUrl,
+      directUrl: result.directUrl,
       cached: result.cached || true,
       chain,
       size: file.size,
@@ -161,7 +192,7 @@ async function realUploadToWalrusWithCache(
 // Real cache status function
 async function realGetCacheStatus(blobId: string): Promise<CacheStatus | null> {
   try {
-    const response = await fetch(`${WCDN_API_BASE}/api/stats/${blobId}`)
+    const response = await fetch(`${WALCACHE_CONFIG.baseUrl}/api/stats/${blobId}`)
 
     if (!response.ok) {
       console.error('Cache status failed:', response.status)
@@ -192,7 +223,7 @@ async function realGetCachedContent(
   const startTime = Date.now()
 
   try {
-    const cdnUrl = `${WCDN_API_BASE}/cdn/${blobId}?chain=${chain}`
+    const cdnUrl = `${WALCACHE_CONFIG.baseUrl}/cdn/${blobId}?chain=${chain}`
 
     const response = await fetch(cdnUrl, { method: 'HEAD' })
     const latency = Date.now() - startTime
@@ -282,7 +313,7 @@ export function UploadCacheDemo() {
   React.useEffect(() => {
     const checkBackend = async () => {
       try {
-        const response = await fetch(`${WCDN_API_BASE}/upload/health`, {
+        const response = await fetch(`${WALCACHE_CONFIG.baseUrl}/upload/health`, {
           method: 'GET',
           signal: AbortSignal.timeout(5000),
         })
@@ -408,25 +439,41 @@ export function UploadCacheDemo() {
 
   const copyToClipboard = async (text: string) => {
     try {
+      console.log('Attempting to copy:', text)
       await navigator.clipboard.writeText(text)
       setCopiedUrl(text)
+      console.log('Copy successful, copied URL state set to:', text)
       setTimeout(() => setCopiedUrl(null), 2000)
     } catch (error) {
       console.error('Failed to copy:', error)
+      // Fallback for older browsers
+      try {
+        const textArea = document.createElement('textarea')
+        textArea.value = text
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        setCopiedUrl(text)
+        setTimeout(() => setCopiedUrl(null), 2000)
+        console.log('Fallback copy successful')
+      } catch (fallbackError) {
+        console.error('Fallback copy also failed:', fallbackError)
+      }
     }
   }
 
-  const generateUrls = () => {
+  const generateUrls = async () => {
     if (!blobIdInput.trim()) {
       alert('Please enter a blob ID')
       return
     }
 
     try {
-      const directUrl = getWalrusCDNUrl(blobIdInput.trim(), {
+      const directUrl = await getWalrusCDNUrl(blobIdInput.trim(), {
         chain: selectedChain,
       })
-      const cdnUrl = `${WCDN_API_BASE}/cdn/${blobIdInput.trim()}`
+      const cdnUrl = `${WALCACHE_CONFIG.baseUrl}/cdn/${blobIdInput.trim()}`
 
       setGeneratedUrls({
         blobId: blobIdInput.trim(),
@@ -446,11 +493,11 @@ export function UploadCacheDemo() {
     setMode('generate')
 
     // Auto-generate URLs
-    setTimeout(() => {
-      const directUrl = getWalrusCDNUrl(upload.blobId, {
-        chain: upload.chain as SupportedChain,
+    setTimeout(async () => {
+      const directUrl = await getWalrusCDNUrl(upload.blobId, {
+        chain: upload.chain,
       })
-      const cdnUrl = `${WCDN_API_BASE}/cdn/${upload.blobId}`
+      const cdnUrl = `${WALCACHE_CONFIG.baseUrl}/cdn/${upload.blobId}`
 
       setGeneratedUrls({
         blobId: upload.blobId,
@@ -508,7 +555,7 @@ export function UploadCacheDemo() {
             {backendStatus === 'offline' && (
               <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-800 text-sm">
-                  ⚠️ <strong>Backend Required:</strong> Please start the WCDN
+                  ⚠️ <strong>Backend Required:</strong> Please start the Walcache
                   backend server:
                   <br />
                   <code className="bg-red-100 px-2 py-1 rounded mt-1 inline-block">
@@ -736,12 +783,12 @@ export function UploadCacheDemo() {
           <CardContent>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* WCDN URL */}
+                {/* Walcache URL */}
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex items-center space-x-2 mb-3">
                     <Zap className="h-4 w-4 text-blue-500" />
                     <span className="font-medium text-blue-700">
-                      WCDN Cache URL
+                      Walcache URL
                     </span>
                     <Badge className="bg-blue-100 text-blue-800">Fast</Badge>
                   </div>
@@ -971,16 +1018,26 @@ export function UploadCacheDemo() {
               </div>
               <div>
                 <span className="text-sm">Blob ID:</span>
-                <p className="font-mono text-xs break-all text-gray-600">
-                  {uploadResult.blobId}
-                </p>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p 
+                      className="font-mono text-xs break-all text-gray-600 cursor-pointer hover:text-blue-600 transition-colors"
+                      onClick={() => copyToClipboard(uploadResult.blobId)}
+                    >
+                      {uploadResult.blobId}
+                    </p>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Click to copy blob ID</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <div className="space-y-3">
                 <div>
                   <div className="flex items-center space-x-2 mb-2">
                     <Zap className="h-4 w-4 text-green-500" />
                     <span className="text-sm font-medium text-green-700">
-                      WCDN Cache (Fast)
+                      Walcache (Fast)
                     </span>
                   </div>
                   <div className="flex space-x-2">
@@ -1223,7 +1280,7 @@ export function UploadCacheDemo() {
                 <li>
                   ✅ Your file was uploaded to the decentralized Walrus network
                 </li>
-                <li>✅ WCDN automatically cached it for fast access</li>
+                <li>✅ Walcache automatically cached it for fast access</li>
                 <li>
                   ✅ Subsequent requests are served from cache (lightning fast!)
                 </li>
@@ -1239,7 +1296,7 @@ export function UploadCacheDemo() {
               </p>
               <ul className="text-sm space-y-1 text-blue-700">
                 <li>
-                  🔗 <strong>WCDN URL:</strong> Fast cached access via our CDN
+                  🔗 <strong>Walcache URL:</strong> Fast cached access via our CDN
                 </li>
                 <li>
                   🔗 <strong>Direct URL:</strong> Decentralized access via
@@ -1415,73 +1472,111 @@ export function UploadCacheDemo() {
                           Date.now() - (uploadHistory.length - index) * 60000,
                         ).toLocaleTimeString()}
                       </p>
-                      <p className="text-xs text-gray-400 font-mono">
-                        {upload.blobId.slice(0, 20)}...
-                      </p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-xs text-gray-400 font-mono cursor-help">
+                            {upload.blobId.slice(0, 20)}...
+                          </p>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="font-mono text-xs">Full Blob ID: {upload.blobId}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => autoFillFromHistory(upload)}
-                      className="text-xs"
-                      title="Auto-fill this blob ID"
-                    >
-                      <Hash className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => copyToClipboard(upload.directUrl)}
-                      className="text-xs"
-                    >
-                      {copiedUrl === upload.directUrl ? (
-                        <Check className="h-3 w-3" />
-                      ) : (
-                        <Copy className="h-3 w-3" />
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        if (upload.contentType.startsWith('image/')) {
-                          const newWindow = window.open('', '_blank')
-                          if (newWindow) {
-                            newWindow.document.write(`
-                              <html>
-                                <head>
-                                  <title>${upload.filename || 'Uploaded Image'}</title>
-                                  <style>
-                                    body { margin: 0; padding: 20px; background: #f5f5f5; font-family: Arial, sans-serif; }
-                                    .container { max-width: 100%; text-align: center; }
-                                    img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-                                    .info { margin-top: 20px; color: #666; }
-                                  </style>
-                                </head>
-                                <body>
-                                  <div class="container">
-                                    <img src="${upload.directUrl}" alt="${upload.filename || 'Uploaded Image'}" />
-                                    <div class="info">
-                                      <p><strong>File:</strong> ${upload.filename || 'Unknown'}</p>
-                                      <p><strong>Size:</strong> ${Math.round(upload.size / 1024)} KB</p>
-                                      <p><strong>Blob ID:</strong> ${upload.blobId}</p>
-                                    </div>
-                                  </div>
-                                </body>
-                              </html>
-                            `)
-                            newWindow.document.close()
-                          }
-                        } else {
-                          window.open(upload.directUrl, '_blank')
-                        }
-                      }}
-                      className="text-xs"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </Button>
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            console.log('Hash button clicked, copying blob ID:', upload.blobId)
+                            copyToClipboard(upload.blobId)
+                          }}
+                          className="text-xs hover:bg-blue-50"
+                          title="Copy blob ID"
+                        >
+                          {copiedUrl === upload.blobId ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Hash className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Copy blob ID to clipboard</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyToClipboard(upload.directUrl)}
+                          className="text-xs"
+                        >
+                          {copiedUrl === upload.directUrl ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                          <span className="ml-1 text-xs">URL</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Copy direct URL to clipboard</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (upload.contentType.startsWith('image/')) {
+                              const newWindow = window.open('', '_blank')
+                              if (newWindow) {
+                                newWindow.document.write(`
+                                  <html>
+                                    <head>
+                                      <title>${upload.filename || 'Uploaded Image'}</title>
+                                      <style>
+                                        body { margin: 0; padding: 20px; background: #f5f5f5; font-family: Arial, sans-serif; }
+                                        .container { max-width: 100%; text-align: center; }
+                                        img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                                        .info { margin-top: 20px; color: #666; }
+                                      </style>
+                                    </head>
+                                    <body>
+                                      <div class="container">
+                                        <img src="${upload.directUrl}" alt="${upload.filename || 'Uploaded Image'}" />
+                                        <div class="info">
+                                          <p><strong>File:</strong> ${upload.filename || 'Unknown'}</p>
+                                          <p><strong>Size:</strong> ${Math.round(upload.size / 1024)} KB</p>
+                                          <p><strong>Blob ID:</strong> ${upload.blobId}</p>
+                                        </div>
+                                      </div>
+                                    </body>
+                                  </html>
+                                `)
+                                newWindow.document.close()
+                              }
+                            } else {
+                              window.open(upload.directUrl, '_blank')
+                            }
+                          }}
+                          className="text-xs"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Open file in new tab</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               ))}

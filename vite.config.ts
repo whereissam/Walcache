@@ -21,4 +21,20 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
     },
   },
+  build: {
+    target: 'esnext', // Support top-level await
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          sdk: ['./packages/sdk/src/index.js']
+        }
+      }
+    }
+  },
+  define: {
+    // Make environment variables available in the browser
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    'process.env.REACT_APP_WALCACHE_URL': JSON.stringify(process.env.REACT_APP_WALCACHE_URL),
+    'process.env.REACT_APP_WALCACHE_API_KEY': JSON.stringify(process.env.REACT_APP_WALCACHE_API_KEY),
+  },
 })

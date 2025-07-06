@@ -38,39 +38,52 @@ export const DEFAULT_CHAIN_NODES: Record<SupportedChain, ChainNodeConfig[]> = {
   ],
   ethereum: [
     {
-      url: 'https://eth-mainnet.alchemyapi.io/v2/demo',
+      url: 'https://ethereum.publicnode.com',
       network: 'mainnet',
       priority: 1,
       isAvailable: true,
+      capabilities: ['rpc'],
+      region: 'europe',
+    },
+    {
+      url: 'https://eth-mainnet.alchemyapi.io/v2/demo',
+      network: 'mainnet',
+      priority: 2,
+      isAvailable: true,
       capabilities: ['rpc', 'websocket'],
+      region: 'global',
     },
     {
       url: 'https://mainnet.infura.io/v3/demo',
       network: 'mainnet',
-      priority: 2,
-      isAvailable: true,
-      capabilities: ['rpc', 'websocket'],
-    },
-    {
-      url: 'https://ethereum.publicnode.com',
-      network: 'mainnet',
       priority: 3,
       isAvailable: true,
-      capabilities: ['rpc'],
+      capabilities: ['rpc', 'websocket'],
+      region: 'global',
     },
     {
-      url: 'https://sepolia.infura.io/v3/demo',
+      url: 'https://ethereum-sepolia-rpc.publicnode.com',
       network: 'testnet',
       priority: 1,
       isAvailable: true,
       capabilities: ['rpc', 'websocket'],
+      region: 'europe',
     },
     {
-      url: 'https://eth-sepolia.alchemyapi.io/v2/demo',
+      url: 'https://sepolia.infura.io/v3/demo',
       network: 'testnet',
       priority: 2,
       isAvailable: true,
       capabilities: ['rpc', 'websocket'],
+      region: 'global',
+    },
+    {
+      url: 'https://eth-sepolia.alchemyapi.io/v2/demo',
+      network: 'testnet',
+      priority: 3,
+      isAvailable: true,
+      capabilities: ['rpc', 'websocket'],
+      region: 'north-america',
     },
   ],
   solana: [
@@ -294,8 +307,19 @@ export class NodeManager {
    * Select closest node (simplified geographic selection)
    */
   private async selectClosestNode(nodes: ChainNodeConfig[]): Promise<ChainNodeConfig> {
-    // For now, use latency as a proxy for geographic proximity
-    // In production, this could use actual geolocation services
+    // Prefer European nodes for French users
+    const europeanNodes = nodes.filter(node => node.region === 'europe')
+    if (europeanNodes.length > 0) {
+      return await this.selectFastestNode(europeanNodes)
+    }
+    
+    // Fallback to global nodes, then fastest available
+    const globalNodes = nodes.filter(node => node.region === 'global')
+    if (globalNodes.length > 0) {
+      return await this.selectFastestNode(globalNodes)
+    }
+    
+    // Final fallback to any available node
     return await this.selectFastestNode(nodes)
   }
 
