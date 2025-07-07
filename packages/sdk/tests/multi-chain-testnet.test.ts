@@ -1,6 +1,6 @@
 /**
  * Multi-Chain Testnet Verification Tests
- * 
+ *
  * This test suite focuses on Sui testnet and Ethereum Sepolia testnet
  * verification functionality for the WCDN SDK.
  */
@@ -26,7 +26,8 @@ import {
 const SUI_TESTNET_CONFIG = {
   rpcUrl: 'https://fullnode.testnet.sui.io:443',
   userAddress: '0x1234567890abcdef1234567890abcdef12345678',
-  objectId: '0xabcdef123456789012345678901234567890abcdef123456789012345678901234',
+  objectId:
+    '0xabcdef123456789012345678901234567890abcdef123456789012345678901234',
   packageId: '0x2::coin::Coin<0x2::sui::SUI>',
 }
 
@@ -50,7 +51,7 @@ describe('Multi-Chain Testnet Verification', () => {
       baseUrl: 'https://test-cdn.walrus.space',
       timeout: 30000,
     })
-    
+
     // Configure default client for convenience functions
     configure({
       baseUrl: 'https://test-cdn.walrus.space',
@@ -66,14 +67,14 @@ describe('Multi-Chain Testnet Verification', () => {
   describe('Sui Testnet Verification', () => {
     it('should create SuiVerifier with testnet configuration', () => {
       const verifier = new SuiVerifier(SUI_TESTNET_CONFIG.rpcUrl)
-      
+
       expect(verifier.chain).toBe('sui')
       expect(verifier.isConfigured()).toBe(true)
     })
 
     it('should verify Sui object ownership on testnet', async () => {
       const verifier = new SuiVerifier(SUI_TESTNET_CONFIG.rpcUrl)
-      
+
       const verificationOptions: AssetVerificationOptions = {
         userAddress: SUI_TESTNET_CONFIG.userAddress,
         assetId: SUI_TESTNET_CONFIG.objectId,
@@ -84,22 +85,24 @@ describe('Multi-Chain Testnet Verification', () => {
       }
 
       const result = await verifier.verifyAsset(verificationOptions)
-      
+
       expect(result).toBeDefined()
       expect(result.chain).toBe('sui')
       expect(result.verifiedAt).toBeInstanceOf(Date)
       expect(typeof result.hasAccess).toBe('boolean')
-      
+
       if (result.hasAccess) {
         expect(result.assetMetadata).toBeDefined()
         expect(result.assetMetadata?.name).toContain('Sui NFT')
-        expect(result.assetMetadata?.description).toContain('Verified Sui object')
+        expect(result.assetMetadata?.description).toContain(
+          'Verified Sui object',
+        )
       }
     })
 
     it('should query Sui asset information on testnet', async () => {
       const verifier = new SuiVerifier(SUI_TESTNET_CONFIG.rpcUrl)
-      
+
       const queryOptions = {
         assetId: SUI_TESTNET_CONFIG.objectId,
         contractAddress: SUI_TESTNET_CONFIG.packageId,
@@ -107,21 +110,23 @@ describe('Multi-Chain Testnet Verification', () => {
       }
 
       const result = await verifier.queryAsset(queryOptions)
-      
+
       expect(result).toBeDefined()
       expect(result.queriedAt).toBeInstanceOf(Date)
       expect(typeof result.exists).toBe('boolean')
-      
+
       if (result.exists) {
         expect(result.metadata).toBeDefined()
         expect(result.contentHashes).toBeDefined()
-        expect(result.contentHashes).toContain(`walrus_${SUI_TESTNET_CONFIG.objectId}`)
+        expect(result.contentHashes).toContain(
+          `walrus_${SUI_TESTNET_CONFIG.objectId}`,
+        )
       }
     })
 
     it('should select optimal Sui testnet node', async () => {
       const result = await selectOptimalNode('sui', 'fastest', 'testnet')
-      
+
       expect(result).toBeDefined()
       expect(result.node).toBeDefined()
       expect(result.node.network).toBe('testnet')
@@ -135,7 +140,7 @@ describe('Multi-Chain Testnet Verification', () => {
         chain: 'sui',
         params: { network: 'testnet' },
       })
-      
+
       expect(url).toBeDefined()
       expect(url).toContain(TEST_BLOB_ID)
       expect(url).toContain('aggregator.walrus-testnet.walrus.space')
@@ -146,9 +151,9 @@ describe('Multi-Chain Testnet Verification', () => {
     it('should create EthereumVerifier with Sepolia configuration', () => {
       const verifier = new EthereumVerifier(
         ETHEREUM_SEPOLIA_CONFIG.rpcUrl,
-        ETHEREUM_SEPOLIA_CONFIG.network
+        ETHEREUM_SEPOLIA_CONFIG.network,
       )
-      
+
       expect(verifier.chain).toBe('ethereum')
       expect(verifier.isConfigured()).toBe(true)
     })
@@ -156,9 +161,9 @@ describe('Multi-Chain Testnet Verification', () => {
     it('should verify ERC-721 token ownership on Sepolia', async () => {
       const verifier = new EthereumVerifier(
         ETHEREUM_SEPOLIA_CONFIG.rpcUrl,
-        ETHEREUM_SEPOLIA_CONFIG.network
+        ETHEREUM_SEPOLIA_CONFIG.network,
       )
-      
+
       const verificationOptions: AssetVerificationOptions = {
         userAddress: ETHEREUM_SEPOLIA_CONFIG.userAddress,
         assetId: ETHEREUM_SEPOLIA_CONFIG.tokenId,
@@ -170,20 +175,20 @@ describe('Multi-Chain Testnet Verification', () => {
       }
 
       const result = await verifier.verifyAsset(verificationOptions)
-      
+
       expect(result).toBeDefined()
       expect(result.chain).toBe('ethereum')
       expect(result.verifiedAt).toBeInstanceOf(Date)
       expect(typeof result.hasAccess).toBe('boolean')
-      
+
       if (result.hasAccess) {
         expect(result.assetMetadata).toBeDefined()
         expect(result.assetMetadata?.name).toContain('Ethereum NFT')
         expect(result.assetMetadata?.description).toContain('sepolia')
         expect(result.assetMetadata?.attributes).toBeDefined()
-        
+
         const networkAttribute = result.assetMetadata?.attributes?.find(
-          attr => attr.trait_type === 'Network'
+          (attr) => attr.trait_type === 'Network',
         )
         expect(networkAttribute?.value).toBe('sepolia')
       }
@@ -192,9 +197,9 @@ describe('Multi-Chain Testnet Verification', () => {
     it('should query ERC-721 token information on Sepolia', async () => {
       const verifier = new EthereumVerifier(
         ETHEREUM_SEPOLIA_CONFIG.rpcUrl,
-        ETHEREUM_SEPOLIA_CONFIG.network
+        ETHEREUM_SEPOLIA_CONFIG.network,
       )
-      
+
       const queryOptions = {
         assetId: ETHEREUM_SEPOLIA_CONFIG.tokenId,
         contractAddress: ETHEREUM_SEPOLIA_CONFIG.contractAddress,
@@ -202,23 +207,27 @@ describe('Multi-Chain Testnet Verification', () => {
       }
 
       const result = await verifier.queryAsset(queryOptions)
-      
+
       expect(result).toBeDefined()
       expect(result.queriedAt).toBeInstanceOf(Date)
       expect(typeof result.exists).toBe('boolean')
-      
+
       if (result.exists) {
         expect(result.metadata).toBeDefined()
         expect(result.metadata?.network).toBe('sepolia')
         expect(result.contentHashes).toBeDefined()
-        expect(result.contentHashes).toContain(`ipfs_${ETHEREUM_SEPOLIA_CONFIG.tokenId}`)
-        expect(result.contentHashes).toContain(`walrus_${ETHEREUM_SEPOLIA_CONFIG.tokenId}`)
+        expect(result.contentHashes).toContain(
+          `ipfs_${ETHEREUM_SEPOLIA_CONFIG.tokenId}`,
+        )
+        expect(result.contentHashes).toContain(
+          `walrus_${ETHEREUM_SEPOLIA_CONFIG.tokenId}`,
+        )
       }
     })
 
     it('should select optimal Ethereum Sepolia node', async () => {
       const result = await selectOptimalNode('ethereum', 'fastest', 'testnet')
-      
+
       expect(result).toBeDefined()
       expect(result.node).toBeDefined()
       expect(result.node.network).toBe('testnet')
@@ -232,7 +241,7 @@ describe('Multi-Chain Testnet Verification', () => {
         chain: 'ethereum',
         params: { network: 'sepolia' },
       })
-      
+
       expect(url).toBeDefined()
       expect(url).toContain(TEST_BLOB_ID)
       expect(url).toContain('eth-aggregator.walrus.space')
@@ -242,7 +251,7 @@ describe('Multi-Chain Testnet Verification', () => {
   describe('Cross-Chain Testnet Verification', () => {
     it('should verify assets across Sui testnet and Ethereum Sepolia', async () => {
       const chains: SupportedChain[] = ['sui', 'ethereum']
-      
+
       const verificationOptions: AssetVerificationOptions = {
         userAddress: '0x1234567890abcdef1234567890abcdef12345678',
         assetId: '12345',
@@ -254,17 +263,17 @@ describe('Multi-Chain Testnet Verification', () => {
       }
 
       const result = await client.verifyMultiChain(chains, verificationOptions)
-      
+
       expect(result).toBeDefined()
       expect(result.primary).toBeDefined()
       expect(result.crossChain).toBeDefined()
       expect(typeof result.hasAccess).toBe('boolean')
-      
+
       // Check individual chain results
       expect(result.crossChain.sui).toBeDefined()
       expect(result.crossChain.ethereum).toBeDefined()
-      
-      chains.forEach(chain => {
+
+      chains.forEach((chain) => {
         const chainResult = result.crossChain[chain]
         expect(chainResult.chain).toBe(chain)
         expect(chainResult.verifiedAt).toBeInstanceOf(Date)
@@ -281,15 +290,15 @@ describe('Multi-Chain Testnet Verification', () => {
         nodeSelectionStrategy: 'fastest',
         params: { network: 'sepolia' },
       })
-      
+
       expect(result).toBeDefined()
       expect(result.url).toBeDefined()
       expect(result.url).toContain(TEST_BLOB_ID)
       expect(result.url).toContain('chain=ethereum')
-      
+
       // Verification should be undefined when skipped
       expect(result.verification).toBeUndefined()
-      
+
       if (result.nodeSelection) {
         expect(result.nodeSelection.strategy).toBe('fastest')
         expect(result.nodeSelection.node).toBeDefined()
@@ -300,13 +309,13 @@ describe('Multi-Chain Testnet Verification', () => {
     it('should handle verification failures gracefully', async () => {
       const invalidOptions: AssetVerificationOptions = {
         userAddress: '', // Invalid address
-        assetId: '',     // Invalid asset ID
+        assetId: '', // Invalid asset ID
         contractAddress: '', // Invalid contract
       }
 
       const verifier = new EthereumVerifier()
       const result = await verifier.verifyAsset(invalidOptions)
-      
+
       expect(result).toBeDefined()
       expect(result.hasAccess).toBe(false)
       expect(result.chain).toBe('ethereum')
@@ -332,10 +341,10 @@ describe('Multi-Chain Testnet Verification', () => {
 
     it('should measure latency for testnet nodes', async () => {
       const suiNodes = nodeManager.getChainNodes('sui')
-      const testnetNodes = suiNodes.filter(node => node.network === 'testnet')
-      
+      const testnetNodes = suiNodes.filter((node) => node.network === 'testnet')
+
       expect(testnetNodes.length).toBeGreaterThan(0)
-      
+
       for (const node of testnetNodes) {
         const latency = await nodeManager.measureLatency(node)
         expect(typeof latency).toBe('number')
@@ -347,8 +356,11 @@ describe('Multi-Chain Testnet Verification', () => {
   describe('Error Handling', () => {
     it('should handle network timeout gracefully', async () => {
       // Test timeout handling directly with verifier using invalid URL
-      const verifier = new EthereumVerifier('https://invalid-endpoint-that-will-fail.com', 'sepolia')
-      
+      const verifier = new EthereumVerifier(
+        'https://invalid-endpoint-that-will-fail.com',
+        'sepolia',
+      )
+
       const result = await verifier.verifyAsset({
         userAddress: ETHEREUM_SEPOLIA_CONFIG.userAddress,
         assetId: ETHEREUM_SEPOLIA_CONFIG.tokenId,
@@ -363,7 +375,11 @@ describe('Multi-Chain Testnet Verification', () => {
 
     it('should handle invalid chain selection', async () => {
       await expect(async () => {
-        await selectOptimalNode('invalid-chain' as SupportedChain, 'fastest', 'testnet')
+        await selectOptimalNode(
+          'invalid-chain' as SupportedChain,
+          'fastest',
+          'testnet',
+        )
       }).rejects.toThrow()
     })
 
@@ -385,45 +401,45 @@ describe('Multi-Chain Testnet Verification', () => {
   describe('Integration Tests', () => {
     it('should complete full testnet workflow', async () => {
       console.log('🧪 Running full testnet integration test...')
-      
+
       // Step 1: Create verifiers directly
       const ethVerifier = new EthereumVerifier()
       const suiVerifier = new SuiVerifier()
-      
+
       // Step 2: Verify on Ethereum Sepolia
       const ethResult = await ethVerifier.verifyAsset({
         userAddress: ETHEREUM_SEPOLIA_CONFIG.userAddress,
         assetId: ETHEREUM_SEPOLIA_CONFIG.tokenId,
         contractAddress: ETHEREUM_SEPOLIA_CONFIG.contractAddress,
       })
-      
+
       expect(ethResult).toBeDefined()
       expect(ethResult.chain).toBe('ethereum')
-      
+
       // Step 3: Verify on Sui testnet
       const suiResult = await suiVerifier.verifyAsset({
         userAddress: SUI_TESTNET_CONFIG.userAddress,
         assetId: SUI_TESTNET_CONFIG.objectId,
       })
-      
+
       expect(suiResult).toBeDefined()
       expect(suiResult.chain).toBe('sui')
-      
+
       // Step 4: Generate optimized CDN URLs
       const ethUrl = getWalrusCDNUrl(TEST_BLOB_ID, {
         chain: 'ethereum',
         params: { network: 'sepolia' },
       })
-      
+
       const suiUrl = getWalrusCDNUrl(TEST_BLOB_ID, {
         chain: 'sui',
         params: { network: 'testnet' },
       })
-      
+
       expect(ethUrl).toBeDefined()
       expect(suiUrl).toBeDefined()
       expect(ethUrl).not.toBe(suiUrl)
-      
+
       console.log('✅ Full testnet integration test completed!')
     })
   })
@@ -432,7 +448,7 @@ describe('Multi-Chain Testnet Verification', () => {
 // Helper functions for testing
 export function createTestVerificationOptions(
   chain: SupportedChain,
-  overrides: Partial<AssetVerificationOptions> = {}
+  overrides: Partial<AssetVerificationOptions> = {},
 ): AssetVerificationOptions {
   const baseOptions: Record<SupportedChain, AssetVerificationOptions> = {
     sui: {
@@ -449,12 +465,8 @@ export function createTestVerificationOptions(
       assetId: 'GqZ5J7XKqbJbzKf7J4QqZ5J7XKqbJbzKf7J4QqZ5J7XKqbJbzKf',
     },
   }
-  
+
   return { ...baseOptions[chain], ...overrides }
 }
 
-export {
-  SUI_TESTNET_CONFIG,
-  ETHEREUM_SEPOLIA_CONFIG,
-  TEST_BLOB_ID,
-}
+export { SUI_TESTNET_CONFIG, ETHEREUM_SEPOLIA_CONFIG, TEST_BLOB_ID }

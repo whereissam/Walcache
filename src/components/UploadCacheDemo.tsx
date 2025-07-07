@@ -42,7 +42,7 @@ import { ENV_CONFIG } from '../config/env.js'
 
 const WALCACHE_CONFIG = {
   baseUrl: ENV_CONFIG.baseUrl,
-  apiKey: ENV_CONFIG.apiKey
+  apiKey: ENV_CONFIG.apiKey,
 }
 
 // SDK will be initialized lazily to avoid build issues
@@ -51,23 +51,25 @@ let cdnClient: WalrusCDNClient | null = null
 // Initialize SDK lazily
 async function getSDKClient() {
   if (!cdnClient) {
-    const { WalrusCDNClient, configure } = await import('../../packages/sdk/src/index.js')
-    
+    const { WalrusCDNClient, configure } = await import(
+      '../../packages/sdk/src/index.js'
+    )
+
     configure({
       baseUrl: WALCACHE_CONFIG.baseUrl,
-      apiKey: WALCACHE_CONFIG.apiKey
+      apiKey: WALCACHE_CONFIG.apiKey,
     })
 
     cdnClient = new WalrusCDNClient({
       baseUrl: WALCACHE_CONFIG.baseUrl,
       apiKey: WALCACHE_CONFIG.apiKey,
-      timeout: 30000
+      timeout: 30000,
     })
   }
   return cdnClient
 }
 
-// Use real SDK for URL generation  
+// Use real SDK for URL generation
 async function getWalrusCDNUrl(
   blobId: string,
   options?: { chain?: string; customEndpoint?: string },
@@ -78,10 +80,12 @@ async function getWalrusCDNUrl(
 
   try {
     // Use real SDK function
-    const { getWalrusCDNUrl: getSDKWalrusCDNUrl } = await import('../../packages/sdk/src/index.js')
+    const { getWalrusCDNUrl: getSDKWalrusCDNUrl } = await import(
+      '../../packages/sdk/src/index.js'
+    )
     return getSDKWalrusCDNUrl(blobId, {
       chain: options?.chain ?? 'sui',
-      params: { cache: true, network: 'testnet' }
+      params: { cache: true, network: 'testnet' },
     })
   } catch (error) {
     console.warn('Failed to load SDK, using fallback URL generation:', error)
@@ -141,14 +145,14 @@ async function realUploadToWalrusWithCache(
     }
 
     const result = await response.json()
-    
+
     const uploadTime = Date.now() - startTime
     console.log(`✅ SDK upload completed in ${uploadTime}ms`)
     console.log('Upload result:', result)
 
     // Generate optimized CDN URL using SDK
     const cdnUrl = await getWalrusCDNUrl(result.blobId, { chain })
-    
+
     // Preload into cache for faster access using SDK
     try {
       const client = await getSDKClient()
@@ -192,7 +196,9 @@ async function realUploadToWalrusWithCache(
 // Real cache status function
 async function realGetCacheStatus(blobId: string): Promise<CacheStatus | null> {
   try {
-    const response = await fetch(`${WALCACHE_CONFIG.baseUrl}/api/stats/${blobId}`)
+    const response = await fetch(
+      `${WALCACHE_CONFIG.baseUrl}/api/stats/${blobId}`,
+    )
 
     if (!response.ok) {
       console.error('Cache status failed:', response.status)
@@ -313,10 +319,13 @@ export function UploadCacheDemo() {
   React.useEffect(() => {
     const checkBackend = async () => {
       try {
-        const response = await fetch(`${WALCACHE_CONFIG.baseUrl}/upload/health`, {
-          method: 'GET',
-          signal: AbortSignal.timeout(5000),
-        })
+        const response = await fetch(
+          `${WALCACHE_CONFIG.baseUrl}/upload/health`,
+          {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000),
+          },
+        )
         if (response.ok) {
           setBackendStatus('online')
         } else {
@@ -555,8 +564,8 @@ export function UploadCacheDemo() {
             {backendStatus === 'offline' && (
               <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-800 text-sm">
-                  ⚠️ <strong>Backend Required:</strong> Please start the Walcache
-                  backend server:
+                  ⚠️ <strong>Backend Required:</strong> Please start the
+                  Walcache backend server:
                   <br />
                   <code className="bg-red-100 px-2 py-1 rounded mt-1 inline-block">
                     cd cdn-server && bun dev
@@ -1020,7 +1029,7 @@ export function UploadCacheDemo() {
                 <span className="text-sm">Blob ID:</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <p 
+                    <p
                       className="font-mono text-xs break-all text-gray-600 cursor-pointer hover:text-blue-600 transition-colors"
                       onClick={() => copyToClipboard(uploadResult.blobId)}
                     >
@@ -1296,7 +1305,8 @@ export function UploadCacheDemo() {
               </p>
               <ul className="text-sm space-y-1 text-blue-700">
                 <li>
-                  🔗 <strong>Walcache URL:</strong> Fast cached access via our CDN
+                  🔗 <strong>Walcache URL:</strong> Fast cached access via our
+                  CDN
                 </li>
                 <li>
                   🔗 <strong>Direct URL:</strong> Decentralized access via
@@ -1479,7 +1489,9 @@ export function UploadCacheDemo() {
                           </p>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p className="font-mono text-xs">Full Blob ID: {upload.blobId}</p>
+                          <p className="font-mono text-xs">
+                            Full Blob ID: {upload.blobId}
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -1493,7 +1505,10 @@ export function UploadCacheDemo() {
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
-                            console.log('Hash button clicked, copying blob ID:', upload.blobId)
+                            console.log(
+                              'Hash button clicked, copying blob ID:',
+                              upload.blobId,
+                            )
                             copyToClipboard(upload.blobId)
                           }}
                           className="text-xs hover:bg-blue-50"

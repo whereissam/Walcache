@@ -61,23 +61,31 @@ export function Dashboard() {
   if (isLoading && !globalStats) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Error: {error}</p>
+      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+        <p className="text-destructive-foreground">Error: {error}</p>
       </div>
     )
   }
 
   const hitRateData = globalStats
     ? [
-        { name: 'Hits', value: globalStats.totalHits, color: '#10b981' },
-        { name: 'Misses', value: globalStats.totalMisses, color: '#ef4444' },
+        {
+          name: 'Hits',
+          value: globalStats.totalHits,
+          color: 'hsl(var(--chart-1))',
+        },
+        {
+          name: 'Misses',
+          value: globalStats.totalMisses,
+          color: 'hsl(var(--chart-2))',
+        },
       ]
     : []
 
@@ -109,11 +117,11 @@ export function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Walcache Dashboard</h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Real-time cache analytics and performance monitoring
           </p>
         </div>
-        <div className="flex items-center space-x-2 text-sm text-gray-500">
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           <span>Live</span>
         </div>
@@ -247,7 +255,7 @@ export function Dashboard() {
                     <div className="text-sm font-bold">
                       {formatNumber(region.requests)}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {region.percentage}%
                     </div>
                   </div>
@@ -282,9 +290,9 @@ export function Dashboard() {
                 <Line
                   type="monotone"
                   dataKey="latency"
-                  stroke="#3b82f6"
+                  stroke="hsl(var(--primary))"
                   strokeWidth={2}
-                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                  dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -313,8 +321,8 @@ export function Dashboard() {
                     return [formatLatency(value), 'Avg Latency']
                   }}
                 />
-                <Bar dataKey="requests" fill="#3b82f6" />
-                <Bar dataKey="hitRate" fill="#10b981" />
+                <Bar dataKey="requests" fill="hsl(var(--primary))" />
+                <Bar dataKey="hitRate" fill="hsl(var(--chart-1))" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -331,7 +339,7 @@ export function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <HardDrive className="h-4 w-4 text-blue-500" />
+                <HardDrive className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">Memory Cache</span>
               </div>
               <div className="text-xl sm:text-2xl font-bold">
@@ -344,7 +352,7 @@ export function Dashboard() {
 
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <Database className="h-4 w-4 text-red-500" />
+                <Database className="h-4 w-4 text-chart-2" />
                 <span className="text-sm font-medium">Redis Cache</span>
               </div>
               <div className="text-xl sm:text-2xl font-bold">
@@ -357,7 +365,7 @@ export function Dashboard() {
 
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <Activity className="h-4 w-4 text-green-500" />
+                <Activity className="h-4 w-4 text-chart-1" />
                 <span className="text-sm font-medium">Status</span>
               </div>
               <div className="text-xl sm:text-2xl font-bold capitalize">

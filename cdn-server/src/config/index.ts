@@ -40,7 +40,9 @@ const configSchema = z.object({
   API_KEY_SECRET: z.string().min(1).default('dev-secret-key'),
   ALLOWED_ORIGINS: z
     .string()
-    .default('http://localhost:4500,http://localhost:5173,http://localhost:5174'),
+    .default(
+      'http://localhost:4500,http://localhost:5173,http://localhost:5174',
+    ),
 
   ENABLE_ANALYTICS: z.boolean().default(true),
   WEBHOOK_URL: z.string().optional(),

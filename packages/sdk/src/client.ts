@@ -77,14 +77,17 @@ export class WalrusCDNClient {
    * @param options - Multi-chain URL options
    * @returns The optimized CDN URL
    */
-  getMultiChainCDNUrl(blobId: string, options: { chain?: SupportedChain; params?: Record<string, string> } = {}): string {
+  getMultiChainCDNUrl(
+    blobId: string,
+    options: { chain?: SupportedChain; params?: Record<string, string> } = {},
+  ): string {
     if (!blobId) {
       throw new WalrusCDNError('blobId is required')
     }
 
     const chain = options.chain || 'sui'
     const params = { chain, ...options.params }
-    
+
     return this.getCDNUrl(blobId, { params })
   }
 
@@ -253,7 +256,11 @@ export class WalrusCDNClient {
   async getAdvancedCDNUrl(
     blobId: string,
     options: AdvancedUrlOptions = {},
-  ): Promise<{ url: string; verification?: AssetVerificationResult; nodeSelection?: NodeSelectionResult }> {
+  ): Promise<{
+    url: string
+    verification?: AssetVerificationResult
+    nodeSelection?: NodeSelectionResult
+  }> {
     if (!blobId) {
       throw new WalrusCDNError('blobId is required')
     }
@@ -269,14 +276,14 @@ export class WalrusCDNClient {
         if (!verificationResult.hasAccess) {
           throw new WalrusCDNError(
             `Asset verification failed: ${verificationResult.error || 'Access denied'}`,
-            'VERIFICATION_FAILED'
+            'VERIFICATION_FAILED',
           )
         }
       } catch (error) {
         if (error instanceof WalrusCDNError) throw error
         throw new WalrusCDNError(
           `Asset verification error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          'VERIFICATION_ERROR'
+          'VERIFICATION_ERROR',
         )
       }
     }
@@ -346,10 +353,12 @@ export class WalrusCDNClient {
   ): Promise<MultiChainVerificationResult> {
     try {
       const results = await Promise.allSettled(
-        chains.map(chain => this.verifyAsset(chain, options))
+        chains.map((chain) => this.verifyAsset(chain, options)),
       )
 
-      const verificationResults: Partial<Record<SupportedChain, AssetVerificationResult>> = {}
+      const verificationResults: Partial<
+        Record<SupportedChain, AssetVerificationResult>
+      > = {}
       let primaryResult: AssetVerificationResult | undefined
       let hasAccess = false
 
@@ -384,14 +393,20 @@ export class WalrusCDNClient {
 
       return {
         primary: primaryResult,
-        crossChain: verificationResults as Record<SupportedChain, AssetVerificationResult>,
+        crossChain: verificationResults as Record<
+          SupportedChain,
+          AssetVerificationResult
+        >,
         hasAccess,
         recommendedEndpoint: hasAccess
           ? `${this.config.baseUrl}/cdn/` // Can be optimized based on best performing chain
           : undefined,
       }
     } catch (error) {
-      throw this.handleError(error, 'Failed to perform multi-chain verification')
+      throw this.handleError(
+        error,
+        'Failed to perform multi-chain verification',
+      )
     }
   }
 
@@ -435,15 +450,18 @@ export class WalrusCDNClient {
         targetChains.map(async (chain) => {
           const nodeSelection = await nodeManager.selectNode(chain, 'fastest')
           const startTime = Date.now()
-          
+
           try {
-            const response = await fetch(`${nodeSelection.node.url}/v1/blobs/${blobId}`, {
-              method: 'HEAD',
-              signal: AbortSignal.timeout(5000),
-            })
-            
+            const response = await fetch(
+              `${nodeSelection.node.url}/v1/blobs/${blobId}`,
+              {
+                method: 'HEAD',
+                signal: AbortSignal.timeout(5000),
+              },
+            )
+
             const latency = Date.now() - startTime
-            
+
             return {
               chain,
               exists: response.ok,
@@ -467,7 +485,7 @@ export class WalrusCDNClient {
               },
             }
           }
-        })
+        }),
       )
 
       results.forEach((result, index) => {
@@ -488,14 +506,14 @@ export class WalrusCDNClient {
       })
 
       const availableChains = targetChains.filter(
-        chain => chainResults[chain]?.exists
+        (chain) => chainResults[chain]?.exists,
       )
-      
+
       // Find best performing chain
       let bestChain: SupportedChain | undefined
       let bestLatency = Infinity
-      
-      availableChains.forEach(chain => {
+
+      availableChains.forEach((chain) => {
         const result = chainResults[chain]
         if (result?.latency && result.latency < bestLatency) {
           bestLatency = result.latency
@@ -547,7 +565,7 @@ export class WalrusCDNClient {
         await nodeManager.healthCheckChain(chain)
       } else {
         const chains: SupportedChain[] = ['sui', 'ethereum', 'solana']
-        await Promise.all(chains.map(c => nodeManager.healthCheckChain(c)))
+        await Promise.all(chains.map((c) => nodeManager.healthCheckChain(c)))
       }
     } catch (error) {
       throw this.handleError(error, 'Failed to perform node health check')

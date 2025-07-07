@@ -14,7 +14,7 @@ interface CDNParams {
  */
 function shouldDisplayInline(contentType: string): boolean {
   if (!contentType) return false
-  
+
   const inlineTypes = [
     // Images
     'image/',
@@ -38,8 +38,8 @@ function shouldDisplayInline(contentType: string): boolean {
     'application/xhtml+xml',
     'image/svg+xml',
   ]
-  
-  return inlineTypes.some(type => contentType.startsWith(type))
+
+  return inlineTypes.some((type) => contentType.startsWith(type))
 }
 
 /**
@@ -49,7 +49,7 @@ function getFileExtension(contentType: string): string {
   const extensionMap: Record<string, string> = {
     // Images
     'image/jpeg': 'jpg',
-    'image/jpg': 'jpg', 
+    'image/jpg': 'jpg',
     'image/png': 'png',
     'image/gif': 'gif',
     'image/webp': 'webp',
@@ -86,7 +86,8 @@ function getFileExtension(contentType: string): string {
     'application/gzip': 'gz',
     // Office
     'application/msword': 'doc',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+      'docx',
     'application/vnd.ms-excel': 'xls',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
   }
@@ -144,15 +145,21 @@ export async function cdnRoutes(fastify: FastifyInstance) {
           reply.header('X-Cache', 'HIT')
           reply.header('X-Cache-Date', cached.cached.toISOString())
           reply.header('X-TTL', cached.ttl.toString())
-          
+
           // Set Content-Disposition with proper filename
           const filename = generateFilename(cached.cid, cached.contentType)
           if (shouldDisplayInline(cached.contentType)) {
-            reply.header('Content-Disposition', `inline; filename="${filename}"`)
+            reply.header(
+              'Content-Disposition',
+              `inline; filename="${filename}"`,
+            )
           } else {
-            reply.header('Content-Disposition', `attachment; filename="${filename}"`)
+            reply.header(
+              'Content-Disposition',
+              `attachment; filename="${filename}"`,
+            )
           }
-          
+
           // Add cache control headers for better browser caching
           reply.header('Cache-Control', 'public, max-age=3600, immutable')
           reply.header('ETag', `"${cached.cid}"`)
@@ -198,15 +205,21 @@ export async function cdnRoutes(fastify: FastifyInstance) {
             reply.header('X-Cache', 'MISS')
             reply.header('X-Fetch-Time', `${latency}ms`)
             reply.header('X-Source', blob.source)
-            
+
             // Set Content-Disposition with proper filename
             const filename = generateFilename(blob.cid, blob.contentType)
             if (shouldDisplayInline(blob.contentType)) {
-              reply.header('Content-Disposition', `inline; filename="${filename}"`)
+              reply.header(
+                'Content-Disposition',
+                `inline; filename="${filename}"`,
+              )
             } else {
-              reply.header('Content-Disposition', `attachment; filename="${filename}"`)
+              reply.header(
+                'Content-Disposition',
+                `attachment; filename="${filename}"`,
+              )
             }
-            
+
             // Add cache control headers for better browser caching
             reply.header('Cache-Control', 'public, max-age=3600, immutable')
             reply.header('ETag', `"${blob.cid}"`)

@@ -3,6 +3,7 @@
 ## Development → Production Migration
 
 ### Phase 1: Local Development (Current)
+
 ```bash
 # What you have now
 npm run dev              # Frontend: http://localhost:5173
@@ -16,6 +17,7 @@ REACT_APP_WCDN_API_KEY=dev-secret-wcdn-2024
 ### Phase 2: Production Deployment
 
 #### 2.1 Backend Deployment (WCDN Server)
+
 ```bash
 # Option A: VPS/Cloud Server
 docker build -t wcdn-server ./cdn-server
@@ -30,6 +32,7 @@ docker run -p 4500:4500 \
 ```
 
 #### 2.2 Frontend Deployment
+
 ```bash
 # Build for production
 REACT_APP_WCDN_URL=https://cdn.yourdomain.com \
@@ -45,6 +48,7 @@ npm run build
 ### Phase 3: Domain & SSL Setup
 
 #### 3.1 Backend Domain
+
 ```bash
 # Your WCDN server URL
 https://cdn.yourdomain.com
@@ -57,6 +61,7 @@ certbot --nginx -d cdn.yourdomain.com
 ```
 
 #### 3.2 Frontend Domain
+
 ```bash
 # Your dashboard URL
 https://dashboard.yourdomain.com
@@ -68,28 +73,30 @@ REACT_APP_WCDN_URL=https://cdn.yourdomain.com
 ## 🔧 Configuration Migration
 
 ### 1. Update Store Configuration
+
 ```typescript
 // src/store/wcdnStore.ts
-const API_BASE = process.env.REACT_APP_WCDN_URL 
+const API_BASE = process.env.REACT_APP_WCDN_URL
   ? `${process.env.REACT_APP_WCDN_URL}/api`
   : 'http://localhost:4500/api'
 
-const API_KEY = process.env.REACT_APP_WCDN_API_KEY 
-  || 'dev-secret-wcdn-2024'
+const API_KEY = process.env.REACT_APP_WCDN_API_KEY || 'dev-secret-wcdn-2024'
 ```
 
 ### 2. SDK Integration
+
 ```typescript
 // Already updated in UploadCacheDemo.tsx
 configure({
   baseUrl: process.env.REACT_APP_WCDN_URL || 'http://localhost:4500',
-  apiKey: process.env.REACT_APP_WCDN_API_KEY || 'dev-secret-wcdn-2024'
+  apiKey: process.env.REACT_APP_WCDN_API_KEY || 'dev-secret-wcdn-2024',
 })
 ```
 
 ## 📋 Deployment Checklist
 
 ### Backend Ready ✅
+
 - [x] Environment-aware configuration
 - [x] API key authentication
 - [x] Redis caching configured
@@ -99,6 +106,7 @@ configure({
 - [x] Analytics tracking
 
 ### Frontend Ready ✅
+
 - [x] SDK integration complete
 - [x] Environment variables configured
 - [x] Production build optimized
@@ -106,6 +114,7 @@ configure({
 - [x] Loading states handled
 
 ### Production Setup 📝
+
 - [ ] Server deployed (VPS/Cloud)
 - [ ] Domain configured
 - [ ] SSL certificate installed
@@ -117,6 +126,7 @@ configure({
 ## 🎯 Easy Migration Steps
 
 ### Step 1: Test Current Setup
+
 ```bash
 # Verify everything works locally
 npm run dev
@@ -126,6 +136,7 @@ bun run dev:server
 ```
 
 ### Step 2: Deploy Backend
+
 ```bash
 # Deploy your cdn-server to production
 # Update environment variables
@@ -133,6 +144,7 @@ bun run dev:server
 ```
 
 ### Step 3: Update Frontend
+
 ```bash
 # Set production environment variables
 export REACT_APP_WCDN_URL=https://cdn.yourdomain.com
@@ -144,6 +156,7 @@ npm run build
 ```
 
 ### Step 4: DNS & SSL
+
 ```bash
 # Point domain to your servers
 # Install SSL certificates

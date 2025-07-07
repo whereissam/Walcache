@@ -131,4 +131,38 @@ code {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Ensure full dark background for landing page */
+  html,
+  body {
+    @apply min-h-screen;
+  }
+
+  /* Landing page always dark - override any theme */
+  .landing-page-dark {
+    background-color: #0f172a !important;
+    color: white !important;
+  }
+
+  /* Force dark background on html and body for landing page */
+  html.landing-dark,
+  body.landing-dark {
+    background-color: #0f172a !important;
+    color: white !important;
+  }
+
+  /* Ensure chart colors work properly with themes */
+  .recharts-cartesian-grid line {
+    stroke: hsl(var(--border));
+  }
+
+  .recharts-text {
+    fill: hsl(var(--muted-foreground));
+  }
+
+  .recharts-tooltip-wrapper {
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
 }

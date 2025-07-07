@@ -1,36 +1,36 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>WCDN Dashboard Test</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>WCDN Dashboard Connection Test</h1>
     <div id="status">Testing...</div>
     <div id="data"></div>
 
     <script>
-        async function testAPI() {
-            const statusDiv = document.getElementById('status');
-            const dataDiv = document.getElementById('data');
-            
-            try {
-                const response = await fetch('http://localhost:4500/api/metrics');
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                statusDiv.innerHTML = '✅ API Connection Successful!';
-                statusDiv.style.color = 'green';
-                dataDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-            } catch (error) {
-                statusDiv.innerHTML = '❌ API Connection Failed: ' + error.message;
-                statusDiv.style.color = 'red';
-                dataDiv.innerHTML = '<p>Error details: ' + error.toString() + '</p>';
-            }
+      async function testAPI() {
+        const statusDiv = document.getElementById('status')
+        const dataDiv = document.getElementById('data')
+
+        try {
+          const response = await fetch('http://localhost:4500/api/metrics')
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+          }
+
+          const data = await response.json()
+          statusDiv.innerHTML = '✅ API Connection Successful!'
+          statusDiv.style.color = 'green'
+          dataDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>'
+        } catch (error) {
+          statusDiv.innerHTML = '❌ API Connection Failed: ' + error.message
+          statusDiv.style.color = 'red'
+          dataDiv.innerHTML = '<p>Error details: ' + error.toString() + '</p>'
         }
-        
-        testAPI();
+      }
+
+      testAPI()
     </script>
-</body>
+  </body>
 </html>

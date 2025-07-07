@@ -43,10 +43,12 @@ export class SuiQueryEngine implements ContractQueryEngine {
     }
   }
 
-  async batchQueryAssets(options: AssetQueryOptions[]): Promise<AssetQueryResult[]> {
+  async batchQueryAssets(
+    options: AssetQueryOptions[],
+  ): Promise<AssetQueryResult[]> {
     const nodeUrl = await this.getOptimalNode()
     return Promise.all(
-      options.map(option => this.querySuiObject(nodeUrl, option))
+      options.map((option) => this.querySuiObject(nodeUrl, option)),
     )
   }
 
@@ -55,7 +57,11 @@ export class SuiQueryEngine implements ContractQueryEngine {
   }
 
   private async getOptimalNode(): Promise<string> {
-    const result = await nodeManager.selectNode(this.chain, 'fastest', this.network)
+    const result = await nodeManager.selectNode(
+      this.chain,
+      'fastest',
+      this.network,
+    )
     return result.node.url
   }
 
@@ -98,17 +104,21 @@ export class SuiQueryEngine implements ContractQueryEngine {
 
       // Mock successful response
       const exists = Math.random() > 0.2 // 80% success rate
-      
+
       return {
         exists,
-        owner: exists ? data.result?.data?.owner?.AddressOwner || 'Sui Address...' : undefined,
-        metadata: exists ? {
-          name: `Sui Object ${options.assetId.slice(0, 8)}`,
-          description: 'Sui blockchain object',
-          objectType: data.result?.data?.type || 'unknown',
-          version: data.result?.data?.version || '1',
-          digest: data.result?.data?.digest || 'digest...',
-        } : undefined,
+        owner: exists
+          ? data.result?.data?.owner?.AddressOwner || 'Sui Address...'
+          : undefined,
+        metadata: exists
+          ? {
+              name: `Sui Object ${options.assetId.slice(0, 8)}`,
+              description: 'Sui blockchain object',
+              objectType: data.result?.data?.type || 'unknown',
+              version: data.result?.data?.version || '1',
+              digest: data.result?.data?.digest || 'digest...',
+            }
+          : undefined,
         contentHashes: exists ? [`walrus_${options.assetId}`] : undefined,
         queriedAt: new Date(),
       }
@@ -146,10 +156,12 @@ export class EthereumQueryEngine implements ContractQueryEngine {
     }
   }
 
-  async batchQueryAssets(options: AssetQueryOptions[]): Promise<AssetQueryResult[]> {
+  async batchQueryAssets(
+    options: AssetQueryOptions[],
+  ): Promise<AssetQueryResult[]> {
     const nodeUrl = await this.getOptimalNode()
     return Promise.all(
-      options.map(option => this.queryEthereumContract(nodeUrl, option))
+      options.map((option) => this.queryEthereumContract(nodeUrl, option)),
     )
   }
 
@@ -158,7 +170,11 @@ export class EthereumQueryEngine implements ContractQueryEngine {
   }
 
   private async getOptimalNode(): Promise<string> {
-    const result = await nodeManager.selectNode(this.chain, 'fastest', this.network)
+    const result = await nodeManager.selectNode(
+      this.chain,
+      'fastest',
+      this.network,
+    )
     return result.node.url
   }
 
@@ -169,14 +185,14 @@ export class EthereumQueryEngine implements ContractQueryEngine {
     try {
       // Mock Ethereum JSON-RPC calls
       // In production, use ethers.js for proper contract interaction
-      
+
       // First, check if token exists by calling ownerOf or balanceOf
       const ownerOfCall = await this.makeEthRpcCall(nodeUrl, 'eth_call', [
         {
           to: options.contractAddress,
           data: this.encodeOwnerOfCall(options.assetId), // ERC-721 ownerOf(tokenId)
         },
-        'latest'
+        'latest',
       ])
 
       if (!ownerOfCall || ownerOfCall === '0x') {
@@ -196,7 +212,7 @@ export class EthereumQueryEngine implements ContractQueryEngine {
           to: options.contractAddress,
           data: this.encodeTokenURICall(options.assetId),
         },
-        'latest'
+        'latest',
       ])
 
       const tokenURI = this.decodeString(tokenURICall)
@@ -245,7 +261,7 @@ export class EthereumQueryEngine implements ContractQueryEngine {
   private async makeEthRpcCall(
     nodeUrl: string,
     method: string,
-    params: any[]
+    params: any[],
   ): Promise<string | null> {
     try {
       const response = await fetch(nodeUrl, {
@@ -317,8 +333,12 @@ export class SolanaQueryEngine implements ContractQueryEngine {
   private network: 'mainnet' | 'testnet' | 'devnet'
 
   constructor(network: 'mainnet' | 'testnet' | 'devnet' = 'mainnet') {
-    this.network = network === 'testnet' ? 'testnet' : 
-                  network === 'devnet' ? 'devnet' : 'mainnet'
+    this.network =
+      network === 'testnet'
+        ? 'testnet'
+        : network === 'devnet'
+          ? 'devnet'
+          : 'mainnet'
   }
 
   async queryAsset(options: AssetQueryOptions): Promise<AssetQueryResult> {
@@ -334,10 +354,12 @@ export class SolanaQueryEngine implements ContractQueryEngine {
     }
   }
 
-  async batchQueryAssets(options: AssetQueryOptions[]): Promise<AssetQueryResult[]> {
+  async batchQueryAssets(
+    options: AssetQueryOptions[],
+  ): Promise<AssetQueryResult[]> {
     const nodeUrl = await this.getOptimalNode()
     return Promise.all(
-      options.map(option => this.querySolanaToken(nodeUrl, option))
+      options.map((option) => this.querySolanaToken(nodeUrl, option)),
     )
   }
 
@@ -347,11 +369,15 @@ export class SolanaQueryEngine implements ContractQueryEngine {
 
   private async getOptimalNode(): Promise<string> {
     const networkMap: Record<string, 'mainnet' | 'testnet' | 'devnet'> = {
-      'mainnet': 'mainnet',
-      'testnet': 'testnet',
-      'devnet': 'devnet'
+      mainnet: 'mainnet',
+      testnet: 'testnet',
+      devnet: 'devnet',
     }
-    const result = await nodeManager.selectNode(this.chain, 'fastest', networkMap[this.network])
+    const result = await nodeManager.selectNode(
+      this.chain,
+      'fastest',
+      networkMap[this.network],
+    )
     return result.node.url
   }
 
@@ -385,21 +411,29 @@ export class SolanaQueryEngine implements ContractQueryEngine {
       }
 
       const data = await response.json()
-      
+
       // Mock successful response
       const exists = Math.random() > 0.25 // 75% success rate
-      
+
       return {
         exists,
-        owner: exists ? options.contractAddress || data.result?.value?.owner || 'Solana Address...' : undefined,
-        metadata: exists ? {
-          name: `Solana Token ${options.assetId.slice(0, 8)}`,
-          description: `SPL token on ${this.network}`,
-          mint: options.assetId,
-          network: this.network,
-          tokenProgram: data.result?.value?.owner || 'Token Program',
-        } : undefined,
-        contentHashes: exists ? [`arweave_${options.assetId}`, `walrus_${options.assetId}`] : undefined,
+        owner: exists
+          ? options.contractAddress ||
+            data.result?.value?.owner ||
+            'Solana Address...'
+          : undefined,
+        metadata: exists
+          ? {
+              name: `Solana Token ${options.assetId.slice(0, 8)}`,
+              description: `SPL token on ${this.network}`,
+              mint: options.assetId,
+              network: this.network,
+              tokenProgram: data.result?.value?.owner || 'Token Program',
+            }
+          : undefined,
+        contentHashes: exists
+          ? [`arweave_${options.assetId}`, `walrus_${options.assetId}`]
+          : undefined,
         queriedAt: new Date(),
       }
     } catch (error) {
@@ -466,7 +500,7 @@ export class QueryManager {
     options: AssetQueryOptions,
   ): Promise<Record<SupportedChain, AssetQueryResult>> {
     const results: Partial<Record<SupportedChain, AssetQueryResult>> = {}
-    
+
     await Promise.all(
       chains.map(async (chain) => {
         try {
@@ -478,7 +512,7 @@ export class QueryManager {
             error: error instanceof Error ? error.message : 'Query failed',
           }
         }
-      })
+      }),
     )
 
     return results as Record<SupportedChain, AssetQueryResult>

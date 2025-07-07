@@ -320,7 +320,9 @@ export interface ChainVerifier {
   /** Chain this verifier supports */
   chain: SupportedChain
   /** Verify asset ownership */
-  verifyAsset(options: AssetVerificationOptions): Promise<AssetVerificationResult>
+  verifyAsset(
+    options: AssetVerificationOptions,
+  ): Promise<AssetVerificationResult>
   /** Query asset information */
   queryAsset(options: AssetQueryOptions): Promise<AssetQueryResult>
   /** Check if verifier is properly configured */

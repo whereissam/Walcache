@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { ThemeProvider } from '@/components/ThemeProvider'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
@@ -32,9 +33,11 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <TooltipProvider>
-        <RouterProvider router={router} />
-      </TooltipProvider>
+      <ThemeProvider defaultTheme="dark" storageKey="walcache-ui-theme">
+        <TooltipProvider>
+          <RouterProvider router={router} />
+        </TooltipProvider>
+      </ThemeProvider>
     </StrictMode>,
   )
 }

@@ -106,7 +106,7 @@ export function CIDExplorer() {
     // If source is provided, use it
     if (source === 'walrus') return 'Walrus Network'
     if (source === 'ipfs') return 'IPFS Gateway'
-    
+
     // Auto-detect from CID format if source is unknown
     if (cid) {
       if (cid.startsWith('bafkrei') || cid.startsWith('Qm')) {
@@ -116,18 +116,18 @@ export function CIDExplorer() {
         return 'Walrus Network'
       }
     }
-    
+
     return 'Unknown'
   }
 
   const getSourceColor = (source?: string) => {
     switch (source) {
       case 'walrus':
-        return 'text-blue-600'
+        return 'text-primary'
       case 'ipfs':
         return 'text-purple-600'
       default:
-        return 'text-gray-600'
+        return 'text-muted-foreground'
     }
   }
 
@@ -135,7 +135,7 @@ export function CIDExplorer() {
     <div className="space-y-4 sm:space-y-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">CID Explorer</h1>
-        <p className="text-sm sm:text-base text-gray-600">
+        <p className="text-sm sm:text-base text-muted-foreground">
           Search and manage individual content by CID
         </p>
       </div>
@@ -173,7 +173,7 @@ export function CIDExplorer() {
       {isLoading && (
         <Card>
           <CardContent className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </CardContent>
         </Card>
       )}
@@ -238,9 +238,11 @@ export function CIDExplorer() {
                 </div>
               </div>
             ) : (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
-                <p className="text-red-800 font-medium">錯誤: {error}</p>
-                <div className="text-sm text-red-700 space-y-2">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 space-y-3">
+                <p className="text-destructive-foreground font-medium">
+                  錯誤: {error}
+                </p>
+                <div className="text-sm text-destructive space-y-2">
                   <p className="font-medium">可能的原因：</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>此 blob ID 不存在於 Walrus 網路</li>
@@ -411,7 +413,7 @@ export function CIDExplorer() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4 text-gray-500" />
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Content Type</span>
                   </div>
                   <div className="text-lg font-bold">
@@ -422,7 +424,7 @@ export function CIDExplorer() {
 
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <HardDrive className="h-4 w-4 text-gray-500" />
+                    <HardDrive className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Size</span>
                   </div>
                   <div className="text-lg font-bold">
@@ -433,7 +435,7 @@ export function CIDExplorer() {
 
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <Download className="h-4 w-4 text-gray-500" />
+                    <Download className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Gateway Status</span>
                   </div>
                   <div className="text-lg font-bold">
@@ -459,7 +461,7 @@ export function CIDExplorer() {
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">
+                    <span className="text-sm font-medium text-muted-foreground">
                       Total Requests
                     </span>
                     <div className="text-xl sm:text-2xl font-bold">
@@ -468,7 +470,7 @@ export function CIDExplorer() {
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">
+                    <span className="text-sm font-medium text-muted-foreground">
                       Hit Rate
                     </span>
                     <div className="text-xl sm:text-2xl font-bold">
@@ -480,7 +482,7 @@ export function CIDExplorer() {
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">
+                    <span className="text-sm font-medium text-muted-foreground">
                       Avg Latency
                     </span>
                     <div className="text-xl sm:text-2xl font-bold">
@@ -489,7 +491,7 @@ export function CIDExplorer() {
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">
+                    <span className="text-sm font-medium text-muted-foreground">
                       Total Size
                     </span>
                     <div className="text-xl sm:text-2xl font-bold">
@@ -500,7 +502,7 @@ export function CIDExplorer() {
 
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">
+                    <span className="text-sm font-medium text-muted-foreground">
                       First Access
                     </span>
                     <div className="text-base sm:text-lg font-semibold">
@@ -509,7 +511,7 @@ export function CIDExplorer() {
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-500">
+                    <span className="text-sm font-medium text-muted-foreground">
                       Last Access
                     </span>
                     <div className="text-base sm:text-lg font-semibold">
@@ -525,10 +527,10 @@ export function CIDExplorer() {
           {!cidInfo.stats && (
             <Card>
               <CardContent className="text-center py-8">
-                <p className="text-gray-500">
+                <p className="text-muted-foreground">
                   No usage statistics available for this CID.
                 </p>
-                <p className="text-sm text-gray-400 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Statistics will appear after the first request to this
                   content.
                 </p>

@@ -136,9 +136,7 @@ interface WalcacheState {
   }>
 
   // Walrus Blob Verification
-  checkBlobOnWalrus: (
-    blobId: string,
-  ) => Promise<{
+  checkBlobOnWalrus: (blobId: string) => Promise<{
     available: boolean
     network?: 'testnet' | 'mainnet'
     aggregator?: string
@@ -485,8 +483,13 @@ export const useWalcacheStore = create<WalcacheState>()(
         }
       },
 
-      uploadFile: async (file: File, vaultId?: string, existingUploadId?: string): Promise<{ file: TuskyFile; uploadId: string }> => {
-        const uploadId = existingUploadId || Math.random().toString(36).substring(2)
+      uploadFile: async (
+        file: File,
+        vaultId?: string,
+        existingUploadId?: string,
+      ): Promise<{ file: TuskyFile; uploadId: string }> => {
+        const uploadId =
+          existingUploadId || Math.random().toString(36).substring(2)
 
         set((state) => ({
           uploads: {
@@ -638,7 +641,10 @@ export const useWalcacheStore = create<WalcacheState>()(
         try {
           // Step 1: Upload file (this creates its own progress tracking)
           console.log(`📤 Uploading ${file.name}...`)
-          const { file: uploadedFile, uploadId } = await get().uploadFile(file, vaultId)
+          const { file: uploadedFile, uploadId } = await get().uploadFile(
+            file,
+            vaultId,
+          )
 
           // Step 2: Update progress to show verifying
           set((state) => ({

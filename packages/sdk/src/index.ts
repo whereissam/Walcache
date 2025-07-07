@@ -201,13 +201,13 @@ export function getWalrusCDNUrl(
 
   // Walrus aggregator API: /v1/blobs/:blobId
   let url = `${endpoint}/v1/blobs/${blobId}`
-  
+
   // Add query parameters if provided
   if (options?.params) {
     const searchParams = new URLSearchParams(options.params)
     url += `?${searchParams.toString()}`
   }
-  
+
   return url
 }
 
@@ -246,7 +246,11 @@ export function getWalrusCDNUrl(
 export async function getAdvancedWalrusCDNUrl(
   blobId: string,
   options: AdvancedUrlOptions & { baseUrl: string },
-): Promise<{ url: string; verification?: AssetVerificationResult; nodeSelection?: NodeSelectionResult }> {
+): Promise<{
+  url: string
+  verification?: AssetVerificationResult
+  nodeSelection?: NodeSelectionResult
+}> {
   const client = new WalrusCDNClient({ baseUrl: options.baseUrl })
   return await client.getAdvancedCDNUrl(blobId, options)
 }
@@ -448,13 +452,13 @@ export function isSupportedChain(chain: string): chain is SupportedChain {
  * @returns Multi-chain blob status
  */
 export async function getBlobStatus(
-  blobId: string, 
-  chains?: SupportedChain[]
+  blobId: string,
+  chains?: SupportedChain[],
 ): Promise<any> {
   if (defaultClient) {
     return defaultClient.getMultiChainBlobStatus(blobId, chains)
   }
-  
+
   // Fallback to mock implementation for backward compatibility
   const targetChains = chains || ['sui', 'ethereum', 'solana']
   const mockStatus = {
@@ -467,7 +471,7 @@ export async function getBlobStatus(
     },
   }
 
-  targetChains.forEach(chain => {
+  targetChains.forEach((chain) => {
     const exists = chain === 'sui' ? true : Math.random() > 0.3
     mockStatus.chains[chain] = {
       exists,
@@ -475,9 +479,9 @@ export async function getBlobStatus(
       endpoint: WALRUS_AGGREGATOR_ENDPOINTS[chain].primary,
       lastChecked: new Date(),
       latency: chain === 'sui' ? 150 : chain === 'ethereum' ? 300 : 250,
-      metadata: { 
-        network: chain === 'sui' ? 'testnet' : 'mock', 
-        status: chain === 'sui' ? 'active' : 'experimental' 
+      metadata: {
+        network: chain === 'sui' ? 'testnet' : 'mock',
+        status: chain === 'sui' ? 'active' : 'experimental',
       },
     }
   })
@@ -486,7 +490,7 @@ export async function getBlobStatus(
   mockStatus.summary.availableChains = Object.entries(mockStatus.chains)
     .filter(([_, status]) => status.exists)
     .map(([chain, _]) => chain as SupportedChain)
-    
+
   mockStatus.summary.bestChain = mockStatus.summary.availableChains[0]
 
   return mockStatus

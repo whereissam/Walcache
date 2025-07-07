@@ -1,0 +1,31 @@
+{
+  "name": "walcache-landing",
+  "version": "1.0.0",
+  "description": "Walcache Landing Page - Marketing site for Walrus CDN",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3400",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "gsap": "^3.13.0",
+    "lucide-react": "^0.525.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.0",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.1.0"
+  }
+}

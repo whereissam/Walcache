@@ -114,7 +114,9 @@ export class EthereumVerifier implements ChainVerifier {
   ): Promise<AssetVerificationResult> {
     try {
       if (!options.contractAddress) {
-        throw new Error('Contract address is required for Ethereum verification')
+        throw new Error(
+          'Contract address is required for Ethereum verification',
+        )
       }
 
       const hasAccess = await this.mockEthereumVerification(options)
@@ -133,7 +135,9 @@ export class EthereumVerifier implements ChainVerifier {
               ],
             }
           : undefined,
-        error: !hasAccess ? 'Asset verification failed: Invalid address format or RPC call failed' : undefined,
+        error: !hasAccess
+          ? 'Asset verification failed: Invalid address format or RPC call failed'
+          : undefined,
         verifiedAt: new Date(),
       }
     } catch (error) {
@@ -157,7 +161,9 @@ export class EthereumVerifier implements ChainVerifier {
 
       return {
         exists,
-        owner: exists ? `0x${Math.random().toString(16).slice(2, 42)}` : undefined,
+        owner: exists
+          ? `0x${Math.random().toString(16).slice(2, 42)}`
+          : undefined,
         metadata: exists
           ? {
               name: `Ethereum NFT #${options.assetId}`,
@@ -166,7 +172,9 @@ export class EthereumVerifier implements ChainVerifier {
               network: this.network,
             }
           : undefined,
-        contentHashes: exists ? [`ipfs_${options.assetId}`, `walrus_${options.assetId}`] : undefined,
+        contentHashes: exists
+          ? [`ipfs_${options.assetId}`, `walrus_${options.assetId}`]
+          : undefined,
         queriedAt: new Date(),
       }
     } catch (error) {
@@ -256,7 +264,9 @@ export class SolanaVerifier implements ChainVerifier {
 
       return {
         exists,
-        owner: exists ? options.contractAddress || 'SolanaWalletAddress...' : undefined,
+        owner: exists
+          ? options.contractAddress || 'SolanaWalletAddress...'
+          : undefined,
         metadata: exists
           ? {
               name: `Solana Token ${options.assetId.slice(0, 8)}`,
@@ -265,7 +275,9 @@ export class SolanaVerifier implements ChainVerifier {
               network: this.network,
             }
           : undefined,
-        contentHashes: exists ? [`arweave_${options.assetId}`, `walrus_${options.assetId}`] : undefined,
+        contentHashes: exists
+          ? [`arweave_${options.assetId}`, `walrus_${options.assetId}`]
+          : undefined,
         queriedAt: new Date(),
       }
     } catch (error) {
