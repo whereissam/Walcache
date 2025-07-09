@@ -1,7 +1,21 @@
 import { config } from '../config/index.js'
 import type { AnalyticsEvent, CIDStats } from '../types/analytics.js'
 
-class AnalyticsService {
+export interface IAnalyticsService {
+  initialize(): Promise<void>
+  recordFetch(cid: string, hit: boolean, latency: number, size?: number, clientIP?: string, userAgent?: string): void
+  recordPreload(cids: string[]): void
+  recordPin(cid: string): void
+  recordUnpin(cid: string): void
+  getCIDStats(cid: string): CIDStats | null
+  getTopCIDs(limit?: number): CIDStats[]
+  getGlobalStats(): any
+  getRecentEvents(limit?: number): AnalyticsEvent[]
+  sendWebhook(event: AnalyticsEvent): Promise<void>
+  getGeographicStats(): any[]
+}
+
+export class AnalyticsService implements IAnalyticsService {
   private stats: Map<string, CIDStats> = new Map()
   private events: AnalyticsEvent[] = []
   private enabled: boolean = config.ENABLE_ANALYTICS
@@ -232,6 +246,12 @@ class AnalyticsService {
 
     // Sort by requests (highest first)
     return geoArray.sort((a, b) => b.requests - a.requests)
+  }
+
+  async destroy(): Promise<void> {
+    this.stats.clear()
+    this.events.length = 0
+    this.geoStats.clear()
   }
 }
 

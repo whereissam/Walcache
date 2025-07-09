@@ -1,14 +1,27 @@
 import axios from 'axios'
 import { config } from '../config/index.js'
 import { WalrusError, WALRUS_ERROR_CODES } from '../types/walrus.js'
-import { endpointHealthService } from './endpoint-health.js'
 import type { WalrusBlob } from '../types/walrus.js'
+import type { IEndpointHealthService } from './endpoint-health.js'
 
-class WalrusService {
+export interface IWalrusService {
+  initialize(endpointHealthService: IEndpointHealthService): Promise<void>
+  fetchBlob(cid: string): Promise<WalrusBlob | null>
+  fetchBlobWithRetry(cid: string, maxRetries?: number, interval?: number): Promise<WalrusBlob | null>
+  uploadBlob(data: Buffer, contentType: string, epochs?: number): Promise<string>
+  healthCheck(): Promise<boolean>
+  waitForAggregatorSync(blobId: string, maxRetries?: number, delayMs?: number): Promise<boolean>
+  uploadAndWaitForSync(data: Buffer, contentType: string, epochs?: number): Promise<{ blobId: string; synced: boolean }>
+  validateCID(cid: string): boolean
+}
+
+export class WalrusService implements IWalrusService {
   private primaryPublisher: string
   private primaryAggregator: string
   private ipfsGateway: string
   private enableIpfsFallback: boolean
+
+  private endpointHealthService?: IEndpointHealthService
 
   constructor() {
     this.primaryPublisher = config.WALRUS_ENDPOINT
@@ -17,18 +30,22 @@ class WalrusService {
     this.enableIpfsFallback = config.ENABLE_IPFS_FALLBACK
   }
 
+  async initialize(endpointHealthService: IEndpointHealthService): Promise<void> {
+    this.endpointHealthService = endpointHealthService
+  }
+
   private getBestAggregator(): string {
     // Try to get the best healthy aggregator, fallback to primary
-    return endpointHealthService.getBestAggregator() || this.primaryAggregator
+    return this.endpointHealthService?.getBestAggregator() || this.primaryAggregator
   }
 
   private getBestPublisher(): string {
     // Try to get the best healthy publisher, fallback to primary
-    return endpointHealthService.getBestPublisher() || this.primaryPublisher
+    return this.endpointHealthService?.getBestPublisher() || this.primaryPublisher
   }
 
   private getAllHealthyAggregators(): string[] {
-    const healthy = endpointHealthService.getHealthyAggregators()
+    const healthy = this.endpointHealthService?.getHealthyAggregators() || []
     // Always include primary as fallback
     if (!healthy.includes(this.primaryAggregator)) {
       healthy.push(this.primaryAggregator)

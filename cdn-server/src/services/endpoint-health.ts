@@ -4,6 +4,18 @@ import {
   WALRUS_ENDPOINTS,
   type WalrusNetwork,
 } from '../config/walrus-endpoints.js'
+import { metricsService } from './metrics.js'
+
+export interface IEndpointHealthService {
+  initialize(): Promise<void>
+  checkAllEndpoints(): Promise<void>
+  getHealthyAggregators(): string[]
+  getHealthyPublishers(): string[]
+  getBestAggregator(): string | null
+  getBestPublisher(): string | null
+  getHealthStatus(): any
+  destroy(): void
+}
 
 interface EndpointHealth {
   url: string
@@ -13,7 +25,7 @@ interface EndpointHealth {
   error?: string
 }
 
-class EndpointHealthService {
+export class EndpointHealthService implements IEndpointHealthService {
   private aggregatorHealth: Map<string, EndpointHealth> = new Map()
   private publisherHealth: Map<string, EndpointHealth> = new Map()
   private healthCheckInterval: NodeJS.Timeout | null = null
@@ -57,6 +69,7 @@ class EndpointHealthService {
 
   private async checkAggregatorEndpoint(url: string): Promise<void> {
     const startTime = Date.now()
+    const labels = { endpoint: url, type: 'aggregator' }
 
     try {
       // Test basic connectivity to root endpoint
@@ -66,6 +79,11 @@ class EndpointHealthService {
       })
 
       const responseTime = Date.now() - startTime
+      
+      // Record metrics
+      metricsService.histogram('walrus.endpoint.response_time', responseTime, labels)
+      metricsService.counter('walrus.endpoint.requests.total', 1, { ...labels, status: 'success' })
+      metricsService.gauge('walrus.endpoint.available', 1, labels)
 
       this.aggregatorHealth.set(url, {
         url,
@@ -75,6 +93,11 @@ class EndpointHealthService {
       })
     } catch (error) {
       const responseTime = Date.now() - startTime
+      
+      // Record failure metrics
+      metricsService.histogram('walrus.endpoint.response_time', responseTime, labels)
+      metricsService.counter('walrus.endpoint.requests.total', 1, { ...labels, status: 'failure' })
+      metricsService.gauge('walrus.endpoint.available', 0, labels)
 
       this.aggregatorHealth.set(url, {
         url,
@@ -88,6 +111,7 @@ class EndpointHealthService {
 
   private async checkPublisherEndpoint(url: string): Promise<void> {
     const startTime = Date.now()
+    const labels = { endpoint: url, type: 'publisher' }
 
     try {
       // Test with HEAD request to base URL
@@ -97,6 +121,11 @@ class EndpointHealthService {
       })
 
       const responseTime = Date.now() - startTime
+      
+      // Record metrics
+      metricsService.histogram('walrus.endpoint.response_time', responseTime, labels)
+      metricsService.counter('walrus.endpoint.requests.total', 1, { ...labels, status: 'success' })
+      metricsService.gauge('walrus.endpoint.available', 1, labels)
 
       this.publisherHealth.set(url, {
         url,
@@ -106,6 +135,11 @@ class EndpointHealthService {
       })
     } catch (error) {
       const responseTime = Date.now() - startTime
+      
+      // Record failure metrics
+      metricsService.histogram('walrus.endpoint.response_time', responseTime, labels)
+      metricsService.counter('walrus.endpoint.requests.total', 1, { ...labels, status: 'failure' })
+      metricsService.gauge('walrus.endpoint.available', 0, labels)
 
       this.publisherHealth.set(url, {
         url,
@@ -161,18 +195,38 @@ class EndpointHealthService {
     const aggregators = Array.from(this.aggregatorHealth.values())
     const publishers = Array.from(this.publisherHealth.values())
 
+    const healthyAggregators = aggregators.filter((h) => h.isHealthy)
+    const healthyPublishers = publishers.filter((h) => h.isHealthy)
+
+    // Calculate average response times
+    const avgAggregatorResponseTime = healthyAggregators.length > 0 
+      ? healthyAggregators.reduce((sum, h) => sum + h.responseTime, 0) / healthyAggregators.length
+      : 0
+
+    const avgPublisherResponseTime = healthyPublishers.length > 0
+      ? healthyPublishers.reduce((sum, h) => sum + h.responseTime, 0) / healthyPublishers.length
+      : 0
+
     return {
       aggregators: {
         total: aggregators.length,
-        healthy: aggregators.filter((h) => h.isHealthy).length,
+        healthy: healthyAggregators.length,
+        avgResponseTime: avgAggregatorResponseTime,
         details: aggregators,
       },
       publishers: {
         total: publishers.length,
-        healthy: publishers.filter((h) => h.isHealthy).length,
+        healthy: healthyPublishers.length,
+        avgResponseTime: avgPublisherResponseTime,
         details: publishers,
       },
       network: config.WALRUS_NETWORK,
+      overall: {
+        healthy: healthyAggregators.length > 0 && healthyPublishers.length > 0,
+        score: ((healthyAggregators.length / aggregators.length) + 
+                (healthyPublishers.length / publishers.length)) / 2,
+      },
+      lastCheck: new Date().toISOString(),
     }
   }
 

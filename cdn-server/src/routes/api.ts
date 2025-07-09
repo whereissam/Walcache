@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { walrusService } from '../services/walrus.js'
 import { cacheService } from '../services/cache.js'
 import { analyticsService } from '../services/analytics.js'
+import { metricsService } from '../services/metrics.js'
 import {
   requireAuth,
   optionalAuth,
@@ -210,13 +211,36 @@ export async function apiRoutes(fastify: FastifyInstance) {
       const globalStats = analyticsService.getGlobalStats()
       const cacheStats = await cacheService.getStats()
       const topCIDs = analyticsService.getTopCIDs(10)
+      const systemMetrics = metricsService.getSystemMetrics()
+      const appMetrics = metricsService.getMetrics()
 
       return reply.send({
         global: globalStats,
         cache: cacheStats,
         topCIDs,
         geographic: analyticsService.getGeographicStats(),
+        system: systemMetrics,
+        application: appMetrics,
       })
+    },
+  )
+
+  // Prometheus metrics endpoint
+  fastify.get(
+    '/metrics/prometheus',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const prometheusMetrics = metricsService.getPrometheusMetrics()
+      reply.header('Content-Type', 'text/plain; version=0.0.4')
+      return reply.send(prometheusMetrics)
+    },
+  )
+
+  // Detailed system metrics
+  fastify.get(
+    '/metrics/system',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const systemMetrics = metricsService.getSystemMetrics()
+      return reply.send(systemMetrics)
     },
   )
 

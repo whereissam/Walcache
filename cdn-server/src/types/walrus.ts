@@ -7,6 +7,7 @@ export interface WalrusBlob {
   source: 'walrus' | 'ipfs'
 }
 
+// Legacy error class - use BaseError instead
 export class WalrusError extends Error {
   constructor(
     message: string,
