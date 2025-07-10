@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { appConfig } from '../config/index.js'
 import { metricsService } from '../services/metrics.js'
 import { AuthenticationError, ErrorCode } from '../errors/base-error.js'
@@ -221,7 +221,6 @@ export class SecurityMiddleware {
         ErrorCode.AUTH_RATE_LIMIT_EXCEEDED,
         { clientIP },
         undefined,
-        300, // 5 minute retry after
       )
     }
   }
@@ -249,7 +248,6 @@ export class SecurityMiddleware {
           ErrorCode.AUTH_RATE_LIMIT_EXCEEDED,
           { clientIP },
           undefined,
-          300,
         )
       }
     }

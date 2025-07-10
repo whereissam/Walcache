@@ -1,11 +1,16 @@
-import { FastifyRequest, FastifyReply } from 'fastify'
+import type { FastifyRequest, FastifyReply } from 'fastify'
 import { config } from '../config/index.js'
 import { userService } from '../services/user.js'
-import { AuthenticatedUser, ApiPermission } from '../types/user.js'
+import type { AuthenticatedUser } from '../types/user.js'
+import { ApiPermission } from '../types/user.js'
 import { AuthenticationError, ErrorCode } from '../errors/base-error.js'
 import { metricsService } from '../services/metrics.js'
 
-export interface AuthenticatedRequest extends FastifyRequest {
+import type { RouteGenericInterface } from 'fastify'
+
+export interface AuthenticatedRequest<
+  T extends RouteGenericInterface = RouteGenericInterface,
+> extends FastifyRequest<T> {
   user?: AuthenticatedUser
 }
 

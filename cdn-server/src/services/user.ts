@@ -1,12 +1,10 @@
 import crypto from 'crypto'
 import bcrypt from 'bcrypt'
-import {
+import type {
   User,
   ApiToken,
   TokenUsage,
   TokenLimits,
-  SubscriptionTier,
-  SubscriptionStatus,
   ApiPermission,
   UserRegistration,
   LoginCredentials,
@@ -14,6 +12,7 @@ import {
   AuthenticatedUser,
   SubscriptionPlan,
 } from '../types/user.js'
+import { SubscriptionTier, SubscriptionStatus } from '../types/user.js'
 import { BaseError, ErrorCode } from '../errors/base-error.js'
 import { metricsService } from './metrics.js'
 

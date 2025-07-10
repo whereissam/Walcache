@@ -102,7 +102,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
     <div className="space-y-4 sm:space-y-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">API & SDK Guide</h1>
-        <p className="text-sm sm:text-base text-gray-600">
+        <p className="text-sm sm:text-base text-muted-foreground">
           Learn how to integrate WCDN CDN proxy into your applications
         </p>
       </div>
@@ -118,7 +118,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
         <CardContent>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Test CID
               </label>
               <div className="flex space-x-2">
@@ -142,10 +142,10 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
                 </Button>
               </div>
             </div>
-            <div className="p-3 bg-blue-50 rounded border">
+            <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded border">
               <p className="text-sm">
                 <strong>CDN URL:</strong>
-                <code className="ml-2 px-2 py-1 bg-white rounded text-xs">
+                <code className="ml-2 px-2 py-1 bg-white dark:bg-gray-800 rounded text-xs">
                   http://localhost:4500/cdn/{exampleCID}
                 </code>
                 <Button
@@ -196,7 +196,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Serve cached Walrus content by CID. Returns file content
                     with appropriate headers.
                   </p>
@@ -218,7 +218,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Get analytics and cache information for a specific CID.
                   </p>
                 </div>
@@ -237,7 +237,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Global CDN performance metrics and top CIDs.
                   </p>
                 </div>
@@ -265,7 +265,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Preload multiple CIDs into cache. Body:{' '}
                     <code>{'{ cids: string[] }'}</code>
                   </p>
@@ -287,7 +287,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Pin CID to prevent cache eviction.
                   </p>
                 </div>
@@ -308,7 +308,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600">Unpin CID from cache.</p>
+                  <p className="text-sm text-muted-foreground">Unpin CID from cache.</p>
                 </div>
               </div>
             </div>
@@ -459,8 +459,8 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-              <p className="text-sm text-yellow-800">
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
                 <strong>Note:</strong> The SDK is currently in development. You
                 can use the REST API endpoints directly for now.
               </p>
@@ -471,7 +471,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
                 Installation (Future)
               </h4>
               <div className="relative">
-                <pre className="text-sm bg-gray-100 p-3 rounded">
+                <pre className="text-sm bg-gray-100 dark:bg-gray-800 p-3 rounded">
                   <code>npm install @walrus/cdn</code>
                 </pre>
                 <Button
@@ -524,7 +524,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
           <div className="space-y-4 text-sm">
             <div>
               <h4 className="font-semibold text-blue-600">🚀 Performance</h4>
-              <ul className="list-disc list-inside space-y-1 text-gray-600">
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>
                   Preload frequently accessed content during off-peak hours
                 </li>
@@ -538,7 +538,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
 
             <div>
               <h4 className="font-semibold text-green-600">🔄 Reliability</h4>
-              <ul className="list-disc list-inside space-y-1 text-gray-600">
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>IPFS fallback is automatically enabled for redundancy</li>
                 <li>
                   Handle HTTP 404 responses gracefully for missing content
@@ -550,7 +550,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
 
             <div>
               <h4 className="font-semibold text-purple-600">⚡ Integration</h4>
-              <ul className="list-disc list-inside space-y-1 text-gray-600">
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>Use the CDN URL directly in your application</li>
                 <li>Cache URLs client-side to reduce API calls</li>
                 <li>Implement proper error handling for CDN failures</li>

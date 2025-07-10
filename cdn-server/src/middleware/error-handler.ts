@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { BaseError, ErrorCode } from '../errors/base-error.js'
 
 export interface ErrorResponse {

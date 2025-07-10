@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { walrusService } from '../services/walrus.js'
 import { cacheService } from '../services/cache.js'
 import { analyticsService } from '../services/analytics.js'

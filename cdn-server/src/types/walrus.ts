@@ -7,6 +7,30 @@ export interface WalrusBlob {
   source: 'walrus' | 'ipfs'
 }
 
+export interface WalrusBlobObject {
+  blobId: string
+  id: string
+}
+
+export interface WalrusUploadNewlyCreated {
+  newlyCreated: {
+    blobObject: WalrusBlobObject
+  }
+}
+
+export interface WalrusUploadAlreadyCertified {
+  alreadyCertified: {
+    blobId: string
+    event: {
+      txDigest: string
+    }
+  }
+}
+
+export type WalrusUploadResponse =
+  | WalrusUploadNewlyCreated
+  | WalrusUploadAlreadyCertified
+
 // Legacy error class - use BaseError instead
 export class WalrusError extends Error {
   constructor(

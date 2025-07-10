@@ -36,19 +36,10 @@ export class CacheService implements ICacheService {
   async initialize(): Promise<void> {
     try {
       this.redis = new Redis(config.REDIS_URL, {
-        retryDelayOnFailover: 100,
         maxRetriesPerRequest: 3,
         lazyConnect: true,
         connectTimeout: 2000,
-        // Enhanced connection pooling
-        maxRetriesPerRequest: 1,
-        keepAlive: true,
-        family: 4,
-        // Connection pool settings
         enableOfflineQueue: false,
-        // Cluster support if needed
-        enableReadyCheck: true,
-        // Memory optimization
         db: 0,
         keyPrefix: 'wcdn:',
       })

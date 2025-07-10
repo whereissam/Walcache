@@ -1,8 +1,9 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { tuskyService } from '../services/tusky.js'
 import { cacheService } from '../services/cache.js'
 import { analyticsService } from '../services/analytics.js'
+import type { WalrusUploadResponse } from '../types/walrus.js'
 import {
   requireAuth,
   optionalAuth,
@@ -70,7 +71,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             })
 
             if (response.ok) {
-              const walrusResponse = await response.json()
+              const walrusResponse =
+                (await response.json()) as WalrusUploadResponse
               fastify.log.info('Walrus upload successful:', walrusResponse)
 
               // Extract blobId from response

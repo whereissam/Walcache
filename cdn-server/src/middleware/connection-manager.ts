@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { metricsService } from '../services/metrics.js'
 import { appConfig } from '../config/index.js'
 
@@ -321,10 +321,9 @@ export class ConnectionManager {
   private async processQueuedConnections(): Promise<void> {
     // Process one queued connection when a slot becomes available
     if (this.connectionQueue.size > 0) {
-      const [queuedId, queuedConnection] = this.connectionQueue
-        .entries()
-        .next().value
-      if (queuedConnection) {
+      const entriesIterator = this.connectionQueue.entries().next()
+      if (!entriesIterator.done) {
+        const [queuedId, queuedConnection] = entriesIterator.value
         this.connectionQueue.delete(queuedId)
         queuedConnection.resolve()
         metricsService.counter('connections.queue.processed', 1)
@@ -333,9 +332,9 @@ export class ConnectionManager {
   }
 
   private async onConnectionError(
-    error: Error,
     request: FastifyRequest,
     reply: FastifyReply,
+    error: Error,
   ): Promise<void> {
     const requestId = request.headers['x-request-id'] as string
     const connection = this.activeConnections.get(requestId)

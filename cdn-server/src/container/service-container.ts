@@ -3,6 +3,7 @@ import type { AnalyticsService } from '../services/analytics.js'
 import type { WalrusService } from '../services/walrus.js'
 import type { TuskyService } from '../services/tusky.js'
 import type { EndpointHealthService } from '../services/endpoint-health.js'
+import type { UserService } from '../services/user.js'
 
 export interface ServiceDependencies {
   cache: CacheService
@@ -10,6 +11,7 @@ export interface ServiceDependencies {
   walrus: WalrusService
   tusky: TuskyService
   endpointHealth: EndpointHealthService
+  user: UserService
 }
 
 export class ServiceContainer {
@@ -51,7 +53,7 @@ export class ServiceContainer {
     const initPromises: Promise<any>[] = []
 
     for (const [name] of this.services) {
-      initPromises.push(this.get(name))
+      initPromises.push(this.get(name as keyof ServiceDependencies))
     }
 
     await Promise.all(initPromises)

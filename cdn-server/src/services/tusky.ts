@@ -37,7 +37,7 @@ export interface TuskyUploadResponse {
   file: TuskyFile
 }
 
-class TuskyService {
+export class TuskyService {
   private tusky: Tusky | null = null
   private defaultVaultId: string | undefined
 
@@ -108,7 +108,7 @@ class TuskyService {
         )
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as { items?: any[] }
       const vaults = data.items || []
       console.log(`Found ${vaults.length} vaults via API`)
 
@@ -237,7 +237,8 @@ class TuskyService {
         certifiedEpoch: fileMetadata.certifiedEpoch || 0,
         ref: fileMetadata.ref || '',
         erasureCodeType: fileMetadata.erasureCodeType || '',
-        status: fileMetadata.status || 'active',
+        status:
+          (fileMetadata.status as 'active' | 'deleted' | 'revoked') || 'active',
         createdAt: fileMetadata.createdAt,
         updatedAt: fileMetadata.updatedAt,
       }
@@ -274,7 +275,7 @@ class TuskyService {
         )
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as { items?: any[] }
       const files = data.items || []
       console.log(`Found ${files.length} files via API`)
 
@@ -332,7 +333,7 @@ class TuskyService {
         certifiedEpoch: file.certifiedEpoch || 0,
         ref: file.ref || '',
         erasureCodeType: file.erasureCodeType || '',
-        status: file.status || 'active',
+        status: (file.status as 'active' | 'deleted' | 'revoked') || 'active',
         createdAt: file.createdAt,
         updatedAt: file.updatedAt,
       }

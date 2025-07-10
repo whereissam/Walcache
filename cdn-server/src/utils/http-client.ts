@@ -1,8 +1,21 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios'
+import axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
+} from 'axios'
 import { Agent } from 'http'
 import { Agent as HttpsAgent } from 'https'
 import { CircuitBreaker } from './circuit-breaker.js'
 import { TimeoutError, ErrorCode } from '../errors/base-error.js'
+
+// Extend the Axios config type to include metadata
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    metadata?: {
+      startTime: number
+    }
+  }
+}
 
 export interface HttpClientOptions {
   timeout: number
@@ -80,8 +93,12 @@ export class HttpClient {
     // Response interceptor
     this.axios.interceptors.response.use(
       (response) => {
-        const duration = Date.now() - response.config.metadata.startTime
-        console.log(`📡 ${this.serviceName} request completed in ${duration}ms`)
+        if (response.config.metadata?.startTime) {
+          const duration = Date.now() - response.config.metadata.startTime
+          console.log(
+            `📡 ${this.serviceName} request completed in ${duration}ms`,
+          )
+        }
         return response
       },
       (error) => {

@@ -1,13 +1,12 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { userService } from '../services/user.js'
-import {
+import type {
   UserRegistration,
   LoginCredentials,
   TokenRequest,
-  SubscriptionTier,
-  ApiPermission,
 } from '../types/user.js'
+import { SubscriptionTier, ApiPermission } from '../types/user.js'
 import {
   requireAuth,
   requirePermission,

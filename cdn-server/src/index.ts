@@ -86,7 +86,7 @@ async function buildServer() {
   await fastify.register(userRoutes, { prefix: '/users' })
 
   fastify.get('/health', async (request, reply) => {
-    const cacheService = await serviceContainer.get('cache')
+    const cacheService = await serviceContainer.get<CacheService>('cache')
     const cacheStatus = await cacheService.healthCheck()
     return {
       status: 'ok',
@@ -116,10 +116,10 @@ async function start() {
     await serviceContainer.initialize()
 
     // Initialize individual services
-    const cacheService = await serviceContainer.get('cache')
-    const analyticsService = await serviceContainer.get('analytics')
-    const endpointHealthService = await serviceContainer.get('endpointHealth')
-    const walrusService = await serviceContainer.get('walrus')
+    const cacheService = await serviceContainer.get<CacheService>('cache')
+    const analyticsService = await serviceContainer.get<AnalyticsService>('analytics')
+    const endpointHealthService = await serviceContainer.get<EndpointHealthService>('endpointHealth')
+    const walrusService = await serviceContainer.get<WalrusService>('walrus')
 
     await cacheService.initialize()
     await analyticsService.initialize()
@@ -156,7 +156,8 @@ async function start() {
   }
 }
 
-if (import.meta.main) {
+// Start server if this is the main module
+if (import.meta.url === `file://${process.argv[1]}`) {
   start()
 }
 
