@@ -151,7 +151,12 @@ interface WalcacheState {
 }
 
 const API_BASE = 'http://localhost:4500/api'
-const API_KEY = 'dev-secret-wcdn-2024' // Match the backend API key from .env
+
+// Helper function to get authentication token
+const getAuthToken = () => {
+  const authStore = JSON.parse(localStorage.getItem('auth-storage') || '{}')
+  return authStore.state?.token || 'dev-secret-wcdn-2024' // Fallback to dev key
+}
 
 // Walrus aggregators for verification
 const WALRUS_AGGREGATORS = [
@@ -206,7 +211,11 @@ export const useWalcacheStore = create<WalcacheState>()(
       fetchCIDStats: async (cid: string) => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch(`${API_BASE}/stats/${cid}`)
+          const response = await fetch(`${API_BASE}/stats/${cid}`, {
+            headers: {
+              'X-API-Key': getAuthToken(),
+            },
+          })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
@@ -231,7 +240,11 @@ export const useWalcacheStore = create<WalcacheState>()(
       fetchGlobalStats: async () => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch(`${API_BASE}/metrics`)
+          const response = await fetch(`${API_BASE}/metrics`, {
+            headers: {
+              'X-API-Key': getAuthToken(),
+            },
+          })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }

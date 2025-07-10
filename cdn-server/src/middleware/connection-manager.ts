@@ -21,21 +21,27 @@ export interface ConnectionLimits {
 }
 
 export class ConnectionManager {
-  private activeConnections = new Map<string, {
-    startTime: number
-    ip: string
-    userAgent: string
-    requestId: string
-    socket?: any
-  }>()
-  
-  private connectionQueue = new Map<string, {
-    request: FastifyRequest
-    reply: FastifyReply
-    resolve: Function
-    reject: Function
-  }>()
-  
+  private activeConnections = new Map<
+    string,
+    {
+      startTime: number
+      ip: string
+      userAgent: string
+      requestId: string
+      socket?: any
+    }
+  >()
+
+  private connectionQueue = new Map<
+    string,
+    {
+      request: FastifyRequest
+      reply: FastifyReply
+      resolve: Function
+      reject: Function
+    }
+  >()
+
   private connectionStats: ConnectionStats = {
     activeConnections: 0,
     totalConnections: 0,
@@ -66,17 +72,26 @@ export class ConnectionManager {
     fastify.addHook('onRequest', this.onConnectionStart.bind(this))
     fastify.addHook('onResponse', this.onConnectionEnd.bind(this))
     fastify.addHook('onError', this.onConnectionError.bind(this))
-    
+
     // Connection monitoring endpoint
-    fastify.get('/api/connections/stats', async (request: FastifyRequest, reply: FastifyReply) => {
-      return this.getConnectionStats()
-    })
+    fastify.get(
+      '/api/connections/stats',
+      async (request: FastifyRequest, reply: FastifyReply) => {
+        return this.getConnectionStats()
+      },
+    )
 
     // Connection management endpoints
-    fastify.post('/api/connections/kill', async (request: FastifyRequest, reply: FastifyReply) => {
-      const { ip, requestId } = request.body as { ip?: string, requestId?: string }
-      return this.killConnections(ip, requestId)
-    })
+    fastify.post(
+      '/api/connections/kill',
+      async (request: FastifyRequest, reply: FastifyReply) => {
+        const { ip, requestId } = request.body as {
+          ip?: string
+          requestId?: string
+        }
+        return this.killConnections(ip, requestId)
+      },
+    )
 
     // Graceful shutdown hook
     fastify.addHook('onClose', async () => {
@@ -84,33 +99,43 @@ export class ConnectionManager {
     })
   }
 
-  private async onConnectionStart(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-    const requestId = request.headers['x-request-id'] as string || this.generateRequestId()
+  private async onConnectionStart(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const requestId =
+      (request.headers['x-request-id'] as string) || this.generateRequestId()
     const ip = this.getClientIP(request)
     const userAgent = request.headers['user-agent'] || 'unknown'
 
     // Check concurrent connection limits
     const currentConcurrentConnections = this.activeConnections.size
     if (currentConcurrentConnections >= this.limits.maxConcurrentConnections) {
-      metricsService.counter('connections.rejected', 1, { reason: 'concurrent_limit' })
-      reply.code(503).send({ 
-        error: 'Server at capacity', 
+      metricsService.counter('connections.rejected', 1, {
+        reason: 'concurrent_limit',
+      })
+      reply.code(503).send({
+        error: 'Server at capacity',
         maxConcurrentConnections: this.limits.maxConcurrentConnections,
-        currentConnections: currentConcurrentConnections
+        currentConnections: currentConcurrentConnections,
       })
       return
     }
 
     // Check per-IP concurrent connection limit
-    const ipConcurrentConnections = Array.from(this.activeConnections.values())
-      .filter(conn => conn.ip === ip).length
-    
+    const ipConcurrentConnections = Array.from(
+      this.activeConnections.values(),
+    ).filter((conn) => conn.ip === ip).length
+
     if (ipConcurrentConnections >= this.limits.maxConcurrentConnectionsPerIP) {
-      metricsService.counter('connections.rejected', 1, { reason: 'ip_concurrent_limit', ip })
-      reply.code(429).send({ 
+      metricsService.counter('connections.rejected', 1, {
+        reason: 'ip_concurrent_limit',
+        ip,
+      })
+      reply.code(429).send({
         error: 'Too many concurrent connections from this IP',
         maxConcurrentPerIP: this.limits.maxConcurrentConnectionsPerIP,
-        currentFromIP: ipConcurrentConnections
+        currentFromIP: ipConcurrentConnections,
       })
       return
     }
@@ -141,7 +166,7 @@ export class ConnectionManager {
     // Track recent connections for rate calculation
     this.recentConnections.push(Date.now())
     this.recentConnections = this.recentConnections.filter(
-      time => Date.now() - time <= 1000
+      (time) => Date.now() - time <= 1000,
     )
 
     // Record metrics
@@ -168,29 +193,40 @@ export class ConnectionManager {
     }, this.limits.maxConnectionDuration)
   }
 
-  private async acquireConnectionSlot(requestId: string, ip: string, userAgent: string): Promise<string | null> {
+  private async acquireConnectionSlot(
+    requestId: string,
+    ip: string,
+    userAgent: string,
+  ): Promise<string | null> {
     // Try to get an available pool slot
     for (const slot of this.connectionPool) {
-      if (!Array.from(this.activeConnections.values()).some(conn => conn.requestId.includes(slot))) {
+      if (
+        !Array.from(this.activeConnections.values()).some((conn) =>
+          conn.requestId.includes(slot),
+        )
+      ) {
         metricsService.counter('connections.pool.acquired', 1, { slot })
         return slot
       }
     }
-    
+
     metricsService.counter('connections.pool.exhausted', 1, { ip })
     return null
   }
 
   private async queueConnection(
-    requestId: string, 
-    request: FastifyRequest, 
-    reply: FastifyReply, 
-    ip: string, 
-    userAgent: string
+    requestId: string,
+    request: FastifyRequest,
+    reply: FastifyReply,
+    ip: string,
+    userAgent: string,
   ): Promise<void> {
     // Check queue size limit
     if (this.connectionQueue.size >= this.limits.maxConcurrentConnections * 2) {
-      metricsService.counter('connections.queue.rejected', 1, { reason: 'queue_full', ip })
+      metricsService.counter('connections.queue.rejected', 1, {
+        reason: 'queue_full',
+        ip,
+      })
       reply.code(503).send({ error: 'Connection queue is full' })
       return
     }
@@ -230,20 +266,24 @@ export class ConnectionManager {
     }
   }
 
-  private async onConnectionEnd(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  private async onConnectionEnd(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void> {
     const requestId = request.headers['x-request-id'] as string
     const connection = this.activeConnections.get(requestId)
-    
+
     if (!connection) return
 
     const duration = Date.now() - connection.startTime
-    
+
     // Update stats
     this.connectionDurations.push(duration)
     this.connectionDurations = this.connectionDurations.slice(-100) // Keep last 100
-    
-    this.connectionStats.avgConnectionDuration = 
-      this.connectionDurations.reduce((sum, d) => sum + d, 0) / this.connectionDurations.length
+
+    this.connectionStats.avgConnectionDuration =
+      this.connectionDurations.reduce((sum, d) => sum + d, 0) /
+      this.connectionDurations.length
 
     this.updateIPStats(connection.ip, -1)
     this.updateUserAgentStats(connection.userAgent, -1)
@@ -256,21 +296,21 @@ export class ConnectionManager {
     await this.processQueuedConnections()
 
     // Record metrics
-    metricsService.counter('connections.completed', 1, { 
-      ip: connection.ip, 
-      userAgent: connection.userAgent 
+    metricsService.counter('connections.completed', 1, {
+      ip: connection.ip,
+      userAgent: connection.userAgent,
     })
-    metricsService.histogram('connections.duration', duration, { 
-      ip: connection.ip 
+    metricsService.histogram('connections.duration', duration, {
+      ip: connection.ip,
     })
     metricsService.gauge('connections.active', this.activeConnections.size)
     metricsService.gauge('connections.queued', this.connectionQueue.size)
 
     // Check for slow requests
     if (duration > this.limits.slowRequestThreshold) {
-      metricsService.counter('connections.slow', 1, { 
+      metricsService.counter('connections.slow', 1, {
         ip: connection.ip,
-        path: request.url 
+        path: request.url,
       })
     }
 
@@ -281,7 +321,9 @@ export class ConnectionManager {
   private async processQueuedConnections(): Promise<void> {
     // Process one queued connection when a slot becomes available
     if (this.connectionQueue.size > 0) {
-      const [queuedId, queuedConnection] = this.connectionQueue.entries().next().value
+      const [queuedId, queuedConnection] = this.connectionQueue
+        .entries()
+        .next().value
       if (queuedConnection) {
         this.connectionQueue.delete(queuedId)
         queuedConnection.resolve()
@@ -290,16 +332,20 @@ export class ConnectionManager {
     }
   }
 
-  private async onConnectionError(error: Error, request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  private async onConnectionError(
+    error: Error,
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void> {
     const requestId = request.headers['x-request-id'] as string
     const connection = this.activeConnections.get(requestId)
-    
+
     if (connection) {
-      metricsService.counter('connections.errors', 1, { 
+      metricsService.counter('connections.errors', 1, {
         ip: connection.ip,
-        error: error.name 
+        error: error.name,
       })
-      
+
       // Clean up connection
       this.activeConnections.delete(requestId)
       this.connectionStats.activeConnections = this.activeConnections.size
@@ -315,17 +361,17 @@ export class ConnectionManager {
       this.connectionStats.activeConnections = this.activeConnections.size
       this.updateIPStats(connection.ip, -1)
       this.updateUserAgentStats(connection.userAgent, -1)
-      
-      metricsService.counter('connections.killed', 1, { 
+
+      metricsService.counter('connections.killed', 1, {
         reason,
-        ip: connection.ip 
+        ip: connection.ip,
       })
     }
   }
 
   private killConnections(ip?: string, requestId?: string): { killed: number } {
     let killed = 0
-    
+
     if (requestId) {
       this.killConnection(requestId, 'manual')
       killed = 1
@@ -333,18 +379,18 @@ export class ConnectionManager {
       const toKill = Array.from(this.activeConnections.entries())
         .filter(([_, conn]) => conn.ip === ip)
         .map(([id, _]) => id)
-      
-      toKill.forEach(id => this.killConnection(id, 'manual'))
+
+      toKill.forEach((id) => this.killConnection(id, 'manual'))
       killed = toKill.length
     }
-    
+
     return { killed }
   }
 
   private updateIPStats(ip: string, delta: number): void {
     const current = this.connectionStats.connectionsByIP.get(ip) || 0
     const newValue = Math.max(0, current + delta)
-    
+
     if (newValue === 0) {
       this.connectionStats.connectionsByIP.delete(ip)
     } else {
@@ -353,9 +399,10 @@ export class ConnectionManager {
   }
 
   private updateUserAgentStats(userAgent: string, delta: number): void {
-    const current = this.connectionStats.connectionsByUserAgent.get(userAgent) || 0
+    const current =
+      this.connectionStats.connectionsByUserAgent.get(userAgent) || 0
     const newValue = Math.max(0, current + delta)
-    
+
     if (newValue === 0) {
       this.connectionStats.connectionsByUserAgent.delete(userAgent)
     } else {
@@ -367,55 +414,67 @@ export class ConnectionManager {
     setInterval(() => {
       // Calculate connections per second
       this.connectionStats.connectionsPerSecond = this.recentConnections.length
-      
+
       // Record metrics
-      metricsService.gauge('connections.per_second', this.connectionStats.connectionsPerSecond)
-      metricsService.gauge('connections.avg_duration', this.connectionStats.avgConnectionDuration)
-      
+      metricsService.gauge(
+        'connections.per_second',
+        this.connectionStats.connectionsPerSecond,
+      )
+      metricsService.gauge(
+        'connections.avg_duration',
+        this.connectionStats.avgConnectionDuration,
+      )
+
       // Top IPs by connection count
       const topIPs = Array.from(this.connectionStats.connectionsByIP.entries())
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, 10)
-      
+
       topIPs.forEach(([ip, count]) => {
         metricsService.gauge('connections.by_ip', count, { ip })
       })
-      
     }, 1000) // Every second
   }
 
   private async gracefulShutdown(): Promise<void> {
     console.log('🔄 Starting graceful shutdown...')
-    
+
     // Give existing connections time to complete
     const shutdownTimeout = 30000 // 30 seconds
     const startTime = Date.now()
-    
-    while (this.activeConnections.size > 0 && Date.now() - startTime < shutdownTimeout) {
-      console.log(`⏳ Waiting for ${this.activeConnections.size} connections to complete...`)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+
+    while (
+      this.activeConnections.size > 0 &&
+      Date.now() - startTime < shutdownTimeout
+    ) {
+      console.log(
+        `⏳ Waiting for ${this.activeConnections.size} connections to complete...`,
+      )
+      await new Promise((resolve) => setTimeout(resolve, 1000))
     }
-    
+
     if (this.activeConnections.size > 0) {
-      console.log(`⚠️ Forcefully closing ${this.activeConnections.size} remaining connections`)
+      console.log(
+        `⚠️ Forcefully closing ${this.activeConnections.size} remaining connections`,
+      )
       this.activeConnections.clear()
     }
-    
+
     console.log('✅ Graceful shutdown completed')
   }
 
   private getClientIP(request: FastifyRequest): string {
     const forwarded = request.headers['x-forwarded-for'] as string
     const realIP = request.headers['x-real-ip'] as string
-    
+
     if (forwarded) {
       return forwarded.split(',')[0].trim()
     }
-    
+
     if (realIP) {
       return realIP
     }
-    
+
     return request.ip
   }
 
@@ -427,7 +486,9 @@ export class ConnectionManager {
     return {
       ...this.connectionStats,
       connectionsByIP: new Map(this.connectionStats.connectionsByIP),
-      connectionsByUserAgent: new Map(this.connectionStats.connectionsByUserAgent),
+      connectionsByUserAgent: new Map(
+        this.connectionStats.connectionsByUserAgent,
+      ),
     }
   }
 
@@ -438,12 +499,14 @@ export class ConnectionManager {
     duration: number
   }> {
     const now = Date.now()
-    return Array.from(this.activeConnections.entries()).map(([requestId, conn]) => ({
-      requestId,
-      ip: conn.ip,
-      userAgent: conn.userAgent,
-      duration: now - conn.startTime,
-    }))
+    return Array.from(this.activeConnections.entries()).map(
+      ([requestId, conn]) => ({
+        requestId,
+        ip: conn.ip,
+        userAgent: conn.userAgent,
+        duration: now - conn.startTime,
+      }),
+    )
   }
 }
 

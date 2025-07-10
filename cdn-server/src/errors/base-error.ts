@@ -2,30 +2,30 @@ export enum ErrorCode {
   // Cache errors
   CACHE_CONNECTION_FAILED = 'CACHE_CONNECTION_FAILED',
   CACHE_OPERATION_FAILED = 'CACHE_OPERATION_FAILED',
-  
+
   // Walrus errors
   WALRUS_BLOB_NOT_FOUND = 'WALRUS_BLOB_NOT_FOUND',
   WALRUS_BLOB_NOT_AVAILABLE_YET = 'WALRUS_BLOB_NOT_AVAILABLE_YET',
   WALRUS_ENDPOINT_UNAVAILABLE = 'WALRUS_ENDPOINT_UNAVAILABLE',
   WALRUS_UPLOAD_FAILED = 'WALRUS_UPLOAD_FAILED',
   WALRUS_INVALID_CID = 'WALRUS_INVALID_CID',
-  
+
   // Tusky errors
   TUSKY_API_ERROR = 'TUSKY_API_ERROR',
   TUSKY_UPLOAD_FAILED = 'TUSKY_UPLOAD_FAILED',
   TUSKY_FILE_NOT_FOUND = 'TUSKY_FILE_NOT_FOUND',
   TUSKY_VAULT_NOT_FOUND = 'TUSKY_VAULT_NOT_FOUND',
-  
+
   // Authentication errors
   AUTH_MISSING_API_KEY = 'AUTH_MISSING_API_KEY',
   AUTH_INVALID_API_KEY = 'AUTH_INVALID_API_KEY',
   AUTH_RATE_LIMIT_EXCEEDED = 'AUTH_RATE_LIMIT_EXCEEDED',
-  
+
   // Validation errors
   VALIDATION_FAILED = 'VALIDATION_FAILED',
   INVALID_FILE_SIZE = 'INVALID_FILE_SIZE',
   INVALID_FILE_TYPE = 'INVALID_FILE_TYPE',
-  
+
   // System errors
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
   SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
@@ -50,7 +50,7 @@ export class BaseError extends Error {
     statusCode: number = 500,
     context: ErrorContext = {},
     correlationId?: string,
-    retryAfter?: number
+    retryAfter?: number,
   ) {
     super(message)
     this.name = this.constructor.name
@@ -84,7 +84,7 @@ export class CacheError extends BaseError {
     message: string,
     code: ErrorCode,
     context: ErrorContext = {},
-    correlationId?: string
+    correlationId?: string,
   ) {
     super(message, code, 500, context, correlationId)
   }
@@ -97,7 +97,7 @@ export class WalrusError extends BaseError {
     statusCode: number = 500,
     context: ErrorContext = {},
     correlationId?: string,
-    retryAfter?: number
+    retryAfter?: number,
   ) {
     super(message, code, statusCode, context, correlationId, retryAfter)
   }
@@ -109,7 +109,7 @@ export class TuskyError extends BaseError {
     code: ErrorCode,
     statusCode: number = 500,
     context: ErrorContext = {},
-    correlationId?: string
+    correlationId?: string,
   ) {
     super(message, code, statusCode, context, correlationId)
   }
@@ -120,7 +120,7 @@ export class AuthenticationError extends BaseError {
     message: string,
     code: ErrorCode,
     context: ErrorContext = {},
-    correlationId?: string
+    correlationId?: string,
   ) {
     super(message, code, 401, context, correlationId)
   }
@@ -130,7 +130,7 @@ export class ValidationError extends BaseError {
   constructor(
     message: string,
     context: ErrorContext = {},
-    correlationId?: string
+    correlationId?: string,
   ) {
     super(message, ErrorCode.VALIDATION_FAILED, 400, context, correlationId)
   }
@@ -140,7 +140,7 @@ export class TimeoutError extends BaseError {
   constructor(
     message: string,
     context: ErrorContext = {},
-    correlationId?: string
+    correlationId?: string,
   ) {
     super(message, ErrorCode.TIMEOUT_ERROR, 408, context, correlationId)
   }

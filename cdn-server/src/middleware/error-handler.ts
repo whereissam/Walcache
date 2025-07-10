@@ -16,11 +16,12 @@ export interface ErrorResponse {
 export async function errorHandler(
   error: Error,
   request: FastifyRequest,
-  reply: FastifyReply
+  reply: FastifyReply,
 ): Promise<void> {
-  const correlationId = request.headers['x-correlation-id'] as string || 
-                       request.headers['x-request-id'] as string ||
-                       generateCorrelationId()
+  const correlationId =
+    (request.headers['x-correlation-id'] as string) ||
+    (request.headers['x-request-id'] as string) ||
+    generateCorrelationId()
 
   // Log the error with structured logging
   const errorLog = {
@@ -40,7 +41,7 @@ export async function errorHandler(
 
   if (error instanceof BaseError) {
     request.log.error(errorLog, `${error.code}: ${error.message}`)
-    
+
     const errorResponse: ErrorResponse = {
       error: {
         code: error.code,
@@ -57,7 +58,7 @@ export async function errorHandler(
   } else {
     // Handle unexpected errors
     request.log.error(errorLog, `Unexpected error: ${error.message}`)
-    
+
     const errorResponse: ErrorResponse = {
       error: {
         code: ErrorCode.INTERNAL_SERVER_ERROR,
@@ -78,25 +79,26 @@ function generateCorrelationId(): string {
 
 function sanitizeHeaders(headers: any): any {
   const sanitized = { ...headers }
-  
+
   // Remove sensitive headers
   delete sanitized['authorization']
   delete sanitized['x-api-key']
   delete sanitized['cookie']
   delete sanitized['set-cookie']
-  
+
   return sanitized
 }
 
 export function registerErrorHandler(fastify: FastifyInstance): void {
   fastify.setErrorHandler(errorHandler)
-  
+
   // Add correlation ID to all requests
   fastify.addHook('onRequest', async (request, reply) => {
-    const correlationId = request.headers['x-correlation-id'] as string || 
-                         request.headers['x-request-id'] as string ||
-                         generateCorrelationId()
-    
+    const correlationId =
+      (request.headers['x-correlation-id'] as string) ||
+      (request.headers['x-request-id'] as string) ||
+      generateCorrelationId()
+
     request.headers['x-correlation-id'] = correlationId
     reply.header('X-Correlation-ID', correlationId)
   })

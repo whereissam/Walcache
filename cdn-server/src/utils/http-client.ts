@@ -23,7 +23,7 @@ export class HttpClient {
 
   constructor(
     private serviceName: string,
-    options: HttpClientOptions
+    options: HttpClientOptions,
   ) {
     // Configure connection pooling
     const httpAgent = new Agent({
@@ -54,9 +54,11 @@ export class HttpClient {
         monitoringPeriod: options.circuitBreaker.monitoringPeriod,
         expectedErrors: (error) => {
           // Don't count 4xx errors as failures
-          return axios.isAxiosError(error) && 
-                 error.response?.status !== undefined && 
-                 error.response.status < 500
+          return (
+            axios.isAxiosError(error) &&
+            error.response?.status !== undefined &&
+            error.response.status < 500
+          )
         },
       })
     }
@@ -72,7 +74,7 @@ export class HttpClient {
         config.metadata = { startTime: Date.now() }
         return config
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     )
 
     // Response interceptor
@@ -83,35 +85,46 @@ export class HttpClient {
         return response
       },
       (error) => {
-        const duration = error.config?.metadata?.startTime 
-          ? Date.now() - error.config.metadata.startTime 
+        const duration = error.config?.metadata?.startTime
+          ? Date.now() - error.config.metadata.startTime
           : 0
-        
+
         if (axios.isAxiosError(error)) {
           if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-            console.warn(`⏱️ ${this.serviceName} request timed out after ${duration}ms`)
-            return Promise.reject(new TimeoutError(
-              `Request to ${this.serviceName} timed out`,
-              { duration, url: error.config?.url }
-            ))
+            console.warn(
+              `⏱️ ${this.serviceName} request timed out after ${duration}ms`,
+            )
+            return Promise.reject(
+              new TimeoutError(`Request to ${this.serviceName} timed out`, {
+                duration,
+                url: error.config?.url,
+              }),
+            )
           }
-          
-          console.warn(`❌ ${this.serviceName} request failed: ${error.message} (${duration}ms)`)
+
+          console.warn(
+            `❌ ${this.serviceName} request failed: ${error.message} (${duration}ms)`,
+          )
         }
-        
+
         return Promise.reject(error)
-      }
+      },
     )
   }
 
-  async get<T>(url: string, config?: AxiosRequestConfig, correlationId?: string): Promise<T> {
-    const request = () => this.axios.get<T>(url, {
-      ...config,
-      headers: {
-        ...config?.headers,
-        'X-Correlation-ID': correlationId,
-      },
-    })
+  async get<T>(
+    url: string,
+    config?: AxiosRequestConfig,
+    correlationId?: string,
+  ): Promise<T> {
+    const request = () =>
+      this.axios.get<T>(url, {
+        ...config,
+        headers: {
+          ...config?.headers,
+          'X-Correlation-ID': correlationId,
+        },
+      })
 
     if (this.circuitBreaker) {
       const response = await this.circuitBreaker.execute(request, correlationId)
@@ -122,14 +135,20 @@ export class HttpClient {
     return response.data
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig, correlationId?: string): Promise<T> {
-    const request = () => this.axios.post<T>(url, data, {
-      ...config,
-      headers: {
-        ...config?.headers,
-        'X-Correlation-ID': correlationId,
-      },
-    })
+  async post<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+    correlationId?: string,
+  ): Promise<T> {
+    const request = () =>
+      this.axios.post<T>(url, data, {
+        ...config,
+        headers: {
+          ...config?.headers,
+          'X-Correlation-ID': correlationId,
+        },
+      })
 
     if (this.circuitBreaker) {
       const response = await this.circuitBreaker.execute(request, correlationId)
@@ -140,14 +159,20 @@ export class HttpClient {
     return response.data
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig, correlationId?: string): Promise<T> {
-    const request = () => this.axios.put<T>(url, data, {
-      ...config,
-      headers: {
-        ...config?.headers,
-        'X-Correlation-ID': correlationId,
-      },
-    })
+  async put<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+    correlationId?: string,
+  ): Promise<T> {
+    const request = () =>
+      this.axios.put<T>(url, data, {
+        ...config,
+        headers: {
+          ...config?.headers,
+          'X-Correlation-ID': correlationId,
+        },
+      })
 
     if (this.circuitBreaker) {
       const response = await this.circuitBreaker.execute(request, correlationId)
@@ -158,14 +183,19 @@ export class HttpClient {
     return response.data
   }
 
-  async head(url: string, config?: AxiosRequestConfig, correlationId?: string): Promise<any> {
-    const request = () => this.axios.head(url, {
-      ...config,
-      headers: {
-        ...config?.headers,
-        'X-Correlation-ID': correlationId,
-      },
-    })
+  async head(
+    url: string,
+    config?: AxiosRequestConfig,
+    correlationId?: string,
+  ): Promise<any> {
+    const request = () =>
+      this.axios.head(url, {
+        ...config,
+        headers: {
+          ...config?.headers,
+          'X-Correlation-ID': correlationId,
+        },
+      })
 
     if (this.circuitBreaker) {
       return await this.circuitBreaker.execute(request, correlationId)

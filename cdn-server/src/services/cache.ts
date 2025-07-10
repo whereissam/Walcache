@@ -72,11 +72,14 @@ export class CacheService implements ICacheService {
       })
 
       await this.redis.connect()
-      
+
       // Test connection
       await this.redis.ping()
     } catch (error) {
-      console.warn('⚠️  Redis unavailable, falling back to memory cache:', error)
+      console.warn(
+        '⚠️  Redis unavailable, falling back to memory cache:',
+        error,
+      )
       this.useRedis = false
       if (this.redis) {
         this.redis.disconnect()
@@ -85,7 +88,7 @@ export class CacheService implements ICacheService {
       throw new CacheError(
         'Failed to initialize Redis cache',
         ErrorCode.CACHE_CONNECTION_FAILED,
-        { error: error instanceof Error ? error.message : String(error) }
+        { error: error instanceof Error ? error.message : String(error) },
       )
     }
   }
@@ -266,10 +269,10 @@ export class CacheService implements ICacheService {
 
   async warmCache(cids: string[]): Promise<void> {
     console.log(`🔥 Warming cache for ${cids.length} CIDs...`)
-    
+
     const batchSize = 10
     const batches = []
-    
+
     for (let i = 0; i < cids.length; i += batchSize) {
       batches.push(cids.slice(i, i + batchSize))
     }
@@ -287,38 +290,38 @@ export class CacheService implements ICacheService {
       })
 
       await Promise.allSettled(warmPromises)
-      
+
       // Small delay between batches to avoid overwhelming the system
       if (batches.indexOf(batch) < batches.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 100))
       }
     }
-    
+
     console.log(`✅ Cache warming completed`)
   }
 
   async preloadPopularContent(): Promise<void> {
     console.log('📈 Preloading popular content...')
-    
+
     try {
       if (this.useRedis && this.redis) {
         // Get popular content based on access frequency
         const popularKeys = await this.redis.keys('blob:*')
-        
+
         // Sort by last access time or frequency if we track it
         const popularCids = popularKeys
           .slice(0, 20)
-          .map(key => key.replace('blob:', ''))
-        
+          .map((key) => key.replace('blob:', ''))
+
         await this.warmCache(popularCids)
       } else {
         // For memory cache, get existing keys
         const keys = this.memoryCache.keys()
         const popularCids = keys
-          .filter(key => key.startsWith('blob:'))
+          .filter((key) => key.startsWith('blob:'))
           .slice(0, 10)
-          .map(key => key.replace('blob:', ''))
-        
+          .map((key) => key.replace('blob:', ''))
+
         await this.warmCache(popularCids)
       }
     } catch (error) {
@@ -332,7 +335,7 @@ export class CacheService implements ICacheService {
         const info = await this.redis.info('memory')
         const usedMemory = parseInt(info.match(/used_memory:(\d+)/)?.[1] || '0')
         const maxMemory = parseInt(info.match(/maxmemory:(\d+)/)?.[1] || '0')
-        
+
         if (maxMemory > 0) {
           return usedMemory / maxMemory
         }
@@ -340,14 +343,14 @@ export class CacheService implements ICacheService {
         console.warn('Failed to get Redis memory info:', error)
       }
     }
-    
+
     const memStats = this.memoryCache.getStats()
     return memStats.keys / config.MAX_CACHE_SIZE
   }
 
   async evictLeastUsed(count: number = 10): Promise<void> {
     console.log(`🗑️ Evicting ${count} least used items...`)
-    
+
     if (this.useRedis && this.redis) {
       try {
         // Get keys sorted by last access time
@@ -356,15 +359,15 @@ export class CacheService implements ICacheService {
           keys.map(async (key) => ({
             key,
             ttl: await this.redis!.ttl(key),
-          }))
+          })),
         )
-        
+
         // Sort by TTL (items with lower TTL are accessed less recently)
         const sortedKeys = keysWithTTL
           .sort((a, b) => a.ttl - b.ttl)
           .slice(0, count)
-          .map(item => item.key)
-        
+          .map((item) => item.key)
+
         if (sortedKeys.length > 0) {
           await this.redis.del(...sortedKeys)
           console.log(`✅ Evicted ${sortedKeys.length} items from Redis`)
@@ -373,17 +376,17 @@ export class CacheService implements ICacheService {
         console.warn('Failed to evict from Redis:', error)
       }
     }
-    
+
     // Also evict from memory cache
     const memKeys = this.memoryCache.keys()
     const blobKeys = memKeys
-      .filter(key => key.startsWith('blob:'))
+      .filter((key) => key.startsWith('blob:'))
       .slice(0, count)
-    
+
     for (const key of blobKeys) {
       this.memoryCache.del(key)
     }
-    
+
     console.log(`✅ Evicted ${blobKeys.length} items from memory cache`)
   }
 

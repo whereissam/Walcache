@@ -10,9 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UploadRouteImport } from './routes/upload'
+import { Route as TokensRouteImport } from './routes/tokens'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as MultichainRouteImport } from './routes/multichain'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExplorerRouteImport } from './routes/explorer'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CacheRouteImport } from './routes/cache'
 import { Route as ApiRouteImport } from './routes/api'
 import { Route as IndexRouteImport } from './routes/index'
@@ -22,9 +26,24 @@ const UploadRoute = UploadRouteImport.update({
   path: '/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TokensRoute = TokensRouteImport.update({
+  id: '/tokens',
+  path: '/tokens',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MultichainRoute = MultichainRouteImport.update({
   id: '/multichain',
   path: '/multichain',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExplorerRoute = ExplorerRouteImport.update({
@@ -35,6 +54,11 @@ const ExplorerRoute = ExplorerRouteImport.update({
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CacheRoute = CacheRouteImport.update({
@@ -57,18 +81,26 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api': typeof ApiRoute
   '/cache': typeof CacheRoute
+  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/explorer': typeof ExplorerRoute
+  '/login': typeof LoginRoute
   '/multichain': typeof MultichainRoute
+  '/register': typeof RegisterRoute
+  '/tokens': typeof TokensRoute
   '/upload': typeof UploadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api': typeof ApiRoute
   '/cache': typeof CacheRoute
+  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/explorer': typeof ExplorerRoute
+  '/login': typeof LoginRoute
   '/multichain': typeof MultichainRoute
+  '/register': typeof RegisterRoute
+  '/tokens': typeof TokensRoute
   '/upload': typeof UploadRoute
 }
 export interface FileRoutesById {
@@ -76,9 +108,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api': typeof ApiRoute
   '/cache': typeof CacheRoute
+  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/explorer': typeof ExplorerRoute
+  '/login': typeof LoginRoute
   '/multichain': typeof MultichainRoute
+  '/register': typeof RegisterRoute
+  '/tokens': typeof TokensRoute
   '/upload': typeof UploadRoute
 }
 export interface FileRouteTypes {
@@ -87,27 +123,39 @@ export interface FileRouteTypes {
     | '/'
     | '/api'
     | '/cache'
+    | '/dashboard'
     | '/demo'
     | '/explorer'
+    | '/login'
     | '/multichain'
+    | '/register'
+    | '/tokens'
     | '/upload'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/api'
     | '/cache'
+    | '/dashboard'
     | '/demo'
     | '/explorer'
+    | '/login'
     | '/multichain'
+    | '/register'
+    | '/tokens'
     | '/upload'
   id:
     | '__root__'
     | '/'
     | '/api'
     | '/cache'
+    | '/dashboard'
     | '/demo'
     | '/explorer'
+    | '/login'
     | '/multichain'
+    | '/register'
+    | '/tokens'
     | '/upload'
   fileRoutesById: FileRoutesById
 }
@@ -115,9 +163,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiRoute: typeof ApiRoute
   CacheRoute: typeof CacheRoute
+  DashboardRoute: typeof DashboardRoute
   DemoRoute: typeof DemoRoute
   ExplorerRoute: typeof ExplorerRoute
+  LoginRoute: typeof LoginRoute
   MultichainRoute: typeof MultichainRoute
+  RegisterRoute: typeof RegisterRoute
+  TokensRoute: typeof TokensRoute
   UploadRoute: typeof UploadRoute
 }
 
@@ -130,11 +182,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tokens': {
+      id: '/tokens'
+      path: '/tokens'
+      fullPath: '/tokens'
+      preLoaderRoute: typeof TokensRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/multichain': {
       id: '/multichain'
       path: '/multichain'
       fullPath: '/multichain'
       preLoaderRoute: typeof MultichainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explorer': {
@@ -149,6 +222,13 @@ declare module '@tanstack/react-router' {
       path: '/demo'
       fullPath: '/demo'
       preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cache': {
@@ -179,9 +259,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiRoute: ApiRoute,
   CacheRoute: CacheRoute,
+  DashboardRoute: DashboardRoute,
   DemoRoute: DemoRoute,
   ExplorerRoute: ExplorerRoute,
+  LoginRoute: LoginRoute,
   MultichainRoute: MultichainRoute,
+  RegisterRoute: RegisterRoute,
+  TokensRoute: TokensRoute,
   UploadRoute: UploadRoute,
 }
 export const routeTree = rootRouteImport

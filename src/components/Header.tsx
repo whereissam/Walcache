@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
 import {
   Search,
@@ -10,12 +10,28 @@ import {
   Code,
   Globe,
   PlayCircle,
+  User,
+  LogOut,
+  Key,
+  CreditCard,
+  ChevronDown,
+  LogIn,
+  UserPlus,
 } from 'lucide-react'
 import { ThemeToggle } from './ui/theme-toggle'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
+import { useAuthStore } from '../store/authStore'
 import walcacheLogo from '../assets/walcache-logo.jpeg'
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const { user, isAuthenticated, logout, checkAuth } = useAuthStore()
+
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -23,6 +39,30 @@ export default function Header() {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false)
+  }
+
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(!isUserMenuOpen)
+  }
+
+  const handleLogout = () => {
+    logout()
+    setIsUserMenuOpen(false)
+  }
+
+  const getSubscriptionColor = (tier: string) => {
+    switch (tier) {
+      case 'free':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100'
+      case 'starter':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100'
+      case 'professional':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100'
+      case 'enterprise':
+        return 'bg-gold-100 text-gold-800 dark:bg-gold-900 dark:text-gold-100'
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100'
+    }
   }
 
   return (
@@ -58,7 +98,7 @@ export default function Header() {
               activeProps={{ className: 'text-primary bg-accent' }}
             >
               <BarChart3 className="h-4 w-4" />
-              <span>Dashboard</span>
+              <span>Analytics</span>
             </Link>
 
             <Link
@@ -70,23 +110,45 @@ export default function Header() {
               <span>Explorer</span>
             </Link>
 
-            <Link
-              to="/cache"
-              className="flex items-center space-x-1 text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
-              activeProps={{ className: 'text-primary bg-accent' }}
-            >
-              <Settings className="h-4 w-4" />
-              <span>Cache</span>
-            </Link>
+            {isAuthenticated && (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="flex items-center space-x-1 text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
+                  activeProps={{ className: 'text-primary bg-accent' }}
+                >
+                  <User className="h-4 w-4" />
+                  <span>Dashboard</span>
+                </Link>
 
-            <Link
-              to="/upload"
-              className="flex items-center space-x-1 text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
-              activeProps={{ className: 'text-primary bg-accent' }}
-            >
-              <Upload className="h-4 w-4" />
-              <span>Upload</span>
-            </Link>
+                <Link
+                  to="/tokens"
+                  className="flex items-center space-x-1 text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
+                  activeProps={{ className: 'text-primary bg-accent' }}
+                >
+                  <Key className="h-4 w-4" />
+                  <span>Tokens</span>
+                </Link>
+
+                <Link
+                  to="/cache"
+                  className="flex items-center space-x-1 text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
+                  activeProps={{ className: 'text-primary bg-accent' }}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Cache</span>
+                </Link>
+
+                <Link
+                  to="/upload"
+                  className="flex items-center space-x-1 text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
+                  activeProps={{ className: 'text-primary bg-accent' }}
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Upload</span>
+                </Link>
+              </>
+            )}
 
             <Link
               to="/demo"
@@ -121,11 +183,76 @@ export default function Header() {
             {/* Theme Toggle */}
             <ThemeToggle />
 
-            {/* Status Indicator */}
-            <div className="hidden sm:flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-muted-foreground">Online</span>
-            </div>
+            {/* Authentication */}
+            {isAuthenticated ? (
+              <div className="hidden md:flex items-center space-x-4">
+                {/* User Menu */}
+                <div className="relative">
+                  <button
+                    onClick={toggleUserMenu}
+                    className="flex items-center space-x-2 text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>{user?.username}</span>
+                    <Badge
+                      className={getSubscriptionColor(
+                        user?.subscriptionTier || 'free',
+                      )}
+                    >
+                      {user?.subscriptionTier}
+                    </Badge>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+
+                  {/* User Dropdown */}
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-background rounded-md shadow-lg border border-border z-50">
+                      <div className="py-1">
+                        <Link
+                          to="/dashboard"
+                          className="flex items-center px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <User className="h-4 w-4 mr-2" />
+                          Dashboard
+                        </Link>
+                        <Link
+                          to="/tokens"
+                          className="flex items-center px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <Key className="h-4 w-4 mr-2" />
+                          API Tokens
+                        </Link>
+                        <div className="border-t border-border"></div>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Logout
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="hidden md:flex items-center space-x-2">
+                <Link to="/login">
+                  <Button variant="outline" size="sm">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button size="sm">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -154,7 +281,7 @@ export default function Header() {
                 onClick={closeMobileMenu}
               >
                 <BarChart3 className="h-5 w-5" />
-                <span>Dashboard</span>
+                <span>Analytics</span>
               </Link>
 
               <Link
@@ -167,25 +294,49 @@ export default function Header() {
                 <span>CID Explorer</span>
               </Link>
 
-              <Link
-                to="/cache"
-                className="flex items-center space-x-3 text-muted-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-md text-base font-medium"
-                activeProps={{ className: 'text-primary bg-accent' }}
-                onClick={closeMobileMenu}
-              >
-                <Settings className="h-5 w-5" />
-                <span>Cache Manager</span>
-              </Link>
+              {isAuthenticated && (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-md text-base font-medium"
+                    activeProps={{ className: 'text-primary bg-accent' }}
+                    onClick={closeMobileMenu}
+                  >
+                    <User className="h-5 w-5" />
+                    <span>Dashboard</span>
+                  </Link>
 
-              <Link
-                to="/upload"
-                className="flex items-center space-x-3 text-muted-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-md text-base font-medium"
-                activeProps={{ className: 'text-primary bg-accent' }}
-                onClick={closeMobileMenu}
-              >
-                <Upload className="h-5 w-5" />
-                <span>Upload Files</span>
-              </Link>
+                  <Link
+                    to="/tokens"
+                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-md text-base font-medium"
+                    activeProps={{ className: 'text-primary bg-accent' }}
+                    onClick={closeMobileMenu}
+                  >
+                    <Key className="h-5 w-5" />
+                    <span>API Tokens</span>
+                  </Link>
+
+                  <Link
+                    to="/cache"
+                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-md text-base font-medium"
+                    activeProps={{ className: 'text-primary bg-accent' }}
+                    onClick={closeMobileMenu}
+                  >
+                    <Settings className="h-5 w-5" />
+                    <span>Cache Manager</span>
+                  </Link>
+
+                  <Link
+                    to="/upload"
+                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-md text-base font-medium"
+                    activeProps={{ className: 'text-primary bg-accent' }}
+                    onClick={closeMobileMenu}
+                  >
+                    <Upload className="h-5 w-5" />
+                    <span>Upload Files</span>
+                  </Link>
+                </>
+              )}
 
               <Link
                 to="/demo"
@@ -217,11 +368,55 @@ export default function Header() {
                 <span>API Guide</span>
               </Link>
 
-              {/* Mobile Status */}
-              <div className="flex items-center space-x-3 px-3 py-2 text-sm text-muted-foreground">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Online</span>
-              </div>
+              {/* Mobile Authentication */}
+              {isAuthenticated ? (
+                <div className="border-t border-border pt-3 mt-3">
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <div className="flex items-center space-x-2">
+                      <User className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        {user?.username}
+                      </span>
+                    </div>
+                    <Badge
+                      className={getSubscriptionColor(
+                        user?.subscriptionTier || 'free',
+                      )}
+                    >
+                      {user?.subscriptionTier}
+                    </Badge>
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleLogout()
+                      closeMobileMenu()
+                    }}
+                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-md text-base font-medium w-full"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="border-t border-border pt-3 mt-3 space-y-2">
+                  <Link
+                    to="/login"
+                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-md text-base font-medium"
+                    onClick={closeMobileMenu}
+                  >
+                    <LogIn className="h-5 w-5" />
+                    <span>Login</span>
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-md text-base font-medium"
+                    onClick={closeMobileMenu}
+                  >
+                    <UserPlus className="h-5 w-5" />
+                    <span>Sign Up</span>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}

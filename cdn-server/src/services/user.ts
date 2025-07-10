@@ -1,18 +1,18 @@
 import crypto from 'crypto'
 import bcrypt from 'bcrypt'
-import { 
-  User, 
-  ApiToken, 
-  TokenUsage, 
-  TokenLimits, 
-  SubscriptionTier, 
-  SubscriptionStatus, 
+import {
+  User,
+  ApiToken,
+  TokenUsage,
+  TokenLimits,
+  SubscriptionTier,
+  SubscriptionStatus,
   ApiPermission,
   UserRegistration,
   LoginCredentials,
   TokenRequest,
   AuthenticatedUser,
-  SubscriptionPlan
+  SubscriptionPlan,
 } from '../types/user.js'
 import { BaseError, ErrorCode } from '../errors/base-error.js'
 import { metricsService } from './metrics.js'
@@ -79,9 +79,19 @@ export class UserService implements IUserService {
           maxStorageSize: 1024 * 1024 * 1024, // 1GB
           maxUploadSize: 100 * 1024 * 1024, // 100MB
           maxConcurrentConnections: 20,
-          allowedFeatures: ['read_cdn', 'write_cdn', 'upload_files', 'view_analytics'],
+          allowedFeatures: [
+            'read_cdn',
+            'write_cdn',
+            'upload_files',
+            'view_analytics',
+          ],
         },
-        features: ['Enhanced CDN access', 'Cache management', 'Advanced analytics', 'Priority support'],
+        features: [
+          'Enhanced CDN access',
+          'Cache management',
+          'Advanced analytics',
+          'Priority support',
+        ],
         isActive: true,
       },
       {
@@ -98,9 +108,20 @@ export class UserService implements IUserService {
           maxStorageSize: 10 * 1024 * 1024 * 1024, // 10GB
           maxUploadSize: 1024 * 1024 * 1024, // 1GB
           maxConcurrentConnections: 100,
-          allowedFeatures: ['read_cdn', 'write_cdn', 'upload_files', 'manage_cache', 'view_analytics'],
+          allowedFeatures: [
+            'read_cdn',
+            'write_cdn',
+            'upload_files',
+            'manage_cache',
+            'view_analytics',
+          ],
         },
-        features: ['Full CDN access', 'Advanced cache management', 'Real-time analytics', 'API webhooks'],
+        features: [
+          'Full CDN access',
+          'Advanced cache management',
+          'Real-time analytics',
+          'API webhooks',
+        ],
         isActive: true,
       },
       {
@@ -117,9 +138,21 @@ export class UserService implements IUserService {
           maxStorageSize: 100 * 1024 * 1024 * 1024, // 100GB
           maxUploadSize: 10 * 1024 * 1024 * 1024, // 10GB
           maxConcurrentConnections: 500,
-          allowedFeatures: ['read_cdn', 'write_cdn', 'upload_files', 'manage_cache', 'view_analytics', 'admin'],
+          allowedFeatures: [
+            'read_cdn',
+            'write_cdn',
+            'upload_files',
+            'manage_cache',
+            'view_analytics',
+            'admin',
+          ],
         },
-        features: ['Unlimited CDN access', 'Enterprise cache management', 'Custom analytics', 'Dedicated support'],
+        features: [
+          'Unlimited CDN access',
+          'Enterprise cache management',
+          'Custom analytics',
+          'Dedicated support',
+        ],
         isActive: true,
       },
     ]
@@ -131,7 +164,7 @@ export class UserService implements IUserService {
       throw new BaseError(
         'User with this email already exists',
         ErrorCode.VALIDATION_FAILED,
-        400
+        400,
       )
     }
 
@@ -150,7 +183,9 @@ export class UserService implements IUserService {
     }
 
     this.users.set(user.id, user)
-    metricsService.counter('users.registered', 1, { tier: user.subscriptionTier })
+    metricsService.counter('users.registered', 1, {
+      tier: user.subscriptionTier,
+    })
 
     return user
   }
@@ -161,16 +196,19 @@ export class UserService implements IUserService {
       throw new BaseError(
         'Invalid credentials',
         ErrorCode.AUTH_INVALID_API_KEY,
-        401
+        401,
       )
     }
 
-    const isPasswordValid = await bcrypt.compare(credentials.password, user.hashedPassword)
+    const isPasswordValid = await bcrypt.compare(
+      credentials.password,
+      user.hashedPassword,
+    )
     if (!isPasswordValid) {
       throw new BaseError(
         'Invalid credentials',
         ErrorCode.AUTH_INVALID_API_KEY,
-        401
+        401,
       )
     }
 
@@ -178,7 +216,7 @@ export class UserService implements IUserService {
       throw new BaseError(
         'Account is deactivated',
         ErrorCode.AUTH_INVALID_API_KEY,
-        403
+        403,
       )
     }
 
@@ -186,8 +224,11 @@ export class UserService implements IUserService {
     user.lastLogin = new Date()
     this.users.set(user.id, user)
 
-    const plan = this.getSubscriptionPlans().find(p => p.tier === user.subscriptionTier)
-    const permissions = plan?.limits.allowedFeatures.map(f => f as ApiPermission) || []
+    const plan = this.getSubscriptionPlans().find(
+      (p) => p.tier === user.subscriptionTier,
+    )
+    const permissions =
+      plan?.limits.allowedFeatures.map((f) => f as ApiPermission) || []
 
     metricsService.counter('users.login', 1, { tier: user.subscriptionTier })
 
@@ -214,14 +255,13 @@ export class UserService implements IUserService {
     return null
   }
 
-  async updateUserSubscription(userId: string, tier: SubscriptionTier): Promise<User> {
+  async updateUserSubscription(
+    userId: string,
+    tier: SubscriptionTier,
+  ): Promise<User> {
     const user = await this.getUserById(userId)
     if (!user) {
-      throw new BaseError(
-        'User not found',
-        ErrorCode.VALIDATION_FAILED,
-        404
-      )
+      throw new BaseError('User not found', ErrorCode.VALIDATION_FAILED, 404)
     }
 
     user.subscriptionTier = tier
@@ -235,28 +275,32 @@ export class UserService implements IUserService {
     return user
   }
 
-  async createApiToken(userId: string, tokenRequest: TokenRequest): Promise<ApiToken> {
+  async createApiToken(
+    userId: string,
+    tokenRequest: TokenRequest,
+  ): Promise<ApiToken> {
     const user = await this.getUserById(userId)
     if (!user) {
-      throw new BaseError(
-        'User not found',
-        ErrorCode.VALIDATION_FAILED,
-        404
-      )
+      throw new BaseError('User not found', ErrorCode.VALIDATION_FAILED, 404)
     }
 
-    const plan = this.getSubscriptionPlans().find(p => p.tier === user.subscriptionTier)
+    const plan = this.getSubscriptionPlans().find(
+      (p) => p.tier === user.subscriptionTier,
+    )
     if (!plan) {
       throw new BaseError(
         'Invalid subscription plan',
         ErrorCode.VALIDATION_FAILED,
-        400
+        400,
       )
     }
 
     // Generate secure token
     const tokenString = this.generateToken()
-    const tokenHash = crypto.createHash('sha256').update(tokenString).digest('hex')
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(tokenString)
+      .digest('hex')
 
     const token: ApiToken = {
       id: this.generateId(),
@@ -264,8 +308,8 @@ export class UserService implements IUserService {
       token: tokenString,
       tokenHash,
       name: tokenRequest.name,
-      permissions: tokenRequest.permissions.filter(p => 
-        plan.limits.allowedFeatures.includes(p)
+      permissions: tokenRequest.permissions.filter((p) =>
+        plan.limits.allowedFeatures.includes(p),
       ),
       usage: {
         totalRequests: 0,
@@ -287,21 +331,28 @@ export class UserService implements IUserService {
     }
 
     this.tokens.set(token.id, token)
-    
+
     // Track tokens by user
     if (!this.tokensByUser.has(userId)) {
       this.tokensByUser.set(userId, new Set())
     }
     this.tokensByUser.get(userId)!.add(token.id)
 
-    metricsService.counter('api_tokens.created', 1, { tier: user.subscriptionTier })
+    metricsService.counter('api_tokens.created', 1, {
+      tier: user.subscriptionTier,
+    })
 
     return token
   }
 
-  async validateApiToken(tokenString: string): Promise<AuthenticatedUser | null> {
-    const tokenHash = crypto.createHash('sha256').update(tokenString).digest('hex')
-    
+  async validateApiToken(
+    tokenString: string,
+  ): Promise<AuthenticatedUser | null> {
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(tokenString)
+      .digest('hex')
+
     for (const token of this.tokens.values()) {
       if (token.tokenHash === tokenHash && token.isActive) {
         // Check if token is expired
@@ -362,7 +413,10 @@ export class UserService implements IUserService {
     return tokens
   }
 
-  async updateTokenUsage(tokenId: string, usage: Partial<TokenUsage>): Promise<void> {
+  async updateTokenUsage(
+    tokenId: string,
+    usage: Partial<TokenUsage>,
+  ): Promise<void> {
     const token = this.tokens.get(tokenId)
     if (token) {
       token.usage = { ...token.usage, ...usage }
@@ -371,7 +425,7 @@ export class UserService implements IUserService {
   }
 
   getSubscriptionPlans(): SubscriptionPlan[] {
-    return this.subscriptionPlans.filter(plan => plan.isActive)
+    return this.subscriptionPlans.filter((plan) => plan.isActive)
   }
 
   async checkUsageLimits(token: ApiToken): Promise<boolean> {

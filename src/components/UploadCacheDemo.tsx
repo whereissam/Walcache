@@ -645,7 +645,7 @@ export function UploadCacheDemo() {
                   placeholder="Enter blob ID (e.g., sibZ297_DArzpYdVbxFegC3WYMLPwglE_ml0v3c8am0)"
                   value={blobIdInput}
                   onChange={(e) => setBlobIdInput(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 />
                 <Button
                   onClick={generateUrls}
@@ -658,8 +658,8 @@ export function UploadCacheDemo() {
               </div>
 
               {uploadHistory.length > 0 && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-2">
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                     💡 Quick Fill from Upload History:
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -697,15 +697,15 @@ export function UploadCacheDemo() {
             <div
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                 dragActive
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
               }`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
             >
               <Upload
-                className={`mx-auto h-12 w-12 mb-4 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`}
+                className={`mx-auto h-12 w-12 mb-4 ${dragActive ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'}`}
               />
 
               {selectedFile ? (
@@ -713,7 +713,7 @@ export function UploadCacheDemo() {
                   <p className="text-lg font-medium text-green-600">
                     ✅ {selectedFile.name}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {Math.round(selectedFile.size / 1024)} KB •{' '}
                     {selectedFile.type}
                   </p>
@@ -753,7 +753,7 @@ export function UploadCacheDemo() {
                       ? 'Drop files here'
                       : 'Drag files here or click to select'}
                   </p>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Images, documents, any file type supported
                   </p>
                   <input
@@ -933,7 +933,7 @@ export function UploadCacheDemo() {
                             ? 'bg-green-100 text-green-600'
                             : status === 'active'
                               ? 'bg-blue-100 text-blue-600'
-                              : 'bg-gray-100 text-gray-400'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
                         }`}
                       >
                         <Icon
@@ -946,7 +946,7 @@ export function UploadCacheDemo() {
                             ? 'text-green-600'
                             : status === 'active'
                               ? 'text-blue-600'
-                              : 'text-gray-400'
+                              : 'text-gray-400 dark:text-gray-500'
                         }`}
                       >
                         {label}
@@ -956,7 +956,7 @@ export function UploadCacheDemo() {
                           className={`h-4 w-4 ${
                             status === 'completed'
                               ? 'text-green-400'
-                              : 'text-gray-300'
+                              : 'text-gray-300 dark:text-gray-600'
                           }`}
                         />
                       )}
@@ -1030,7 +1030,7 @@ export function UploadCacheDemo() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <p
-                      className="font-mono text-xs break-all text-gray-600 cursor-pointer hover:text-blue-600 transition-colors"
+                      className="font-mono text-xs break-all text-gray-600 dark:text-gray-300 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                       onClick={() => copyToClipboard(uploadResult.blobId)}
                     >
                       {uploadResult.blobId}
@@ -1141,8 +1141,10 @@ export function UploadCacheDemo() {
                   </div>
                   {/* Inline preview for images */}
                   {uploadResult.contentType.startsWith('image/') && (
-                    <div className="mt-3 p-2 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-600 mb-2">Preview:</p>
+                    <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">
+                        Preview:
+                      </p>
                       <img
                         src={uploadResult.directUrl}
                         alt={selectedFile?.name || 'Uploaded image'}
@@ -1191,7 +1193,7 @@ export function UploadCacheDemo() {
                 </div>
                 <div>
                   <span className="text-sm">Last Access:</span>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-gray-600 dark:text-gray-300">
                     {new Date(cacheStatus.lastAccess).toLocaleTimeString()}
                   </p>
                 </div>
@@ -1283,9 +1285,9 @@ export function UploadCacheDemo() {
               </div>
             </div>
 
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <h4 className="font-medium mb-2">💡 What just happened?</h4>
-              <ul className="text-sm space-y-1 text-gray-700">
+              <ul className="text-sm space-y-1 text-gray-700 dark:text-gray-300">
                 <li>
                   ✅ Your file was uploaded to the decentralized Walrus network
                 </li>
@@ -1407,14 +1409,14 @@ export function UploadCacheDemo() {
               </ul>
             </div>
 
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-800 mb-2">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
                 ⚡ Why This Matters
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div>
                   <strong className="text-green-600">✅ For Developers:</strong>
-                  <ul className="text-gray-700 mt-1">
+                  <ul className="text-gray-700 dark:text-gray-300 mt-1">
                     <li>• Build once, use everywhere</li>
                     <li>• No chain-specific storage code</li>
                     <li>• Simplified cross-chain dApps</li>
@@ -1422,7 +1424,7 @@ export function UploadCacheDemo() {
                 </div>
                 <div>
                   <strong className="text-blue-600">✅ For Users:</strong>
-                  <ul className="text-gray-700 mt-1">
+                  <ul className="text-gray-700 dark:text-gray-300 mt-1">
                     <li>• Access from any blockchain</li>
                     <li>• No SDK installation needed</li>
                     <li>• Standard HTTP URLs</li>
@@ -1439,7 +1441,7 @@ export function UploadCacheDemo() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-gray-500" />
+              <Clock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
               <span>Upload History</span>
               <Badge variant="outline">{uploadHistory.length} uploads</Badge>
             </CardTitle>
@@ -1453,7 +1455,7 @@ export function UploadCacheDemo() {
               {uploadHistory.map((upload, index) => (
                 <div
                   key={`${upload.blobId}-${index}`}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                 >
                   <div className="flex items-center space-x-3">
                     {upload.contentType.startsWith('image/') && (
@@ -1475,7 +1477,7 @@ export function UploadCacheDemo() {
                       <p className="font-medium text-sm">
                         {upload.filename || 'Unknown file'}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {Math.round(upload.size / 1024)} KB •{' '}
                         {upload.chain.toUpperCase()} •{' '}
                         {new Date(
@@ -1484,7 +1486,7 @@ export function UploadCacheDemo() {
                       </p>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <p className="text-xs text-gray-400 font-mono cursor-help">
+                          <p className="text-xs text-gray-400 dark:text-gray-500 font-mono cursor-help">
                             {upload.blobId.slice(0, 20)}...
                           </p>
                         </TooltipTrigger>

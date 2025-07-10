@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import { resolve } from 'node:path'
 
@@ -26,6 +25,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
+          // Core React libraries
+          react: ['react', 'react-dom'],
+          // Router and query libraries
+          router: ['@tanstack/react-router'],
+          query: ['@tanstack/react-query'],
+          // UI libraries
+          ui: ['lucide-react', 'recharts'],
+          // SDK chunk
           sdk: ['./packages/sdk/src/index.js'],
         },
       },

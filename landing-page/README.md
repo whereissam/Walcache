@@ -13,6 +13,7 @@ A standalone marketing landing page for Walcache - Lightning-fast CDN for Walrus
 ## 🛠️ Development
 
 ### Prerequisites
+
 - Node.js 18+ or Bun
 - Modern web browser
 
@@ -80,17 +81,20 @@ landing-page/
 ## 🌐 Deployment
 
 This landing page can be deployed to:
+
 - **Vercel**: Connect your GitHub repo for automatic deployments
 - **Netlify**: Drag and drop the `dist` folder or connect via Git
 - **GitHub Pages**: Use GitHub Actions to build and deploy
 - **Any static hosting**: Upload the `dist` folder contents
 
 ### Build Command
+
 ```bash
 npm run build
 ```
 
 ### Output Directory
+
 ```
 dist/
 ```
@@ -105,7 +109,8 @@ dist/
 ## 📱 Links Configuration
 
 All external links open in new tabs with security attributes:
+
 - `Launch App` → Main product application
-- `Get Started` → Main product application  
+- `Get Started` → Main product application
 - `View Demo` → Demo application
 - `Start Building Now` → Main product application

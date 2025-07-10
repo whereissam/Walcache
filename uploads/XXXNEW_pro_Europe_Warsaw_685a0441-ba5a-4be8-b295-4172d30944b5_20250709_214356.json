@@ -1,0 +1,520 @@
+{
+  "blocks": [
+    {
+      "startTime": "2025-06-28T14:00:00.000Z",
+      "endTime": "2025-06-28T19:00:00.000Z",
+      "actualEndTime": "2025-06-28T15:45:50.536Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 90,
+            "outputTokens": 2695,
+            "cacheCreationTokens": 352989,
+            "cacheReadTokens": 5928275,
+            "totalTokens": 2785
+          },
+          "costUSD": 3.142886,
+          "entriesCount": 61
+        }
+      },
+      "totalTokens": 2785,
+      "totalTokensOld": 2785,
+      "costUSD": 3.142886,
+      "entries": 63,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-06-28T15:45:24.592Z",
+          "content": "Claude AI usage limit reached|1751133600",
+          "resetTime": "2025-06-28T18:00:00.000Z"
+        },
+        {
+          "type": "general_limit",
+          "timestamp": "2025-06-28T15:45:50.536Z",
+          "content": "Claude AI usage limit reached|1751133600",
+          "resetTime": "2025-06-28T18:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-06-29T07:00:00.000Z",
+      "endTime": "2025-06-29T12:00:00.000Z",
+      "actualEndTime": "2025-06-29T11:58:45.489Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 2237,
+            "outputTokens": 31470,
+            "cacheCreationTokens": 566482,
+            "cacheReadTokens": 14893293,
+            "totalTokens": 33707
+          },
+          "costUSD": 7.071056,
+          "entriesCount": 231
+        }
+      },
+      "totalTokens": 33707,
+      "totalTokensOld": 33707,
+      "costUSD": 7.071056,
+      "entries": 232,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-06-29T11:58:45.489Z",
+          "content": "Claude AI usage limit reached|1751198400",
+          "resetTime": "2025-06-29T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-06-29T12:00:00.000Z",
+      "endTime": "2025-06-29T17:00:00.000Z",
+      "actualEndTime": "2025-06-29T14:04:15.262Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 871,
+            "outputTokens": 40215,
+            "cacheCreationTokens": 836038,
+            "cacheReadTokens": 23467238,
+            "totalTokens": 41086
+          },
+          "costUSD": 10.781152,
+          "entriesCount": 274
+        }
+      },
+      "totalTokens": 41086,
+      "totalTokensOld": 41086,
+      "costUSD": 10.781152,
+      "entries": 277,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-06-29T14:04:15.262Z",
+          "content": "Claude AI usage limit reached|1751216400",
+          "resetTime": "2025-06-29T17:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-06-30T12:00:00.000Z",
+      "endTime": "2025-06-30T17:00:00.000Z",
+      "actualEndTime": "2025-06-30T16:52:57.329Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 15356,
+            "outputTokens": 7636,
+            "cacheCreationTokens": 1072662,
+            "cacheReadTokens": 15192767,
+            "totalTokens": 22992
+          },
+          "costUSD": 8.740921,
+          "entriesCount": 204
+        }
+      },
+      "totalTokens": 22992,
+      "totalTokensOld": 22992,
+      "costUSD": 8.740921,
+      "entries": 206,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-06-30T16:52:57.329Z",
+          "content": "Claude AI usage limit reached|1751302800",
+          "resetTime": "2025-06-30T17:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-02T14:00:00.000Z",
+      "endTime": "2025-07-02T19:00:00.000Z",
+      "actualEndTime": "2025-07-02T16:22:28.632Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 1217,
+            "outputTokens": 29280,
+            "cacheCreationTokens": 666374,
+            "cacheReadTokens": 21189101,
+            "totalTokens": 30497
+          },
+          "costUSD": 9.298484,
+          "entriesCount": 327
+        }
+      },
+      "totalTokens": 30497,
+      "totalTokensOld": 30497,
+      "costUSD": 9.298484,
+      "entries": 329,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-02T16:22:09.677Z",
+          "content": "Claude AI usage limit reached|1751482800",
+          "resetTime": "2025-07-02T19:00:00.000Z"
+        },
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-02T16:22:28.632Z",
+          "content": "Claude AI usage limit reached|1751482800",
+          "resetTime": "2025-07-02T19:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-02T20:00:00.000Z",
+      "endTime": "2025-07-03T01:00:00.000Z",
+      "actualEndTime": "2025-07-02T22:20:24.966Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 2052,
+            "outputTokens": 7249,
+            "cacheCreationTokens": 677510,
+            "cacheReadTokens": 19358243,
+            "totalTokens": 9301
+          },
+          "costUSD": 8.463026,
+          "entriesCount": 220
+        }
+      },
+      "totalTokens": 9301,
+      "totalTokensOld": 9301,
+      "costUSD": 8.463026,
+      "entries": 221,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-02T22:20:24.966Z",
+          "content": "Claude AI usage limit reached|1751504400",
+          "resetTime": "2025-07-03T01:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-03T07:00:00.000Z",
+      "endTime": "2025-07-03T12:00:00.000Z",
+      "actualEndTime": "2025-07-03T09:26:03.868Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 541,
+            "outputTokens": 11074,
+            "cacheCreationTokens": 881342,
+            "cacheReadTokens": 12121766,
+            "totalTokens": 11615
+          },
+          "costUSD": 7.109295,
+          "entriesCount": 159
+        }
+      },
+      "totalTokens": 11615,
+      "totalTokensOld": 11615,
+      "costUSD": 7.109295,
+      "entries": 161,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-03T09:26:00.249Z",
+          "content": "Claude AI usage limit reached|1751544000",
+          "resetTime": "2025-07-03T12:00:00.000Z"
+        },
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-03T09:26:03.868Z",
+          "content": "Claude AI usage limit reached|1751544000",
+          "resetTime": "2025-07-03T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-04T15:00:00.000Z",
+      "endTime": "2025-07-04T20:00:00.000Z",
+      "actualEndTime": "2025-07-04T19:50:21.643Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 1112,
+            "outputTokens": 21468,
+            "cacheCreationTokens": 875475,
+            "cacheReadTokens": 26555647,
+            "totalTokens": 22580
+          },
+          "costUSD": 11.575081,
+          "entriesCount": 382
+        }
+      },
+      "totalTokens": 22580,
+      "totalTokensOld": 22580,
+      "costUSD": 11.575081,
+      "entries": 384,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-04T19:14:26.070Z",
+          "content": "Claude AI usage limit reached|1751659200",
+          "resetTime": "2025-07-04T20:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-04T20:00:00.000Z",
+      "endTime": "2025-07-05T01:00:00.000Z",
+      "actualEndTime": "2025-07-04T22:37:47.482Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 576,
+            "outputTokens": 14719,
+            "cacheCreationTokens": 812857,
+            "cacheReadTokens": 18508140,
+            "totalTokens": 15295
+          },
+          "costUSD": 8.823169,
+          "entriesCount": 210
+        }
+      },
+      "totalTokens": 15295,
+      "totalTokensOld": 15295,
+      "costUSD": 8.823169,
+      "entries": 211,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-04T22:22:26.886Z",
+          "content": "Claude AI usage limit reached|1751673600",
+          "resetTime": "2025-07-05T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-05T07:00:00.000Z",
+      "endTime": "2025-07-05T12:00:00.000Z",
+      "actualEndTime": "2025-07-05T10:03:59.893Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 1363,
+            "outputTokens": 5482,
+            "cacheCreationTokens": 962494,
+            "cacheReadTokens": 14455568,
+            "totalTokens": 6845
+          },
+          "costUSD": 8.032342,
+          "entriesCount": 192
+        }
+      },
+      "totalTokens": 6845,
+      "totalTokensOld": 6845,
+      "costUSD": 8.032342,
+      "entries": 194,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-05T09:30:36.806Z",
+          "content": "Claude AI usage limit reached|1751716800",
+          "resetTime": "2025-07-05T12:00:00.000Z"
+        },
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-05T09:45:37.082Z",
+          "content": "Claude AI usage limit reached|1751716800",
+          "resetTime": "2025-07-05T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-05T12:00:00.000Z",
+      "endTime": "2025-07-05T17:00:00.000Z",
+      "actualEndTime": "2025-07-05T15:51:48.954Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 1786,
+            "outputTokens": 6457,
+            "cacheCreationTokens": 1874276,
+            "cacheReadTokens": 29909501,
+            "totalTokens": 8243
+          },
+          "costUSD": 16.103598,
+          "entriesCount": 303
+        }
+      },
+      "totalTokens": 8243,
+      "totalTokensOld": 8243,
+      "costUSD": 16.103598,
+      "entries": 305,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-05T15:46:44.108Z",
+          "content": "Claude AI usage limit reached|1751742000",
+          "resetTime": "2025-07-05T19:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-05T19:00:00.000Z",
+      "endTime": "2025-07-06T00:00:00.000Z",
+      "actualEndTime": "2025-07-05T23:18:56.404Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 1325,
+            "outputTokens": 7099,
+            "cacheCreationTokens": 1792653,
+            "cacheReadTokens": 18135958,
+            "totalTokens": 8424
+          },
+          "costUSD": 12.273696,
+          "entriesCount": 227
+        }
+      },
+      "totalTokens": 8424,
+      "totalTokensOld": 8424,
+      "costUSD": 12.273696,
+      "entries": 229,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-05T22:09:11.606Z",
+          "content": "Claude AI usage limit reached|1751763600",
+          "resetTime": "2025-07-06T01:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-06T08:00:00.000Z",
+      "endTime": "2025-07-06T13:00:00.000Z",
+      "actualEndTime": "2025-07-06T10:54:04.116Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 11647,
+            "outputTokens": 12123,
+            "cacheCreationTokens": 1243304,
+            "cacheReadTokens": 38187362,
+            "totalTokens": 23770
+          },
+          "costUSD": 16.335385,
+          "entriesCount": 417
+        }
+      },
+      "totalTokens": 23770,
+      "totalTokensOld": 23770,
+      "costUSD": 16.335385,
+      "entries": 419,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-06T10:16:39.192Z",
+          "content": "Claude AI usage limit reached|1751806800",
+          "resetTime": "2025-07-06T13:00:00.000Z"
+        },
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-06T10:16:39.720Z",
+          "content": "Claude AI usage limit reached|1751806800",
+          "resetTime": "2025-07-06T13:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-06T14:00:00.000Z",
+      "endTime": "2025-07-06T19:00:00.000Z",
+      "actualEndTime": "2025-07-06T18:38:08.094Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 9448,
+            "outputTokens": 22283,
+            "cacheCreationTokens": 1259115,
+            "cacheReadTokens": 20947331,
+            "totalTokens": 31731
+          },
+          "costUSD": 11.36847,
+          "entriesCount": 277
+        }
+      },
+      "totalTokens": 31731,
+      "totalTokensOld": 31731,
+      "costUSD": 11.36847,
+      "entries": 283,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-06T14:51:58.094Z",
+          "content": "Claude AI usage limit reached|1751814000",
+          "resetTime": "2025-07-06T15:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-08T13:00:00.000Z",
+      "endTime": "2025-07-08T18:00:00.000Z",
+      "actualEndTime": "2025-07-08T16:14:13.940Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 1008,
+            "outputTokens": 11928,
+            "cacheCreationTokens": 951898,
+            "cacheReadTokens": 9930766,
+            "totalTokens": 12936
+          },
+          "costUSD": 6.730791,
+          "entriesCount": 144
+        }
+      },
+      "totalTokens": 12936,
+      "totalTokensOld": 12936,
+      "costUSD": 6.730791,
+      "entries": 147,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-08T14:29:54.818Z",
+          "content": "Claude AI usage limit reached|1751997600",
+          "resetTime": "2025-07-08T18:00:00.000Z"
+        },
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-08T16:14:13.940Z",
+          "content": "Claude AI usage limit reached|1751997600",
+          "resetTime": "2025-07-08T18:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "startTime": "2025-07-09T07:00:00.000Z",
+      "endTime": "2025-07-09T12:00:00.000Z",
+      "actualEndTime": "2025-07-09T08:38:45.407Z",
+      "perModelStats": {
+        "claude-sonnet-4-20250514": {
+          "tokenCounts": {
+            "inputTokens": 11598,
+            "outputTokens": 47237,
+            "cacheCreationTokens": 709510,
+            "cacheReadTokens": 9605746,
+            "totalTokens": 58835
+          },
+          "costUSD": 6.285735,
+          "entriesCount": 165
+        }
+      },
+      "totalTokens": 58835,
+      "totalTokensOld": 58835,
+      "costUSD": 6.285735,
+      "entries": 166,
+      "limits": [
+        {
+          "type": "general_limit",
+          "timestamp": "2025-07-09T08:38:45.407Z",
+          "content": "Claude AI usage limit reached|1752062400",
+          "resetTime": "2025-07-09T12:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}

@@ -62,16 +62,19 @@ bun run format
 ### 👤 User Management & Authentication
 
 #### User Registration & Login
+
 - `POST /users/register` - Register new user account
 - `POST /users/login` - User authentication
 - `GET /users/profile` - Get user profile information
 - `GET /users/dashboard` - Complete user dashboard with usage stats
 
 #### Subscription Management
+
 - `GET /users/plans` - List available subscription plans
 - `PUT /users/subscription` - Update user subscription tier
 
 #### API Token Management
+
 - `POST /users/tokens` - Create new API token with permissions
 - `GET /users/tokens` - List user's API tokens
 - `GET /users/tokens/:tokenId/usage` - Get token usage statistics
@@ -239,6 +242,7 @@ bun run format
 ### 🎯 Subscription Plans
 
 #### Free Tier
+
 - **Cost**: $0/month
 - **Rate Limit**: 10 requests/minute
 - **Daily Limit**: 1,000 requests
@@ -247,6 +251,7 @@ bun run format
 - **Features**: Basic CDN access, file uploads, basic analytics
 
 #### Starter Plan
+
 - **Cost**: $29/month
 - **Rate Limit**: 100 requests/minute
 - **Daily Limit**: 50,000 requests
@@ -255,6 +260,7 @@ bun run format
 - **Features**: Enhanced CDN, cache management, advanced analytics
 
 #### Professional Plan
+
 - **Cost**: $99/month
 - **Rate Limit**: 1,000 requests/minute
 - **Daily Limit**: 1,000,000 requests
@@ -263,6 +269,7 @@ bun run format
 - **Features**: Full CDN access, advanced cache management, webhooks
 
 #### Enterprise Plan
+
 - **Cost**: $299/month
 - **Rate Limit**: 10,000 requests/minute
 - **Daily Limit**: 10,000,000 requests
@@ -324,6 +331,7 @@ curl -H "X-API-Key: your_session_token" \
 ### 🔐 Permissions System
 
 #### Available Permissions
+
 - **READ_CDN**: Access CDN content retrieval
 - **WRITE_CDN**: Modify CDN configurations
 - **UPLOAD_FILES**: Upload files to Walrus
@@ -332,21 +340,23 @@ curl -H "X-API-Key: your_session_token" \
 - **ADMIN**: Full administrative access
 
 #### Permission-Based Access
+
 ```typescript
 // Token permissions are automatically enforced
 // Users can only access endpoints they have permission for
 const tokenPermissions = {
-  "READ_CDN": ["GET /cdn/*", "GET /api/stats/*"],
-  "UPLOAD_FILES": ["POST /upload/*"],
-  "MANAGE_CACHE": ["POST /api/preload", "POST /api/pin/*"],
-  "VIEW_ANALYTICS": ["GET /api/metrics", "GET /api/stats/*"],
-  "ADMIN": ["*"] // Full access
+  READ_CDN: ['GET /cdn/*', 'GET /api/stats/*'],
+  UPLOAD_FILES: ['POST /upload/*'],
+  MANAGE_CACHE: ['POST /api/preload', 'POST /api/pin/*'],
+  VIEW_ANALYTICS: ['GET /api/metrics', 'GET /api/stats/*'],
+  ADMIN: ['*'], // Full access
 }
 ```
 
 ### 📊 Usage Tracking & Billing
 
 #### Real-Time Usage Monitoring
+
 ```bash
 # Get user dashboard with usage stats
 curl -H "X-API-Key: your_session_token" \
@@ -358,6 +368,7 @@ curl -H "X-API-Key: your_session_token" \
 ```
 
 #### Usage Metrics Tracked
+
 - **Request Count**: Per minute, daily, monthly
 - **Bandwidth Usage**: Upload and download tracking
 - **Cache Performance**: Hit/miss ratios
@@ -365,6 +376,7 @@ curl -H "X-API-Key: your_session_token" \
 - **Geographic Distribution**: Request origins
 
 #### Automatic Limit Enforcement
+
 - **Rate Limiting**: Automatic throttling based on tier
 - **Usage Quotas**: Blocking when limits exceeded
 - **Overage Alerts**: Notifications for approaching limits
@@ -373,6 +385,7 @@ curl -H "X-API-Key: your_session_token" \
 ### 🏪 User Workflow
 
 #### For New Users
+
 1. **Register**: Create account with chosen subscription tier
 2. **Verify**: Email verification (optional)
 3. **Create Token**: Generate API token with needed permissions
@@ -380,6 +393,7 @@ curl -H "X-API-Key: your_session_token" \
 5. **Monitor**: Track usage via dashboard
 
 #### For Existing Users
+
 1. **Upgrade/Downgrade**: Change subscription tier anytime
 2. **Manage Tokens**: Create, revoke, and monitor tokens
 3. **Usage Analytics**: View detailed usage patterns
@@ -388,12 +402,14 @@ curl -H "X-API-Key: your_session_token" \
 ### 🔒 Security Features
 
 #### Token Security
+
 - **Secure Generation**: Cryptographically secure random tokens
 - **Hash Storage**: Tokens stored as SHA-256 hashes
 - **Expiration Support**: Optional token expiration dates
 - **Immediate Revocation**: Instant token deactivation
 
 #### Access Control
+
 - **Permission Validation**: Every request checked against token permissions
 - **Usage Limits**: Automatic enforcement of subscription limits
 - **Audit Logging**: Complete access and usage logging
@@ -454,6 +470,7 @@ curl http://localhost:4500/api/circuit-breakers
 The system supports multiple environments with optimized defaults:
 
 #### Development Environment
+
 ```typescript
 // Development optimized settings
 {
@@ -469,6 +486,7 @@ The system supports multiple environments with optimized defaults:
 ```
 
 #### Production Environment
+
 ```typescript
 // Production optimized settings
 {
@@ -623,12 +641,14 @@ tail -f logs/wcdn.log
 ### 🚀 Concurrent Connection Optimization
 
 #### Connection Pool Management
+
 - **Pool Size**: Configure based on expected concurrent load
 - **Keep-Alive**: Enable persistent connections for better performance
 - **Queue Management**: Handle connection overflow gracefully
 - **Per-IP Limits**: Prevent single client from exhausting resources
 
 #### Monitoring Connection Health
+
 ```bash
 # Monitor active connections
 curl http://localhost:4500/api/connections/stats
@@ -640,12 +660,14 @@ curl http://localhost:4500/api/metrics/system
 ### 🔄 Cache Optimization
 
 #### Intelligent Caching
+
 - **Cache Warming**: Proactively load popular content
 - **Memory Pressure**: Automatic eviction based on memory usage
 - **Batch Processing**: Optimize cache operations with batching
 - **Connection Pooling**: Redis connection optimization
 
 #### Cache Performance Tuning
+
 ```typescript
 // Optimal cache settings
 cache: {
@@ -660,11 +682,13 @@ cache: {
 ### 🛡️ Security & Performance Balance
 
 #### Rate Limiting Strategy
+
 - **Tiered Limits**: Different limits for authenticated vs anonymous users
 - **Dynamic Scaling**: Adjust limits based on system load
 - **IP-based Protection**: Prevent abuse from single sources
 
 #### Circuit Breaker Configuration
+
 ```typescript
 // Circuit breaker settings
 circuitBreaker: {
@@ -677,6 +701,7 @@ circuitBreaker: {
 ### 📊 Performance Monitoring
 
 #### Key Metrics to Track
+
 - **Connection Utilization**: Active vs max connections
 - **Response Times**: P95, P99 latencies
 - **Cache Hit Rates**: Target >80% for optimal performance
@@ -684,6 +709,7 @@ circuitBreaker: {
 - **Memory Usage**: Prevent memory pressure
 
 #### Performance Alerts
+
 ```bash
 # Set up monitoring alerts for:
 # - Connection pool exhaustion
@@ -708,11 +734,13 @@ circuitBreaker: {
 ### 🔄 Scaling Guidelines
 
 #### Horizontal Scaling
+
 - **Load Balancer**: Distribute traffic across multiple instances
 - **Session Affinity**: Use Redis for shared session storage
 - **Health Checks**: Configure proper health check endpoints
 
 #### Vertical Scaling
+
 - **Memory**: Increase for larger cache sizes
 - **CPU**: Scale based on connection processing needs
 - **Connection Limits**: Adjust based on server capacity
@@ -720,6 +748,7 @@ circuitBreaker: {
 ### 📊 Performance Benchmarks
 
 #### Expected Performance (Production Hardware)
+
 - **Concurrent Connections**: 1000+ concurrent connections
 - **Response Time**: <100ms for cached content
 - **Throughput**: 10,000+ requests per second
@@ -728,6 +757,7 @@ circuitBreaker: {
 ## 🤝 Contributing
 
 ### Development Guidelines
+
 1. **Code Style**: Follow existing TypeScript patterns with strict typing
 2. **Testing**: Add comprehensive tests for new features
 3. **Documentation**: Update README and inline docs
@@ -736,6 +766,7 @@ circuitBreaker: {
 6. **Performance**: Consider impact on concurrent connections
 
 ### Architecture Principles
+
 - **Dependency Injection**: Use service container for all dependencies
 - **Circuit Breakers**: Implement for all external service calls
 - **Monitoring**: Add metrics for all new features

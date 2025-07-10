@@ -31,30 +31,32 @@ async function buildServer() {
   // Initialize security and connection management
   const securityMiddleware = createSecurityMiddleware()
   const connectionManager = createConnectionManager()
-  
+
   await securityMiddleware.register(fastify)
   await connectionManager.register(fastify)
 
   await fastify.register(helmet, {
     contentSecurityPolicy: appConfig.security.helmet.contentSecurityPolicy,
-    crossOriginEmbedderPolicy: appConfig.security.helmet.crossOriginEmbedderPolicy,
+    crossOriginEmbedderPolicy:
+      appConfig.security.helmet.crossOriginEmbedderPolicy,
   })
 
   await fastify.register(cors, {
-    origin: appConfig.env === 'development'
-      ? (origin, cb) => {
-          // In development, allow any localhost origin
-          if (
-            !origin ||
-            origin.startsWith('http://localhost:') ||
-            origin.startsWith('http://127.0.0.1:')
-          ) {
-            cb(null, true)
-          } else {
-            cb(null, false)
+    origin:
+      appConfig.env === 'development'
+        ? (origin, cb) => {
+            // In development, allow any localhost origin
+            if (
+              !origin ||
+              origin.startsWith('http://localhost:') ||
+              origin.startsWith('http://127.0.0.1:')
+            ) {
+              cb(null, true)
+            } else {
+              cb(null, false)
+            }
           }
-        }
-      : appConfig.server.cors.origins,
+        : appConfig.server.cors.origins,
     credentials: appConfig.server.cors.credentials,
   })
 
@@ -65,15 +67,15 @@ async function buildServer() {
       // Use IP-based rate limiting with better key generation
       const forwarded = request.headers['x-forwarded-for'] as string
       const realIP = request.headers['x-real-ip'] as string
-      
+
       if (forwarded) {
         return forwarded.split(',')[0].trim()
       }
-      
+
       if (realIP) {
         return realIP
       }
-      
+
       return request.ip
     },
   })
@@ -102,7 +104,10 @@ async function start() {
     // Register services in container
     serviceContainer.register('cache', () => new CacheService())
     serviceContainer.register('analytics', () => new AnalyticsService())
-    serviceContainer.register('endpointHealth', () => new EndpointHealthService())
+    serviceContainer.register(
+      'endpointHealth',
+      () => new EndpointHealthService(),
+    )
     serviceContainer.register('walrus', () => new WalrusService())
     serviceContainer.register('tusky', () => tuskyService)
     serviceContainer.register('user', () => userService)

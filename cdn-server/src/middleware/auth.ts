@@ -23,7 +23,7 @@ export async function optionalAuth(
         request.user = user
         return
       }
-      
+
       // Fallback to legacy system
       if (apiKey === config.API_KEY_SECRET) {
         request.user = {
@@ -52,7 +52,7 @@ export async function requireAuth(
     throw new AuthenticationError(
       'Missing API key',
       ErrorCode.AUTH_MISSING_API_KEY,
-      { message: 'Please provide X-API-Key header' }
+      { message: 'Please provide X-API-Key header' },
     )
   }
 
@@ -61,26 +61,26 @@ export async function requireAuth(
     const user = await userService.validateApiToken(apiKey)
     if (user) {
       // Check usage limits
-      if (user.token && !await userService.checkUsageLimits(user.token)) {
-        metricsService.counter('auth.usage_limit_exceeded', 1, { 
+      if (user.token && !(await userService.checkUsageLimits(user.token))) {
+        metricsService.counter('auth.usage_limit_exceeded', 1, {
           userId: user.id,
-          tier: user.subscriptionTier 
+          tier: user.subscriptionTier,
         })
         throw new AuthenticationError(
           'Usage limit exceeded',
           ErrorCode.AUTH_RATE_LIMIT_EXCEEDED,
-          { userId: user.id, tier: user.subscriptionTier }
+          { userId: user.id, tier: user.subscriptionTier },
         )
       }
 
       request.user = user
-      metricsService.counter('auth.success', 1, { 
+      metricsService.counter('auth.success', 1, {
         userId: user.id,
-        tier: user.subscriptionTier 
+        tier: user.subscriptionTier,
       })
       return
     }
-    
+
     // Fallback to legacy system
     if (apiKey === config.API_KEY_SECRET) {
       request.user = {
@@ -104,7 +104,7 @@ export async function requireAuth(
   throw new AuthenticationError(
     'Invalid API key',
     ErrorCode.AUTH_INVALID_API_KEY,
-    { message: 'The provided API key is not valid' }
+    { message: 'The provided API key is not valid' },
   )
 }
 
@@ -113,20 +113,23 @@ export function requirePermission(permission: ApiPermission) {
     if (!request.user) {
       throw new AuthenticationError(
         'Authentication required',
-        ErrorCode.AUTH_MISSING_API_KEY
+        ErrorCode.AUTH_MISSING_API_KEY,
       )
     }
 
-    if (!request.user.permissions.includes(permission) && !request.user.permissions.includes(ApiPermission.ADMIN)) {
-      metricsService.counter('auth.permission_denied', 1, { 
+    if (
+      !request.user.permissions.includes(permission) &&
+      !request.user.permissions.includes(ApiPermission.ADMIN)
+    ) {
+      metricsService.counter('auth.permission_denied', 1, {
         userId: request.user.id,
         permission,
-        tier: request.user.subscriptionTier 
+        tier: request.user.subscriptionTier,
       })
       throw new AuthenticationError(
         'Insufficient permissions',
         ErrorCode.AUTH_INVALID_API_KEY,
-        { required: permission, userPermissions: request.user.permissions }
+        { required: permission, userPermissions: request.user.permissions },
       )
     }
   }
@@ -158,7 +161,7 @@ export function createRateLimitByAuth() {
 export async function trackUsage(
   request: AuthenticatedRequest,
   reply: FastifyReply,
-  responseSize: number = 0
+  responseSize: number = 0,
 ) {
   if (request.user?.token) {
     const usage = {
@@ -166,19 +169,20 @@ export async function trackUsage(
       monthlyRequests: request.user.token.usage.monthlyRequests + 1,
       dailyRequests: request.user.token.usage.dailyRequests + 1,
       totalBandwidth: request.user.token.usage.totalBandwidth + responseSize,
-      monthlyBandwidth: request.user.token.usage.monthlyBandwidth + responseSize,
+      monthlyBandwidth:
+        request.user.token.usage.monthlyBandwidth + responseSize,
       dailyBandwidth: request.user.token.usage.dailyBandwidth + responseSize,
     }
 
     await userService.updateTokenUsage(request.user.token.id, usage)
-    
-    metricsService.counter('api.usage.requests', 1, { 
+
+    metricsService.counter('api.usage.requests', 1, {
       userId: request.user.id,
-      tier: request.user.subscriptionTier 
+      tier: request.user.subscriptionTier,
     })
-    metricsService.counter('api.usage.bandwidth', responseSize, { 
+    metricsService.counter('api.usage.bandwidth', responseSize, {
       userId: request.user.id,
-      tier: request.user.subscriptionTier 
+      tier: request.user.subscriptionTier,
     })
   }
 }

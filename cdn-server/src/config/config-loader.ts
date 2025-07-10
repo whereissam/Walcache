@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { 
-  environmentSchema, 
-  type Environment, 
-  type EnvironmentConfig, 
-  environmentConfigs 
+import {
+  environmentSchema,
+  type Environment,
+  type EnvironmentConfig,
+  environmentConfigs,
 } from './environments.js'
 
 // Environment variables schema
@@ -11,35 +11,35 @@ const envSchema = z.object({
   NODE_ENV: environmentSchema.default('development'),
   PORT: z.coerce.number().default(4500),
   HOST: z.string().default('127.0.0.1'),
-  
+
   // Redis
   REDIS_URL: z.string().optional(),
   CACHE_TTL: z.coerce.number().optional(),
   MAX_CACHE_SIZE: z.coerce.number().optional(),
-  
+
   // Walrus
   WALRUS_NETWORK: z.enum(['testnet', 'mainnet']).optional(),
   WALRUS_ENDPOINT: z.string().url().optional(),
   WALRUS_AGGREGATOR: z.string().url().optional(),
-  
+
   // IPFS
   IPFS_GATEWAY: z.string().url().optional(),
   ENABLE_IPFS_FALLBACK: z.coerce.boolean().optional(),
-  
+
   // Security
   API_KEY_SECRET: z.string().min(1).default('dev-secret-key'),
   ALLOWED_ORIGINS: z.string().optional(),
-  
+
   // Monitoring
   ENABLE_ANALYTICS: z.coerce.boolean().optional(),
   ENABLE_METRICS: z.coerce.boolean().optional(),
   WEBHOOK_URL: z.string().url().optional().or(z.literal('')),
-  
+
   // Tusky
   TUSKY_API_URL: z.string().url().optional(),
   TUSKY_API_KEY: z.string().optional(),
   TUSKY_DEFAULT_VAULT_ID: z.string().optional(),
-  
+
   // Logging
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).optional(),
 })
@@ -75,10 +75,10 @@ export class ConfigLoader {
 
     // Load and validate environment variables
     const env = this.loadEnvironmentVariables()
-    
+
     // Get base configuration for environment
     const baseConfig = environmentConfigs[env.NODE_ENV]
-    
+
     // Override with environment variables
     const config: AppConfig = {
       ...baseConfig,
@@ -90,8 +90,8 @@ export class ConfigLoader {
         logLevel: env.LOG_LEVEL || baseConfig.server.logLevel,
         cors: {
           ...baseConfig.server.cors,
-          origins: env.ALLOWED_ORIGINS 
-            ? env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+          origins: env.ALLOWED_ORIGINS
+            ? env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim())
             : baseConfig.server.cors.origins,
         },
       },
@@ -109,14 +109,20 @@ export class ConfigLoader {
         ipfs: {
           ...baseConfig.walrus.ipfs,
           gateway: env.IPFS_GATEWAY || baseConfig.walrus.ipfs.gateway,
-          fallbackEnabled: env.ENABLE_IPFS_FALLBACK ?? baseConfig.walrus.ipfs.fallbackEnabled,
+          fallbackEnabled:
+            env.ENABLE_IPFS_FALLBACK ?? baseConfig.walrus.ipfs.fallbackEnabled,
         },
       },
       monitoring: {
         ...baseConfig.monitoring,
-        enableAnalytics: env.ENABLE_ANALYTICS ?? baseConfig.monitoring.enableAnalytics,
-        enableMetrics: env.ENABLE_METRICS ?? baseConfig.monitoring.enableMetrics,
-        webhookUrl: env.WEBHOOK_URL && env.WEBHOOK_URL !== '' ? env.WEBHOOK_URL : baseConfig.monitoring.webhookUrl,
+        enableAnalytics:
+          env.ENABLE_ANALYTICS ?? baseConfig.monitoring.enableAnalytics,
+        enableMetrics:
+          env.ENABLE_METRICS ?? baseConfig.monitoring.enableMetrics,
+        webhookUrl:
+          env.WEBHOOK_URL && env.WEBHOOK_URL !== ''
+            ? env.WEBHOOK_URL
+            : baseConfig.monitoring.webhookUrl,
       },
       integrations: {
         ...baseConfig.integrations,
@@ -124,7 +130,9 @@ export class ConfigLoader {
           ...baseConfig.integrations.tusky,
           apiUrl: env.TUSKY_API_URL || baseConfig.integrations.tusky.apiUrl,
           apiKey: env.TUSKY_API_KEY || baseConfig.integrations.tusky.apiKey,
-          defaultVaultId: env.TUSKY_DEFAULT_VAULT_ID || baseConfig.integrations.tusky.defaultVaultId,
+          defaultVaultId:
+            env.TUSKY_DEFAULT_VAULT_ID ||
+            baseConfig.integrations.tusky.defaultVaultId,
         },
       },
       secrets: {
@@ -142,7 +150,7 @@ export class ConfigLoader {
     // Bun automatically loads .env files, so we can just use process.env
     // Parse and validate environment variables
     const result = envSchema.safeParse(process.env)
-    
+
     if (!result.success) {
       console.error('❌ Invalid environment configuration:')
       console.error(result.error.format())

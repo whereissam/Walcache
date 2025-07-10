@@ -79,10 +79,17 @@ export class EndpointHealthService implements IEndpointHealthService {
       })
 
       const responseTime = Date.now() - startTime
-      
+
       // Record metrics
-      metricsService.histogram('walrus.endpoint.response_time', responseTime, labels)
-      metricsService.counter('walrus.endpoint.requests.total', 1, { ...labels, status: 'success' })
+      metricsService.histogram(
+        'walrus.endpoint.response_time',
+        responseTime,
+        labels,
+      )
+      metricsService.counter('walrus.endpoint.requests.total', 1, {
+        ...labels,
+        status: 'success',
+      })
       metricsService.gauge('walrus.endpoint.available', 1, labels)
 
       this.aggregatorHealth.set(url, {
@@ -93,10 +100,17 @@ export class EndpointHealthService implements IEndpointHealthService {
       })
     } catch (error) {
       const responseTime = Date.now() - startTime
-      
+
       // Record failure metrics
-      metricsService.histogram('walrus.endpoint.response_time', responseTime, labels)
-      metricsService.counter('walrus.endpoint.requests.total', 1, { ...labels, status: 'failure' })
+      metricsService.histogram(
+        'walrus.endpoint.response_time',
+        responseTime,
+        labels,
+      )
+      metricsService.counter('walrus.endpoint.requests.total', 1, {
+        ...labels,
+        status: 'failure',
+      })
       metricsService.gauge('walrus.endpoint.available', 0, labels)
 
       this.aggregatorHealth.set(url, {
@@ -121,10 +135,17 @@ export class EndpointHealthService implements IEndpointHealthService {
       })
 
       const responseTime = Date.now() - startTime
-      
+
       // Record metrics
-      metricsService.histogram('walrus.endpoint.response_time', responseTime, labels)
-      metricsService.counter('walrus.endpoint.requests.total', 1, { ...labels, status: 'success' })
+      metricsService.histogram(
+        'walrus.endpoint.response_time',
+        responseTime,
+        labels,
+      )
+      metricsService.counter('walrus.endpoint.requests.total', 1, {
+        ...labels,
+        status: 'success',
+      })
       metricsService.gauge('walrus.endpoint.available', 1, labels)
 
       this.publisherHealth.set(url, {
@@ -135,10 +156,17 @@ export class EndpointHealthService implements IEndpointHealthService {
       })
     } catch (error) {
       const responseTime = Date.now() - startTime
-      
+
       // Record failure metrics
-      metricsService.histogram('walrus.endpoint.response_time', responseTime, labels)
-      metricsService.counter('walrus.endpoint.requests.total', 1, { ...labels, status: 'failure' })
+      metricsService.histogram(
+        'walrus.endpoint.response_time',
+        responseTime,
+        labels,
+      )
+      metricsService.counter('walrus.endpoint.requests.total', 1, {
+        ...labels,
+        status: 'failure',
+      })
       metricsService.gauge('walrus.endpoint.available', 0, labels)
 
       this.publisherHealth.set(url, {
@@ -199,13 +227,17 @@ export class EndpointHealthService implements IEndpointHealthService {
     const healthyPublishers = publishers.filter((h) => h.isHealthy)
 
     // Calculate average response times
-    const avgAggregatorResponseTime = healthyAggregators.length > 0 
-      ? healthyAggregators.reduce((sum, h) => sum + h.responseTime, 0) / healthyAggregators.length
-      : 0
+    const avgAggregatorResponseTime =
+      healthyAggregators.length > 0
+        ? healthyAggregators.reduce((sum, h) => sum + h.responseTime, 0) /
+          healthyAggregators.length
+        : 0
 
-    const avgPublisherResponseTime = healthyPublishers.length > 0
-      ? healthyPublishers.reduce((sum, h) => sum + h.responseTime, 0) / healthyPublishers.length
-      : 0
+    const avgPublisherResponseTime =
+      healthyPublishers.length > 0
+        ? healthyPublishers.reduce((sum, h) => sum + h.responseTime, 0) /
+          healthyPublishers.length
+        : 0
 
     return {
       aggregators: {
@@ -223,8 +255,10 @@ export class EndpointHealthService implements IEndpointHealthService {
       network: config.WALRUS_NETWORK,
       overall: {
         healthy: healthyAggregators.length > 0 && healthyPublishers.length > 0,
-        score: ((healthyAggregators.length / aggregators.length) + 
-                (healthyPublishers.length / publishers.length)) / 2,
+        score:
+          (healthyAggregators.length / aggregators.length +
+            healthyPublishers.length / publishers.length) /
+          2,
       },
       lastCheck: new Date().toISOString(),
     }

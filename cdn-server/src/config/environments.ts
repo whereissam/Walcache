@@ -1,6 +1,11 @@
 import { z } from 'zod'
 
-export const environmentSchema = z.enum(['development', 'staging', 'production', 'test'])
+export const environmentSchema = z.enum([
+  'development',
+  'staging',
+  'production',
+  'test',
+])
 export type Environment = z.infer<typeof environmentSchema>
 
 export interface EnvironmentConfig {
@@ -57,7 +62,11 @@ export const developmentConfig: EnvironmentConfig = {
     host: '127.0.0.1',
     logLevel: 'info',
     cors: {
-      origins: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:4500'],
+      origins: [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:4500',
+      ],
       credentials: true,
     },
   },

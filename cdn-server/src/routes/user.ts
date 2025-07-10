@@ -1,20 +1,24 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { userService } from '../services/user.js'
-import { 
-  UserRegistration, 
-  LoginCredentials, 
-  TokenRequest, 
-  SubscriptionTier, 
-  ApiPermission 
+import {
+  UserRegistration,
+  LoginCredentials,
+  TokenRequest,
+  SubscriptionTier,
+  ApiPermission,
 } from '../types/user.js'
-import { 
-  requireAuth, 
-  requirePermission, 
+import {
+  requireAuth,
+  requirePermission,
   optionalAuth,
-  type AuthenticatedRequest 
+  type AuthenticatedRequest,
 } from '../middleware/auth.js'
-import { ValidationError, AuthenticationError, ErrorCode } from '../errors/base-error.js'
+import {
+  ValidationError,
+  AuthenticationError,
+  ErrorCode,
+} from '../errors/base-error.js'
 import { metricsService } from '../services/metrics.js'
 
 // Validation schemas
@@ -49,9 +53,9 @@ export async function userRoutes(fastify: FastifyInstance) {
       try {
         const registration = userRegistrationSchema.parse(request.body)
         const user = await userService.registerUser(registration)
-        
-        metricsService.counter('users.registration.success', 1, { 
-          tier: user.subscriptionTier 
+
+        metricsService.counter('users.registration.success', 1, {
+          tier: user.subscriptionTier,
         })
 
         return reply.status(201).send({
@@ -69,14 +73,13 @@ export async function userRoutes(fastify: FastifyInstance) {
       } catch (error) {
         if (error instanceof z.ZodError) {
           metricsService.counter('users.registration.validation_error', 1)
-          throw new ValidationError(
-            'Invalid registration data',
-            { errors: error.errors }
-          )
+          throw new ValidationError('Invalid registration data', {
+            errors: error.errors,
+          })
         }
         throw error
       }
-    }
+    },
   )
 
   // User login
@@ -86,9 +89,9 @@ export async function userRoutes(fastify: FastifyInstance) {
       try {
         const credentials = loginCredentialsSchema.parse(request.body)
         const user = await userService.loginUser(credentials)
-        
-        metricsService.counter('users.login.success', 1, { 
-          tier: user.subscriptionTier 
+
+        metricsService.counter('users.login.success', 1, {
+          tier: user.subscriptionTier,
         })
 
         return reply.send({
@@ -99,15 +102,14 @@ export async function userRoutes(fastify: FastifyInstance) {
       } catch (error) {
         if (error instanceof z.ZodError) {
           metricsService.counter('users.login.validation_error', 1)
-          throw new ValidationError(
-            'Invalid login data',
-            { errors: error.errors }
-          )
+          throw new ValidationError('Invalid login data', {
+            errors: error.errors,
+          })
         }
         metricsService.counter('users.login.failed', 1)
         throw error
       }
-    }
+    },
   )
 
   // Get user profile
@@ -119,7 +121,7 @@ export async function userRoutes(fastify: FastifyInstance) {
       if (!user) {
         throw new AuthenticationError(
           'User not found',
-          ErrorCode.AUTH_INVALID_API_KEY
+          ErrorCode.AUTH_INVALID_API_KEY,
         )
       }
 
@@ -136,7 +138,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           lastLogin: user.lastLogin,
         },
       })
-    }
+    },
   )
 
   // Update user subscription
@@ -146,11 +148,14 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request: AuthenticatedRequest, reply: FastifyReply) => {
       try {
         const { tier } = subscriptionUpdateSchema.parse(request.body)
-        const user = await userService.updateUserSubscription(request.user!.id, tier)
-        
-        metricsService.counter('users.subscription.updated', 1, { 
+        const user = await userService.updateUserSubscription(
+          request.user!.id,
+          tier,
+        )
+
+        metricsService.counter('users.subscription.updated', 1, {
           fromTier: request.user!.subscriptionTier,
-          toTier: tier 
+          toTier: tier,
         })
 
         return reply.send({
@@ -165,14 +170,13 @@ export async function userRoutes(fastify: FastifyInstance) {
         })
       } catch (error) {
         if (error instanceof z.ZodError) {
-          throw new ValidationError(
-            'Invalid subscription data',
-            { errors: error.errors }
-          )
+          throw new ValidationError('Invalid subscription data', {
+            errors: error.errors,
+          })
         }
         throw error
       }
-    }
+    },
   )
 
   // Get subscription plans
@@ -181,12 +185,12 @@ export async function userRoutes(fastify: FastifyInstance) {
     { preHandler: optionalAuth },
     async (request: AuthenticatedRequest, reply: FastifyReply) => {
       const plans = userService.getSubscriptionPlans()
-      
+
       return reply.send({
         success: true,
         plans,
       })
-    }
+    },
   )
 
   // Create API token
@@ -196,17 +200,22 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request: AuthenticatedRequest, reply: FastifyReply) => {
       try {
         const tokenRequest = tokenRequestSchema.parse(request.body)
-        
+
         // Parse expiration date if provided
         const parsedRequest: TokenRequest = {
           ...tokenRequest,
-          expiresAt: tokenRequest.expiresAt ? new Date(tokenRequest.expiresAt) : undefined,
+          expiresAt: tokenRequest.expiresAt
+            ? new Date(tokenRequest.expiresAt)
+            : undefined,
         }
 
-        const token = await userService.createApiToken(request.user!.id, parsedRequest)
-        
-        metricsService.counter('users.tokens.created', 1, { 
-          tier: request.user!.subscriptionTier 
+        const token = await userService.createApiToken(
+          request.user!.id,
+          parsedRequest,
+        )
+
+        metricsService.counter('users.tokens.created', 1, {
+          tier: request.user!.subscriptionTier,
         })
 
         return reply.status(201).send({
@@ -225,14 +234,13 @@ export async function userRoutes(fastify: FastifyInstance) {
         })
       } catch (error) {
         if (error instanceof z.ZodError) {
-          throw new ValidationError(
-            'Invalid token request',
-            { errors: error.errors }
-          )
+          throw new ValidationError('Invalid token request', {
+            errors: error.errors,
+          })
         }
         throw error
       }
-    }
+    },
   )
 
   // Get user tokens
@@ -241,12 +249,12 @@ export async function userRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request: AuthenticatedRequest, reply: FastifyReply) => {
       const tokens = await userService.getUserTokens(request.user!.id)
-      
+
       return reply.send({
         success: true,
         tokens,
       })
-    }
+    },
   )
 
   // Revoke API token
@@ -255,29 +263,29 @@ export async function userRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request: AuthenticatedRequest, reply: FastifyReply) => {
       const { tokenId } = request.params as { tokenId: string }
-      
+
       // Verify token belongs to user
       const userTokens = await userService.getUserTokens(request.user!.id)
-      const tokenExists = userTokens.some(token => token.id === tokenId)
-      
+      const tokenExists = userTokens.some((token) => token.id === tokenId)
+
       if (!tokenExists) {
         throw new AuthenticationError(
           'Token not found or not owned by user',
-          ErrorCode.AUTH_INVALID_API_KEY
+          ErrorCode.AUTH_INVALID_API_KEY,
         )
       }
 
       await userService.revokeApiToken(tokenId)
-      
-      metricsService.counter('users.tokens.revoked', 1, { 
-        tier: request.user!.subscriptionTier 
+
+      metricsService.counter('users.tokens.revoked', 1, {
+        tier: request.user!.subscriptionTier,
       })
 
       return reply.send({
         success: true,
         message: 'Token revoked successfully',
       })
-    }
+    },
   )
 
   // Get token usage statistics
@@ -286,15 +294,15 @@ export async function userRoutes(fastify: FastifyInstance) {
     { preHandler: requireAuth },
     async (request: AuthenticatedRequest, reply: FastifyReply) => {
       const { tokenId } = request.params as { tokenId: string }
-      
+
       // Get user tokens to find the specific token
       const userTokens = await userService.getUserTokens(request.user!.id)
-      const token = userTokens.find(t => t.id === tokenId)
-      
+      const token = userTokens.find((t) => t.id === tokenId)
+
       if (!token) {
         throw new AuthenticationError(
           'Token not found or not owned by user',
-          ErrorCode.AUTH_INVALID_API_KEY
+          ErrorCode.AUTH_INVALID_API_KEY,
         )
       }
 
@@ -303,12 +311,16 @@ export async function userRoutes(fastify: FastifyInstance) {
         usage: token.usage,
         limits: token.limits,
         utilizationPercentage: {
-          dailyRequests: (token.usage.dailyRequests / token.limits.requestsPerDay) * 100,
-          monthlyRequests: (token.usage.monthlyRequests / token.limits.requestsPerMonth) * 100,
-          monthlyBandwidth: (token.usage.monthlyBandwidth / token.limits.bandwidthPerMonth) * 100,
+          dailyRequests:
+            (token.usage.dailyRequests / token.limits.requestsPerDay) * 100,
+          monthlyRequests:
+            (token.usage.monthlyRequests / token.limits.requestsPerMonth) * 100,
+          monthlyBandwidth:
+            (token.usage.monthlyBandwidth / token.limits.bandwidthPerMonth) *
+            100,
         },
       })
-    }
+    },
   )
 
   // Get user dashboard data
@@ -319,32 +331,35 @@ export async function userRoutes(fastify: FastifyInstance) {
       const user = await userService.getUserById(request.user!.id)
       const tokens = await userService.getUserTokens(request.user!.id)
       const plans = userService.getSubscriptionPlans()
-      
+
       if (!user) {
         throw new AuthenticationError(
           'User not found',
-          ErrorCode.AUTH_INVALID_API_KEY
+          ErrorCode.AUTH_INVALID_API_KEY,
         )
       }
 
       // Calculate total usage across all tokens
-      const totalUsage = tokens.reduce((acc, token) => ({
-        totalRequests: acc.totalRequests + token.usage.totalRequests,
-        monthlyRequests: acc.monthlyRequests + token.usage.monthlyRequests,
-        dailyRequests: acc.dailyRequests + token.usage.dailyRequests,
-        totalBandwidth: acc.totalBandwidth + token.usage.totalBandwidth,
-        monthlyBandwidth: acc.monthlyBandwidth + token.usage.monthlyBandwidth,
-        dailyBandwidth: acc.dailyBandwidth + token.usage.dailyBandwidth,
-      }), {
-        totalRequests: 0,
-        monthlyRequests: 0,
-        dailyRequests: 0,
-        totalBandwidth: 0,
-        monthlyBandwidth: 0,
-        dailyBandwidth: 0,
-      })
+      const totalUsage = tokens.reduce(
+        (acc, token) => ({
+          totalRequests: acc.totalRequests + token.usage.totalRequests,
+          monthlyRequests: acc.monthlyRequests + token.usage.monthlyRequests,
+          dailyRequests: acc.dailyRequests + token.usage.dailyRequests,
+          totalBandwidth: acc.totalBandwidth + token.usage.totalBandwidth,
+          monthlyBandwidth: acc.monthlyBandwidth + token.usage.monthlyBandwidth,
+          dailyBandwidth: acc.dailyBandwidth + token.usage.dailyBandwidth,
+        }),
+        {
+          totalRequests: 0,
+          monthlyRequests: 0,
+          dailyRequests: 0,
+          totalBandwidth: 0,
+          monthlyBandwidth: 0,
+          dailyBandwidth: 0,
+        },
+      )
 
-      const currentPlan = plans.find(p => p.tier === user.subscriptionTier)
+      const currentPlan = plans.find((p) => p.tier === user.subscriptionTier)
 
       return reply.send({
         success: true,
@@ -360,9 +375,9 @@ export async function userRoutes(fastify: FastifyInstance) {
           currentPlan,
           totalUsage,
           tokens: tokens.length,
-          activeTokens: tokens.filter(t => t.isActive).length,
+          activeTokens: tokens.filter((t) => t.isActive).length,
         },
       })
-    }
+    },
   )
 }

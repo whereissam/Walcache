@@ -3,7 +3,14 @@ import type { AnalyticsEvent, CIDStats } from '../types/analytics.js'
 
 export interface IAnalyticsService {
   initialize(): Promise<void>
-  recordFetch(cid: string, hit: boolean, latency: number, size?: number, clientIP?: string, userAgent?: string): void
+  recordFetch(
+    cid: string,
+    hit: boolean,
+    latency: number,
+    size?: number,
+    clientIP?: string,
+    userAgent?: string,
+  ): void
   recordPreload(cids: string[]): void
   recordPin(cid: string): void
   recordUnpin(cid: string): void

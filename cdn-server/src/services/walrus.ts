@@ -7,11 +7,27 @@ import type { IEndpointHealthService } from './endpoint-health.js'
 export interface IWalrusService {
   initialize(endpointHealthService: IEndpointHealthService): Promise<void>
   fetchBlob(cid: string): Promise<WalrusBlob | null>
-  fetchBlobWithRetry(cid: string, maxRetries?: number, interval?: number): Promise<WalrusBlob | null>
-  uploadBlob(data: Buffer, contentType: string, epochs?: number): Promise<string>
+  fetchBlobWithRetry(
+    cid: string,
+    maxRetries?: number,
+    interval?: number,
+  ): Promise<WalrusBlob | null>
+  uploadBlob(
+    data: Buffer,
+    contentType: string,
+    epochs?: number,
+  ): Promise<string>
   healthCheck(): Promise<boolean>
-  waitForAggregatorSync(blobId: string, maxRetries?: number, delayMs?: number): Promise<boolean>
-  uploadAndWaitForSync(data: Buffer, contentType: string, epochs?: number): Promise<{ blobId: string; synced: boolean }>
+  waitForAggregatorSync(
+    blobId: string,
+    maxRetries?: number,
+    delayMs?: number,
+  ): Promise<boolean>
+  uploadAndWaitForSync(
+    data: Buffer,
+    contentType: string,
+    epochs?: number,
+  ): Promise<{ blobId: string; synced: boolean }>
   validateCID(cid: string): boolean
 }
 
@@ -30,18 +46,24 @@ export class WalrusService implements IWalrusService {
     this.enableIpfsFallback = config.ENABLE_IPFS_FALLBACK
   }
 
-  async initialize(endpointHealthService: IEndpointHealthService): Promise<void> {
+  async initialize(
+    endpointHealthService: IEndpointHealthService,
+  ): Promise<void> {
     this.endpointHealthService = endpointHealthService
   }
 
   private getBestAggregator(): string {
     // Try to get the best healthy aggregator, fallback to primary
-    return this.endpointHealthService?.getBestAggregator() || this.primaryAggregator
+    return (
+      this.endpointHealthService?.getBestAggregator() || this.primaryAggregator
+    )
   }
 
   private getBestPublisher(): string {
     // Try to get the best healthy publisher, fallback to primary
-    return this.endpointHealthService?.getBestPublisher() || this.primaryPublisher
+    return (
+      this.endpointHealthService?.getBestPublisher() || this.primaryPublisher
+    )
   }
 
   private getAllHealthyAggregators(): string[] {

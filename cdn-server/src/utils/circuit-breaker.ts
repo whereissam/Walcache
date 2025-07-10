@@ -21,7 +21,7 @@ export class CircuitBreakerError extends BaseError {
       503,
       { serviceName, state: CircuitBreakerState.OPEN },
       correlationId,
-      30 // retry after 30 seconds
+      30, // retry after 30 seconds
     )
   }
 }
@@ -34,14 +34,16 @@ export class CircuitBreaker {
 
   constructor(
     private serviceName: string,
-    private options: CircuitBreakerOptions
+    private options: CircuitBreakerOptions,
   ) {}
 
   async execute<T>(fn: () => Promise<T>, correlationId?: string): Promise<T> {
     if (this.state === CircuitBreakerState.OPEN) {
       if (this.shouldAttemptReset()) {
         this.state = CircuitBreakerState.HALF_OPEN
-        console.log(`🔄 Circuit breaker for ${this.serviceName} is now HALF_OPEN`)
+        console.log(
+          `🔄 Circuit breaker for ${this.serviceName} is now HALF_OPEN`,
+        )
       } else {
         throw new CircuitBreakerError(this.serviceName, correlationId)
       }
@@ -63,7 +65,8 @@ export class CircuitBreaker {
 
     if (this.state === CircuitBreakerState.HALF_OPEN) {
       this.successCount++
-      if (this.successCount >= 3) { // Require 3 successful calls to close
+      if (this.successCount >= 3) {
+        // Require 3 successful calls to close
         this.state = CircuitBreakerState.CLOSED
         this.successCount = 0
         console.log(`✅ Circuit breaker for ${this.serviceName} is now CLOSED`)

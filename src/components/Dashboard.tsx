@@ -1,5 +1,10 @@
-import { useEffect } from 'react'
-import { useWalcacheStore } from '../store/walcacheStore'
+import { useMemo, memo } from 'react'
+import {
+  useGlobalStats,
+  useCacheStats,
+  useTopCIDs,
+} from '../hooks/api/useStats'
+import { useRealtimeConnection } from '../services/realtime'
 import {
   Card,
   CardContent,
@@ -42,22 +47,77 @@ import {
   Users,
 } from 'lucide-react'
 
-export function Dashboard() {
+export const Dashboard = memo(function Dashboard() {
+  // Use React Query hooks for data fetching
   const {
-    globalStats,
-    cacheStats,
-    topCIDs,
-    isLoading,
-    error,
-    fetchGlobalStats,
-  } = useWalcacheStore()
+    data: globalStats,
+    isLoading: globalLoading,
+    error: globalError,
+  } = useGlobalStats()
+  const { data: cacheStats, isLoading: cacheLoading } = useCacheStats()
+  const { data: topCIDs, isLoading: topCIDsLoading } = useTopCIDs()
 
-  useEffect(() => {
-    fetchGlobalStats()
-    const interval = setInterval(fetchGlobalStats, 30000) // Refresh every 30 seconds
-    return () => clearInterval(interval)
-  }, [fetchGlobalStats])
+  const realtimeStatus = useRealtimeConnection()
 
+  // Combine loading states
+  const isLoading = globalLoading || cacheLoading || topCIDsLoading
+  const error = globalError?.message
+
+  // All hooks must be at the top level - before any early returns
+  // Memoize expensive calculations
+  const pieChartData = useMemo(() => {
+    if (!globalStats) return []
+    return [
+      {
+        name: 'Hits',
+        value: globalStats.totalHits,
+        fill: 'hsl(var(--chart-1))',
+      },
+      {
+        name: 'Misses',
+        value: globalStats.totalMisses,
+        fill: 'hsl(var(--chart-2))',
+      },
+    ]
+  }, [globalStats])
+
+  const topCIDsChartData = useMemo(() => {
+    if (!topCIDs || topCIDs.length === 0) return []
+    return topCIDs.slice(0, 10).map((cid, index) => ({
+      name: truncateCID(cid.cid),
+      requests: cid.requests,
+      hits: cid.hits,
+      hitRate: cid.hitRate,
+      fill: `hsl(var(--chart-${(index % 5) + 1}))`,
+    }))
+  }, [topCIDs])
+
+  const geographicData = useMemo(() => {
+    if (!globalStats?.geographic) return []
+    return globalStats.geographic.slice(0, 8).map((geo, index) => ({
+      name: geo.region,
+      requests: geo.requests,
+      percentage: geo.percentage,
+      fill: `hsl(var(--chart-${(index % 5) + 1}))`,
+    }))
+  }, [globalStats?.geographic])
+
+  // Generate sample latency trend data (memoized)
+  const latencyTrendData = useMemo(
+    () =>
+      Array.from({ length: 24 }, (_, i) => ({
+        hour: `${i}:00`,
+        latency: Math.random() * 200 + 50,
+        requests: Math.floor(Math.random() * 100) + 10,
+      })),
+    [],
+  )
+
+  // Use memoized data for better performance
+  const hitRateData = pieChartData
+  const topCIDsData = topCIDsChartData
+
+  // Early returns after all hooks
   if (isLoading && !globalStats) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -74,43 +134,16 @@ export function Dashboard() {
     )
   }
 
-  const hitRateData = globalStats
-    ? [
-        {
-          name: 'Hits',
-          value: globalStats.totalHits,
-          color: 'hsl(var(--chart-1))',
-        },
-        {
-          name: 'Misses',
-          value: globalStats.totalMisses,
-          color: 'hsl(var(--chart-2))',
-        },
-      ]
-    : []
-
-  const topCIDsData = topCIDs.map((cid) => ({
-    name: truncateCID(cid.cid),
-    requests: cid.requests,
-    latency: cid.avgLatency,
-    hitRate: cid.hitRate * 100,
-    size: cid.totalSize,
-  }))
-
-  // Generate sample latency trend data (in real app, this would come from analytics)
-  const latencyTrendData = Array.from({ length: 24 }, (_, i) => ({
-    hour: `${i}:00`,
-    latency: Math.random() * 200 + 50,
-    requests: Math.floor(Math.random() * 100) + 10,
-  }))
-
-  // Geographic data from real analytics service
-  const geoData = globalStats?.geographic || [
-    { region: 'Europe', requests: 0, percentage: 100 },
-    { region: 'North America', requests: 0, percentage: 0 },
-    { region: 'Asia Pacific', requests: 0, percentage: 0 },
-    { region: 'Others', requests: 0, percentage: 0 },
-  ]
+  // Use memoized geographic data
+  const geoData =
+    geographicData.length > 0
+      ? geographicData
+      : [
+          { region: 'Europe', requests: 0, percentage: 100 },
+          { region: 'North America', requests: 0, percentage: 0 },
+          { region: 'Asia Pacific', requests: 0, percentage: 0 },
+          { region: 'Others', requests: 0, percentage: 0 },
+        ]
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -378,4 +411,4 @@ export function Dashboard() {
       </Card>
     </div>
   )
-}
+})

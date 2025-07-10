@@ -68,7 +68,7 @@ export function ChainSelector({
   React.useEffect(() => {
     if (showBlobStatus && blobId) {
       // Check blob status on all chains
-      const statuses: Record<SupportedChain, ChainBlobStatus> = {} as any
+      const statuses = {} as Record<SupportedChain, ChainBlobStatus>
       ;(['sui', 'ethereum', 'solana'] as SupportedChain[]).forEach((chain) => {
         statuses[chain] = getMockBlobStatus(chain, blobId)
       })
@@ -86,7 +86,7 @@ export function ChainSelector({
         <CardDescription>
           Choose blockchain network for Walrus CDN access
           {showBlobStatus && blobId && (
-            <span className="block mt-1 text-xs text-blue-600">
+            <span className="block mt-1 text-xs text-blue-600 dark:text-blue-400">
               Showing blob status for: {blobId.slice(0, 8)}...{blobId.slice(-8)}
             </span>
           )}
@@ -103,9 +103,7 @@ export function ChainSelector({
               <Button
                 key={chain}
                 variant={isSelected ? 'default' : 'outline'}
-                className={`h-auto p-4 flex flex-col items-start space-y-2 ${
-                  isSelected ? '' : config.bgColor
-                } ${isSelected ? '' : 'hover:' + config.bgColor}`}
+                className="h-auto p-4 flex flex-col items-start space-y-2"
                 onClick={() => onChainSelect(chain)}
               >
                 <div className="flex items-center justify-between w-full">
@@ -146,12 +144,12 @@ export function ChainSelector({
                   )}
                 </div>
 
-                <p className={`text-xs ${config.color} text-left w-full`}>
+                <p className="text-xs text-muted-foreground text-left w-full">
                   {config.description}
                 </p>
 
                 {showBlobStatus && blobStatus?.lastChecked && (
-                  <p className="text-xs text-gray-500 w-full text-left">
+                  <p className="text-xs text-muted-foreground w-full text-left">
                     <Clock className="h-3 w-3 inline mr-1" />
                     Checked{' '}
                     {Math.round(
@@ -169,7 +167,7 @@ export function ChainSelector({
 
         {/* Chain Comparison Table */}
         {showBlobStatus && Object.keys(blobStatuses).length > 0 && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <h4 className="text-sm font-medium mb-2">
               Multi-Chain Availability Summary
             </h4>
@@ -195,7 +193,7 @@ export function ChainSelector({
                           <span className="text-red-600">✗ N/A</span>
                         )}
                       </div>
-                      <div className="text-gray-600">
+                      <div className="text-muted-foreground">
                         {status?.latency ? `${status.latency}ms` : '-'}
                       </div>
                     </React.Fragment>
@@ -204,10 +202,12 @@ export function ChainSelector({
               )}
             </div>
 
-            <div className="mt-2 text-xs text-blue-600">
+            <div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
               💡 <strong>Pro Tip:</strong> Use SDK function{' '}
-              <code>getWalrusCDNUrl(blobId, &#123;chain&#125;)</code> to
-              automatically get the best URL
+              <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                getWalrusCDNUrl(blobId, &#123;chain&#125;)
+              </code>{' '}
+              to automatically get the best URL
             </div>
           </div>
         )}

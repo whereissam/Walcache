@@ -16,7 +16,10 @@ export class ServiceContainer {
   private services = new Map<string, any>()
   private initializing = new Set<string>()
 
-  register<T>(name: keyof ServiceDependencies, factory: () => T | Promise<T>): void {
+  register<T>(
+    name: keyof ServiceDependencies,
+    factory: () => T | Promise<T>,
+  ): void {
     this.services.set(name, { factory, instance: null })
   }
 
@@ -46,7 +49,7 @@ export class ServiceContainer {
 
   async initialize(): Promise<void> {
     const initPromises: Promise<any>[] = []
-    
+
     for (const [name] of this.services) {
       initPromises.push(this.get(name))
     }
