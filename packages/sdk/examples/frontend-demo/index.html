@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walcache SDK - Frontend Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .demo-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .demo-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .demo-card h3 {
+            color: #5a67d8;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .upload-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            border-color: #5a67d8;
+            background-color: #f7fafc;
+        }
+        
+        .upload-area.dragover {
+            border-color: #5a67d8;
+            background-color: #edf2f7;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #5a67d8, #667eea);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(90, 103, 216, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #5a67d8;
+        }
+        
+        .result-card {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .success {
+            border-color: #38a169;
+            background-color: #f0fff4;
+        }
+        
+        .error {
+            border-color: #e53e3e;
+            background-color: #fed7d7;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #5a67d8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .cdn-urls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .cdn-url {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .metric {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #5a67d8;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 5px;
+        }
+        
+        .code-example {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        .chain-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .chain-btn {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .chain-btn.active {
+            border-color: #5a67d8;
+            background: #5a67d8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Walcache SDK</h1>
+            <p>Universal Asset Storage for Web3 - Frontend Demo</p>
+            <p><strong>Backend SDK handles all blockchain complexity</strong></p>
+        </div>
+
+        <div class="demo-grid">
+            <!-- Upload Demo -->
+            <div class="demo-card">
+                <h3>📤 Upload Asset</h3>
+                <p>Upload any file to any blockchain. SDK handles optimization and deployment.</p>
+                
+                <div class="chain-selector">
+                    <button class="chain-btn active" data-chain="sui">Sui</button>
+                    <button class="chain-btn" data-chain="ethereum">Ethereum</button>
+                    <button class="chain-btn" data-chain="solana">Solana</button>
+                </div>
+
+                <div class="upload-area" id="uploadArea">
+                    <div>📁 Drag & drop files here or click to browse</div>
+                    <input type="file" id="fileInput" style="display: none;" multiple>
+                </div>
+
+                <div class="form-group">
+                    <label>Asset Name</label>
+                    <input type="text" id="assetName" placeholder="My Awesome Asset">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="assetDescription" placeholder="Describe your asset..." rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="createNFT"> Create as NFT
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="permanentStorage" checked> Permanent Storage
+                    </label>
+                </div>
+
+                <button class="btn" id="uploadBtn">Upload to Blockchain</button>
+
+                <div id="uploadResult" class="result-card" style="display: none;"></div>
+            </div>
+
+            <!-- Asset Info Demo -->
+            <div class="demo-card">
+                <h3>🔍 Asset Information</h3>
+                <p>Get detailed information about any stored asset.</p>
+
+                <div class="form-group">
+                    <label>Asset ID (Blob ID)</label>
+                    <input type="text" id="assetId" placeholder="bafkreih...">
+                </div>
+
+                <button class="btn" id="getInfoBtn">Get Asset Info</button>
+
+                <div id="assetInfoResult" class="result-card" style="display: none;"></div>
+            </div>
+
+            <!-- Multi-Chain URLs -->
+            <div class="demo-card">
+                <h3>🌐 Multi-Chain CDN URLs</h3>
+                <p>Generate optimized CDN URLs for any blockchain.</p>
+
+                <div class="form-group">
+                    <label>Blob ID</label>
+                    <input type="text" id="urlBlobId" placeholder="Enter blob ID">
+                </div>
+
+                <div class="form-group">
+                    <label>Image Width (optional)</label>
+                    <input type="number" id="imageWidth" placeholder="800">
+                </div>
+
+                <div class="form-group">
+                    <label>Image Quality (optional)</label>
+                    <input type="number" id="imageQuality" placeholder="85" min="1" max="100">
+                </div>
+
+                <button class="btn" id="generateUrlsBtn">Generate URLs</button>
+
+                <div id="urlsResult" class="result-card" style="display: none;"></div>
+            </div>
+
+            <!-- Asset Verification -->
+            <div class="demo-card">
+                <h3>🔐 Asset Verification</h3>
+                <p>Verify ownership for gated content access.</p>
+
+                <div class="form-group">
+                    <label>User Wallet Address</label>
+                    <input type="text" id="userAddress" placeholder="0x123...">
+                </div>
+
+                <div class="form-group">
+                    <label>Asset/Token ID</label>
+                    <input type="text" id="tokenId" placeholder="123">
+                </div>
+
+                <div class="form-group">
+                    <label>Blockchain</label>
+                    <select id="verifyChain">
+                        <option value="ethereum">Ethereum</option>
+                        <option value="sui">Sui</option>
+                        <option value="solana">Solana</option>
+                    </select>
+                </div>
+
+                <button class="btn" id="verifyBtn">Verify Ownership</button>
+
+                <div id="verifyResult" class="result-card" style="display: none;"></div>
+            </div>
+
+            <!-- Service Metrics -->
+            <div class="demo-card">
+                <h3>📊 Service Metrics</h3>
+                <p>Real-time metrics from your Walcache backend.</p>
+
+                <button class="btn" id="metricsBtn">Load Metrics</button>
+
+                <div id="metricsResult" class="result-card" style="display: none;"></div>
+            </div>
+
+            <!-- Developer Integration -->
+            <div class="demo-card">
+                <h3>💻 Developer Integration</h3>
+                <p>How to integrate Walcache SDK in your backend.</p>
+
+                <div class="code-example">
+<pre>// Install the SDK
+npm install walcache-sdk
+
+// Backend integration
+import { WalcacheBackendService } from 'walcache-sdk'
+
+const walcache = new WalcacheBackendService({
+  baseUrl: 'https://your-cdn.com',
+  apiKey: 'your-api-key',
+  defaultChain: 'sui'
+})
+
+// Upload endpoint
+app.post('/upload', async (req, res) => {
+  const result = await walcache.uploadAsset(req.file, {
+    chain: req.body.chain,
+    createNFT: req.body.createNFT
+  })
+  res.json(result)
+})
+
+// Frontend calls your backend
+fetch('/upload', {
+  method: 'POST',
+  body: formData
+})
+</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - This would point to your backend API
+        const API_BASE = 'http://localhost:3000/api'; // Developer's backend using your SDK
+        
+        let selectedChain = 'sui';
+        let uploadedFiles = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadSampleData();
+        });
+
+        function setupEventListeners() {
+            // Chain selection
+            document.querySelectorAll('.chain-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.chain-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedChain = this.dataset.chain;
+                });
+            });
+
+            // File upload
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Upload button
+            document.getElementById('uploadBtn').addEventListener('click', uploadFiles);
+
+            // Asset info
+            document.getElementById('getInfoBtn').addEventListener('click', getAssetInfo);
+
+            // Generate URLs
+            document.getElementById('generateUrlsBtn').addEventListener('click', generateUrls);
+
+            // Verify ownership
+            document.getElementById('verifyBtn').addEventListener('click', verifyOwnership);
+
+            // Load metrics
+            document.getElementById('metricsBtn').addEventListener('click', loadMetrics);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            uploadedFiles = files;
+            const uploadArea = document.getElementById('uploadArea');
+            
+            if (files.length === 1) {
+                uploadArea.innerHTML = `<div>📁 Selected: ${files[0].name} (${formatFileSize(files[0].size)})</div>`;
+            } else if (files.length > 1) {
+                uploadArea.innerHTML = `<div>📁 Selected: ${files.length} files (${formatFileSize(files.reduce((acc, f) => acc + f.size, 0))})</div>`;
+            }
+        }
+
+        async function uploadFiles() {
+            if (uploadedFiles.length === 0) {
+                showResult('uploadResult', { success: false, error: 'Please select files to upload' }, 'error');
+                return;
+            }
+
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="loading"></span> Uploading...';
+
+            try {
+                const results = [];
+
+                for (const file of uploadedFiles) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('chain', selectedChain);
+                    formData.append('name', document.getElementById('assetName').value || file.name);
+                    formData.append('description', document.getElementById('assetDescription').value);
+                    formData.append('createNFT', document.getElementById('createNFT').checked);
+                    formData.append('permanent', document.getElementById('permanentStorage').checked);
+
+                    // This calls the developer's backend which uses your SDK
+                    const response = await fetch(`${API_BASE}/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    results.push({ file: file.name, ...result });
+                }
+
+                // Show results
+                if (results.length === 1) {
+                    showUploadResult(results[0]);
+                } else {
+                    showBatchUploadResults(results);
+                }
+
+            } catch (error) {
+                showResult('uploadResult', { 
+                    success: false, 
+                    error: `Upload failed: ${error.message}` 
+                }, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = 'Upload to Blockchain';
+            }
+        }
+
+        function showUploadResult(result) {
+            if (result.success) {
+                const html = `
+                    <h4>✅ Upload Successful!</h4>
+                    <p><strong>Asset ID:</strong> <code>${result.data.id}</code></p>
+                    <p><strong>Chain:</strong> ${result.data.chain}</p>
+                    <p><strong>CDN URL:</strong> <a href="${result.data.cdnUrl}" target="_blank">${result.data.cdnUrl}</a></p>
+                    ${result.data.transactionHash ? `<p><strong>Transaction:</strong> <code>${result.data.transactionHash}</code></p>` : ''}
+                    ${result.data.contractAddress ? `<p><strong>NFT Contract:</strong> <code>${result.data.contractAddress}</code></p>` : ''}
+                    ${result.data.tokenId ? `<p><strong>Token ID:</strong> ${result.data.tokenId}</p>` : ''}
+                    <div class="cdn-urls">
+                        ${Object.entries(result.data.cdnUrls || {}).map(([chain, url]) => 
+                            `<div class="cdn-url"><strong>${chain}:</strong><br>${url}</div>`
+                        ).join('')}
+                    </div>
+                `;
+                showResult('uploadResult', html, 'success');
+            } else {
+                showResult('uploadResult', result, 'error');
+            }
+        }
+
+        function showBatchUploadResults(results) {
+            const successful = results.filter(r => r.success).length;
+            const failed = results.length - successful;
+            
+            const html = `
+                <h4>📦 Batch Upload Complete</h4>
+                <p><strong>Successful:</strong> ${successful} / ${results.length}</p>
+                <p><strong>Failed:</strong> ${failed}</p>
+                <div class="metrics-grid">
+                    ${results.map(result => `
+                        <div class="metric">
+                            <div style="font-size: 1rem; font-weight: bold;">${result.file}</div>
+                            <div style="color: ${result.success ? '#38a169' : '#e53e3e'}">
+                                ${result.success ? '✅ Success' : '❌ Failed'}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            showResult('uploadResult', html, successful > 0 ? 'success' : 'error');
+        }
+
+        async function getAssetInfo() {
+            const assetId = document.getElementById('assetId').value.trim();
+            if (!assetId) {
+                showResult('assetInfoResult', { success: false, error: 'Please enter an asset ID' }, 'error');
+                return;
+            }
+
+            try {
+                // This calls the developer's backend which uses your SDK
+                const response = await fetch(`${API_BASE}/asset/${assetId}?multichain=true`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const html = `
+                        <h4>📋 Asset Information</h4>
+                        <p><strong>ID:</strong> <code>${result.data.id}</code></p>
+                        <p><strong>Cached:</strong> ${result.data.cached ? '✅ Yes' : '❌ No'}</p>
+                        <p><strong>Pinned:</strong> ${result.data.pinned ? '✅ Yes' : '❌ No'}</p>
+                        <p><strong>CDN URL:</strong> <a href="${result.data.cdnUrl}" target="_blank">${result.data.cdnUrl}</a></p>
+                        ${result.data.stats ? `
+                            <div class="metrics-grid">
+                                <div class="metric">
+                                    <div class="metric-value">${result.data.stats.requests}</div>
+                                    <div class="metric-label">Requests</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-value">${result.data.stats.hitRate.toFixed(1)}%</div>
+                                    <div class="metric-label">Hit Rate</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-value">${result.data.stats.avgLatency}ms</div>
+                                    <div class="metric-label">Avg Latency</div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${result.data.multiChain ? `
+                            <h5>Multi-Chain Status:</h5>
+                            <div class="cdn-urls">
+                                ${Object.entries(result.data.multiChain.chains).map(([chain, status]) => 
+                                    `<div class="cdn-url">
+                                        <strong>${chain}:</strong> ${status.exists ? '✅' : '❌'} 
+                                        ${status.latency ? `(${status.latency}ms)` : ''}
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        ` : ''}
+                    `;
+                    showResult('assetInfoResult', html, 'success');
+                } else {
+                    showResult('assetInfoResult', result, 'error');
+                }
+            } catch (error) {
+                showResult('assetInfoResult', { 
+                    success: false, 
+                    error: `Failed to get asset info: ${error.message}` 
+                }, 'error');
+            }
+        }
+
+        async function generateUrls() {
+            const blobId = document.getElementById('urlBlobId').value.trim();
+            if (!blobId) {
+                showResult('urlsResult', { success: false, error: 'Please enter a blob ID' }, 'error');
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams();
+                const width = document.getElementById('imageWidth').value;
+                const quality = document.getElementById('imageQuality').value;
+                
+                if (width) params.append('width', width);
+                if (quality) params.append('quality', quality);
+
+                // This calls the developer's backend which uses your SDK
+                const response = await fetch(`${API_BASE}/cdn/${blobId}?${params}`);
+                const result = await response.json();
+
+                const html = `
+                    <h4>🌐 Multi-Chain CDN URLs</h4>
+                    <div class="cdn-urls">
+                        <div class="cdn-url">
+                            <strong>Optimized URL:</strong><br>
+                            <a href="${result.cdnUrl}" target="_blank">${result.cdnUrl}</a>
+                        </div>
+                    </div>
+                    <p><em>URLs automatically optimized based on user's blockchain and location</em></p>
+                `;
+                showResult('urlsResult', html, 'success');
+
+            } catch (error) {
+                showResult('urlsResult', { 
+                    success: false, 
+                    error: `Failed to generate URLs: ${error.message}` 
+                }, 'error');
+            }
+        }
+
+        async function verifyOwnership() {
+            const userAddress = document.getElementById('userAddress').value.trim();
+            const tokenId = document.getElementById('tokenId').value.trim();
+            const chain = document.getElementById('verifyChain').value;
+
+            if (!userAddress || !tokenId) {
+                showResult('verifyResult', { success: false, error: 'Please enter wallet address and token ID' }, 'error');
+                return;
+            }
+
+            try {
+                // This calls the developer's backend which uses your SDK
+                const response = await fetch(`${API_BASE}/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userAddress,
+                        assetId: tokenId,
+                        chain
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const html = `
+                        <h4>${result.data.hasAccess ? '✅ Verified!' : '❌ Not Verified'}</h4>
+                        <p><strong>Chain:</strong> ${result.data.chain}</p>
+                        <p><strong>Verified At:</strong> ${new Date(result.data.verifiedAt).toLocaleString()}</p>
+                        ${result.data.assetMetadata ? `
+                            <h5>Asset Metadata:</h5>
+                            <p><strong>Name:</strong> ${result.data.assetMetadata.name || 'N/A'}</p>
+                            <p><strong>Description:</strong> ${result.data.assetMetadata.description || 'N/A'}</p>
+                        ` : ''}
+                    `;
+                    showResult('verifyResult', html, result.data.hasAccess ? 'success' : 'error');
+                } else {
+                    showResult('verifyResult', result, 'error');
+                }
+
+            } catch (error) {
+                showResult('verifyResult', { 
+                    success: false, 
+                    error: `Verification failed: ${error.message}` 
+                }, 'error');
+            }
+        }
+
+        async function loadMetrics() {
+            try {
+                // This calls the developer's backend which uses your SDK
+                const response = await fetch(`${API_BASE}/metrics`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const html = `
+                        <h4>📊 Service Metrics</h4>
+                        <div class="metrics-grid">
+                            <div class="metric">
+                                <div class="metric-value">${result.data.cdn.global.totalRequests.toLocaleString()}</div>
+                                <div class="metric-label">Total Requests</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${result.data.cdn.global.globalHitRate.toFixed(1)}%</div>
+                                <div class="metric-label">Hit Rate</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${result.data.cdn.global.avgLatency}ms</div>
+                                <div class="metric-label">Avg Latency</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${result.data.cdn.global.uniqueCIDs.toLocaleString()}</div>
+                                <div class="metric-label">Unique Assets</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${Math.round(result.data.service.uptime / 3600)}h</div>
+                                <div class="metric-label">Uptime</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${(result.data.service.memory.heapUsed / 1024 / 1024).toFixed(1)}MB</div>
+                                <div class="metric-label">Memory</div>
+                            </div>
+                        </div>
+                        <p><strong>Optimal Node:</strong> ${result.data.network.optimalNode}</p>
+                        <p><strong>Cache Using:</strong> ${result.data.cdn.cache.using}</p>
+                    `;
+                    showResult('metricsResult', html, 'success');
+                } else {
+                    showResult('metricsResult', result, 'error');
+                }
+
+            } catch (error) {
+                showResult('metricsResult', { 
+                    success: false, 
+                    error: `Failed to load metrics: ${error.message}` 
+                }, 'error');
+            }
+        }
+
+        function showResult(elementId, content, type) {
+            const element = document.getElementById(elementId);
+            element.className = `result-card ${type}`;
+            
+            if (typeof content === 'string') {
+                element.innerHTML = content;
+            } else if (content.success) {
+                element.innerHTML = `<h4>✅ Success</h4><pre>${JSON.stringify(content.data, null, 2)}</pre>`;
+            } else {
+                element.innerHTML = `<h4>❌ Error</h4><p>${content.error}</p>`;
+            }
+            
+            element.style.display = 'block';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function loadSampleData() {
+            // Pre-populate with sample data for demo
+            document.getElementById('assetId').value = 'bafkreihvzun3vxd2dxqhvhwdvwyx7vt7zwqhvhwdvwyx7vt7zwqhvhw';
+            document.getElementById('urlBlobId').value = 'bafkreihvzun3vxd2dxqhvhwdvwyx7vt7zwqhvhwdvwyx7vt7zwqhvhw';
+            document.getElementById('userAddress').value = '0x1234567890123456789012345678901234567890';
+            document.getElementById('tokenId').value = '123';
+            document.getElementById('assetName').value = 'Sample Asset';
+            document.getElementById('assetDescription').value = 'This is a sample asset uploaded via Walcache SDK';
+            
+            // Show connection status
+            setTimeout(() => {
+                const status = document.createElement('div');
+                status.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #38a169; color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold;';
+                status.innerHTML = '🟢 Connected to Backend API';
+                document.body.appendChild(status);
+                
+                setTimeout(() => status.remove(), 3000);
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

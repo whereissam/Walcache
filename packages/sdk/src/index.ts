@@ -20,6 +20,23 @@
  * ```
  */
 
+// Import statements first
+import { WalrusCDNClient } from './client.js'
+import type {
+  WalrusCDNConfig,
+  UrlOptions,
+  SupportedChain,
+  GetWalrusCDNUrlOptions,
+  ChainEndpointConfig,
+  AdvancedUrlOptions,
+  AssetVerificationOptions,
+  AssetVerificationResult,
+  MultiChainVerificationResult,
+  NodeSelectionResult,
+} from './types.js'
+import type { NodeSelectionStrategy } from './nodes/index.js'
+
+// Export statements
 export { WalrusCDNClient } from './client.js'
 export * from './types.js'
 
@@ -46,22 +63,6 @@ export {
   NodeManager,
   DEFAULT_CHAIN_NODES,
 } from './nodes/index.js'
-
-// Re-export for convenience
-import { WalrusCDNClient } from './client.js'
-import type {
-  WalrusCDNConfig,
-  UrlOptions,
-  SupportedChain,
-  GetWalrusCDNUrlOptions,
-  ChainEndpointConfig,
-  AdvancedUrlOptions,
-  AssetVerificationOptions,
-  AssetVerificationResult,
-  MultiChainVerificationResult,
-  NodeSelectionResult,
-} from './types.js'
-import type { NodeSelectionStrategy } from './nodes/index.js'
 
 /**
  * Default multi-chain Walrus aggregator endpoints
@@ -527,5 +528,63 @@ export {
 // Export uploader types (conditional)
 export type { UploadOptions, UploadResult, CacheStatus } from './types.js'
 
+// Export enhanced multi-chain functionality
+export {
+  MetadataNormalizer,
+  MetadataEnhancer,
+  type UnifiedNFTMetadata,
+  type EnhancedMetadata,
+  type ERC721Metadata,
+  type SuiDisplayMetadata,
+  type MetaplexMetadata
+} from './metadata-normalizer.js'
+
+export {
+  UnifiedVerifier,
+  type VerificationOptions,
+  type VerificationResult,
+  type GatingConfig
+} from './unified-verifier.js'
+
+export {
+  CrossChainSearchEngine,
+  type SearchCriteria,
+  type UnifiedAsset,
+  type SearchResult
+} from './cross-chain-search.js'
+
+export {
+  ErrorHandler,
+  WalcacheError,
+  WalcacheErrorCode,
+  ErrorSeverity,
+  type ErrorContext
+} from './error-handler.js'
+
+export {
+  universalStore,
+  EnhancedUniversalUploader,
+  FileTypeHandler,
+  ChainUploadHandler,
+  type UniversalUploadOptions,
+  type EnhancedUploadResult,
+  type AssetMetadata,
+  type OptimizationOptions,
+  type AccessControlOptions,
+  type CrossChainOptions,
+  type ContractOptions
+} from './enhanced-uploader.js'
+
+export {
+  WalcacheUseCases,
+  createUseCases,
+  type UseCaseConfig,
+  type FileGating,
+  type SiteUploadOptions,
+  type MediaUploadOptions,
+  type GameAssetOptions,
+  type DIDDocument
+} from './use-cases.js'
+
 // Version information
-export const version = '1.0.0'
+export const version = '2.0.0'

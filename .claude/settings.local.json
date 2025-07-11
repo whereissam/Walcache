@@ -4,7 +4,10 @@
       "Bash(bun install:*)",
       "Bash(ls:*)",
       "Bash(bun run:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(bun:*)",
+      "Bash(python3:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }
