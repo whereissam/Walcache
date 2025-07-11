@@ -7,7 +7,9 @@
       "Bash(grep:*)",
       "Bash(bun:*)",
       "Bash(python3:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(timeout 10 bun:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

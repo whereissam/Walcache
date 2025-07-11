@@ -1,0 +1,1017 @@
+openapi: 3.0.3
+info:
+  title: WCDN API
+  description: |
+    The WCDN (Walrus Content Delivery Network) API provides access to decentralized storage and CDN services.
+    
+    This API follows Stripe-style REST principles with:
+    - Consistent resource structures
+    - Standardized error handling  
+    - Cursor-based pagination
+    - Bearer token authentication
+  version: 1.0.0
+  contact:
+    name: WCDN Support
+    email: support@wcdn.dev
+    url: https://docs.wcdn.dev
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.wcdn.dev/v1
+    description: Production server
+  - url: http://localhost:4500/v1
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "API key obtained from the WCDN dashboard"
+
+  parameters:
+    LimitParam:
+      name: limit
+      in: query
+      description: Number of results to return (1-100)
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+    
+    StartingAfterParam:
+      name: starting_after
+      in: query
+      description: Cursor for pagination (return results after this ID)
+      required: false
+      schema:
+        type: string
+    
+    EndingBeforeParam:
+      name: ending_before
+      in: query
+      description: Cursor for pagination (return results before this ID)
+      required: false
+      schema:
+        type: string
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - type
+            - message
+          properties:
+            type:
+              type: string
+              enum:
+                - validation_error
+                - authentication_error
+                - permission_error
+                - not_found_error
+                - rate_limit_error
+                - api_error
+                - network_error
+            message:
+              type: string
+            code:
+              type: string
+            param:
+              type: string
+      example:
+        error:
+          type: validation_error
+          message: Invalid blob ID format
+          code: VALIDATION_FAILED
+          param: id
+
+    PaginatedList:
+      type: object
+      required:
+        - object
+        - data
+        - has_more
+        - url
+      properties:
+        object:
+          type: string
+          enum: [list]
+        data:
+          type: array
+          items: {}
+        has_more:
+          type: boolean
+        url:
+          type: string
+
+    Blob:
+      type: object
+      required:
+        - id
+        - object
+        - created
+        - cid
+        - size
+        - content_type
+        - cached
+        - pinned
+      properties:
+        id:
+          type: string
+          description: Unique blob identifier (same as CID)
+          example: GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c
+        object:
+          type: string
+          enum: [blob]
+        created:
+          type: integer
+          format: int64
+          description: Unix timestamp of creation
+          example: 1720000000
+        cid:
+          type: string
+          description: Content identifier in Walrus network
+          example: GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c
+        size:
+          type: integer
+          description: Size in bytes
+          example: 2048576
+        content_type:
+          type: string
+          description: MIME type
+          example: image/jpeg
+        cached:
+          type: boolean
+          description: Whether blob is cached
+        pinned:
+          type: boolean
+          description: Whether blob is pinned to prevent eviction
+        cache_date:
+          type: integer
+          format: int64
+          description: Unix timestamp when cached
+          example: 1720001000
+        ttl:
+          type: integer
+          description: Time to live in seconds (0 for pinned)
+          example: 3600
+        source:
+          type: string
+          description: Source of the blob data
+          example: cache
+
+    Upload:
+      type: object
+      required:
+        - id
+        - object
+        - created
+        - filename
+        - size
+        - content_type
+        - blob_id
+        - status
+      properties:
+        id:
+          type: string
+          description: Unique upload identifier
+          example: upload_1720000000_abc123
+        object:
+          type: string
+          enum: [upload]
+        created:
+          type: integer
+          format: int64
+          description: Unix timestamp of creation
+          example: 1720000000
+        filename:
+          type: string
+          description: Original filename
+          example: document.pdf
+        size:
+          type: integer
+          description: File size in bytes
+          example: 2048576
+        content_type:
+          type: string
+          description: MIME type
+          example: application/pdf
+        blob_id:
+          type: string
+          description: Resulting blob ID after upload
+          example: GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c
+        status:
+          type: string
+          enum: [processing, completed, failed]
+          description: Upload status
+        vault_id:
+          type: string
+          description: Tusky vault ID (if applicable)
+          example: vault_abc123
+        parent_id:
+          type: string
+          description: Parent folder ID (if applicable)
+
+    CacheEntry:
+      type: object
+      required:
+        - id
+        - object
+        - created
+        - blob_id
+        - size
+        - pinned
+        - ttl
+        - expires_at
+        - last_accessed
+      properties:
+        id:
+          type: string
+          description: Cache entry identifier
+          example: cache_GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c
+        object:
+          type: string
+          enum: [cache]
+        created:
+          type: integer
+          format: int64
+          description: Unix timestamp when cached
+          example: 1720000000
+        blob_id:
+          type: string
+          description: Associated blob ID
+          example: GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c
+        size:
+          type: integer
+          description: Size in bytes
+          example: 2048576
+        pinned:
+          type: boolean
+          description: Whether entry is pinned
+        ttl:
+          type: integer
+          description: Time to live in seconds
+          example: 3600
+        expires_at:
+          type: integer
+          format: int64
+          description: Unix timestamp when entry expires
+          example: 1720003600
+        last_accessed:
+          type: integer
+          format: int64
+          description: Unix timestamp of last access
+          example: 1720002000
+
+    Analytics:
+      type: object
+      required:
+        - id
+        - object
+        - created
+        - blob_id
+        - total_requests
+        - cache_hits
+        - cache_misses
+        - total_bytes_served
+        - last_accessed
+        - geographic_stats
+      properties:
+        id:
+          type: string
+          description: Analytics identifier
+          example: analytics_GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c
+        object:
+          type: string
+          enum: [analytics]
+        created:
+          type: integer
+          format: int64
+          description: Unix timestamp of creation
+          example: 1720000000
+        blob_id:
+          type: string
+          description: Associated blob ID
+          example: GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c
+        total_requests:
+          type: integer
+          description: Total number of requests
+          example: 1543
+        cache_hits:
+          type: integer
+          description: Number of cache hits
+          example: 1387
+        cache_misses:
+          type: integer
+          description: Number of cache misses
+          example: 156
+        total_bytes_served:
+          type: integer
+          format: int64
+          description: Total bytes served
+          example: 3167285248
+        last_accessed:
+          type: integer
+          format: int64
+          description: Unix timestamp of last access
+          example: 1720002000
+        geographic_stats:
+          type: object
+          description: Geographic distribution of requests
+          additionalProperties:
+            type: integer
+          example:
+            US: 892
+            EU: 451
+            APAC: 200
+
+paths:
+  /blobs:
+    get:
+      summary: List blobs
+      description: Retrieve a list of blobs with optional filtering
+      tags: [Blobs]
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StartingAfterParam'
+        - $ref: '#/components/parameters/EndingBeforeParam'
+        - name: cached
+          in: query
+          description: Filter by cached status
+          required: false
+          schema:
+            type: boolean
+        - name: pinned
+          in: query
+          description: Filter by pinned status
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of blobs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedList'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Blob'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /blobs/{id}:
+    get:
+      summary: Retrieve a blob
+      description: Get details about a specific blob
+      tags: [Blobs]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Blob ID (CID)
+          schema:
+            type: string
+            example: GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c
+      responses:
+        '200':
+          description: Blob details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blob'
+        '400':
+          description: Invalid blob ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Blob not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      summary: Delete blob from cache
+      description: Remove a blob from the cache
+      tags: [Blobs]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Blob ID (CID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Blob deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blob'
+        '400':
+          description: Invalid blob ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Blob not found in cache
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /blobs/{id}/pin:
+    post:
+      summary: Pin a blob
+      description: Pin a blob to prevent cache eviction
+      tags: [Blobs]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Blob ID (CID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Blob pinned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blob'
+        '400':
+          description: Invalid blob ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Blob not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      summary: Unpin a blob
+      description: Remove pin from a blob, allowing cache eviction
+      tags: [Blobs]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Blob ID (CID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Blob unpinned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blob'
+        '400':
+          description: Invalid blob ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Blob not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /uploads:
+    post:
+      summary: Create an upload
+      description: Upload a file to the Walrus network
+      tags: [Uploads]
+      parameters:
+        - name: vault_id
+          in: query
+          description: Tusky vault ID (optional)
+          required: false
+          schema:
+            type: string
+        - name: parent_id
+          in: query
+          description: Parent folder ID (optional)
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload (max 10MB)
+              required:
+                - file
+      responses:
+        '200':
+          description: Upload created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Upload'
+        '400':
+          description: Invalid request or file too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    get:
+      summary: List uploads
+      description: Retrieve a list of uploads
+      tags: [Uploads]
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StartingAfterParam'
+        - $ref: '#/components/parameters/EndingBeforeParam'
+        - name: vault_id
+          in: query
+          description: Filter by vault ID
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by upload status
+          required: false
+          schema:
+            type: string
+            enum: [processing, completed, failed]
+      responses:
+        '200':
+          description: List of uploads
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedList'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Upload'
+
+  /uploads/{id}:
+    get:
+      summary: Retrieve an upload
+      description: Get details about a specific upload
+      tags: [Uploads]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Upload ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Upload details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Upload'
+        '404':
+          description: Upload not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      summary: Delete an upload
+      description: Delete an upload record
+      tags: [Uploads]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Upload ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Upload deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Upload'
+        '404':
+          description: Upload not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cache:
+    get:
+      summary: List cache entries
+      description: Retrieve a list of cache entries
+      tags: [Cache]
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StartingAfterParam'
+        - $ref: '#/components/parameters/EndingBeforeParam'
+        - name: pinned
+          in: query
+          description: Filter by pinned status
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of cache entries
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedList'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CacheEntry'
+
+  /cache/stats:
+    get:
+      summary: Get cache statistics
+      description: Retrieve overall cache statistics
+      tags: [Cache]
+      responses:
+        '200':
+          description: Cache statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object:
+                    type: string
+                    enum: [cache_stats]
+                  created:
+                    type: integer
+                    format: int64
+                  total_entries:
+                    type: integer
+                  total_size_bytes:
+                    type: integer
+                    format: int64
+                  pinned_entries:
+                    type: integer
+                  memory_usage_mb:
+                    type: integer
+                  redis_connected:
+                    type: boolean
+                  hit_rate:
+                    type: number
+                    format: float
+
+  /cache/preload:
+    post:
+      summary: Preload blobs
+      description: Preload multiple blobs into cache
+      tags: [Cache]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                blob_ids:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  maxItems: 100
+                  description: Array of blob IDs to preload
+              required:
+                - blob_ids
+      responses:
+        '200':
+          description: Preload operation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object:
+                    type: string
+                    enum: [preload_result]
+                  successful:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        blob_id:
+                          type: string
+                        status:
+                          type: string
+                        size:
+                          type: integer
+                  failed:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        blob_id:
+                          type: string
+                        error:
+                          type: string
+                  total:
+                    type: integer
+                  cached:
+                    type: integer
+                  errors:
+                    type: integer
+
+  /cache/clear:
+    post:
+      summary: Clear cache
+      description: Clear entire cache or specific blobs
+      tags: [Cache]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                blob_ids:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 100
+                  description: Array of blob IDs to clear (omit to clear all)
+      responses:
+        '200':
+          description: Clear operation result
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      object:
+                        type: string
+                        enum: [clear_result]
+                      status:
+                        type: string
+                        enum: [all_cleared]
+                      message:
+                        type: string
+                  - type: object
+                    properties:
+                      object:
+                        type: string
+                        enum: [clear_result]
+                      successful:
+                        type: array
+                        items:
+                          type: object
+                      failed:
+                        type: array
+                        items:
+                          type: object
+                      total:
+                        type: integer
+                      cleared:
+                        type: integer
+
+  /cache/{id}:
+    get:
+      summary: Retrieve cache entry
+      description: Get details about a specific cache entry
+      tags: [Cache]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Blob ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cache entry details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheEntry'
+        '404':
+          description: Cache entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      summary: Delete cache entry
+      description: Remove a specific cache entry
+      tags: [Cache]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Blob ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cache entry deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object:
+                    type: string
+                    enum: [cache_deletion]
+                  blob_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [deleted]
+                  message:
+                    type: string
+
+  /analytics:
+    get:
+      summary: List analytics
+      description: Retrieve analytics data for blobs
+      tags: [Analytics]
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StartingAfterParam'
+        - $ref: '#/components/parameters/EndingBeforeParam'
+        - name: blob_id
+          in: query
+          description: Filter by specific blob ID
+          required: false
+          schema:
+            type: string
+        - name: period
+          in: query
+          description: Time period for analytics
+          required: false
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+      responses:
+        '200':
+          description: List of analytics data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedList'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Analytics'
+
+  /analytics/global:
+    get:
+      summary: Get global analytics
+      description: Retrieve global analytics and system metrics
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Global analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object:
+                    type: string
+                    enum: [global_analytics]
+                  created:
+                    type: integer
+                    format: int64
+                  global:
+                    type: object
+                    properties:
+                      total_requests:
+                        type: integer
+                      cache_hits:
+                        type: integer
+                      cache_misses:
+                        type: integer
+                      total_bytes_served:
+                        type: integer
+                        format: int64
+                      unique_cids:
+                        type: integer
+                      uptime:
+                        type: integer
+                  cache:
+                    type: object
+                  geographic:
+                    type: object
+                  top_blobs:
+                    type: array
+                    items:
+                      type: object
+                  system:
+                    type: object
+                  application:
+                    type: object
+
+  /analytics/prometheus:
+    get:
+      summary: Get Prometheus metrics
+      description: Retrieve metrics in Prometheus format
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /analytics/{id}:
+    get:
+      summary: Retrieve analytics for blob
+      description: Get analytics data for a specific blob
+      tags: [Analytics]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Blob ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Analytics data for blob
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analytics'
+        '404':
+          description: Analytics not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Blobs
+    description: Blob management operations
+  - name: Uploads
+    description: File upload operations
+  - name: Cache
+    description: Cache management operations
+  - name: Analytics
+    description: Analytics and metrics operations

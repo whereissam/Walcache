@@ -7,6 +7,8 @@ import { cdnRoutes } from './routes/cdn.js'
 import { apiRoutes } from './routes/api.js'
 import { uploadRoutes } from './routes/upload.js'
 import { userRoutes } from './routes/user.js'
+import { v1Routes } from './routes/v1/index.js'
+import { registerSwagger } from './routes/swagger.js'
 import { serviceContainer } from './container/service-container.js'
 import { CacheService } from './services/cache.js'
 import { AnalyticsService } from './services/analytics.js'
@@ -80,6 +82,13 @@ async function buildServer() {
     },
   })
 
+  // Register Swagger documentation
+  await registerSwagger(fastify)
+
+  // Register v1 API routes (new Stripe-style API)
+  await fastify.register(v1Routes, { prefix: '/v1' })
+
+  // Legacy routes (maintain backward compatibility)
   await fastify.register(cdnRoutes, { prefix: '/cdn' })
   await fastify.register(apiRoutes, { prefix: '/api' })
   await fastify.register(uploadRoutes, { prefix: '/upload' })
