@@ -141,11 +141,11 @@ export class AnalyticsController extends BaseController {
         created: this.getUnixTimestamp(),
         global: {
           total_requests: globalStats.totalRequests,
-          cache_hits: globalStats.cacheHits,
-          cache_misses: globalStats.cacheMisses,
-          total_bytes_served: globalStats.totalBytesServed,
-          unique_cids: globalStats.uniqueCIDs,
-          uptime: globalStats.uptime
+          cache_hits: globalStats.totalHits,
+          cache_misses: globalStats.totalMisses,
+          hit_rate: globalStats.globalHitRate,
+          avg_latency: globalStats.avgLatency,
+          unique_cids: globalStats.uniqueCIDs
         },
         cache: {
           total_entries: cacheStats.totalEntries,

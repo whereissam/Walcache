@@ -110,6 +110,15 @@ export default function Header() {
               <span>Explorer</span>
             </Link>
 
+            <Link
+              to="/api-showcase"
+              className="flex items-center space-x-1 text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
+              activeProps={{ className: 'text-primary bg-accent' }}
+            >
+              <PlayCircle className="h-4 w-4" />
+              <span>API Showcase</span>
+            </Link>
+
             {isAuthenticated && (
               <>
                 <Link

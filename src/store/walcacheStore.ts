@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { WalrusCDNClient } from '../../packages/sdk/src/index.js'
+import { BlockchainIntegrator, PRESET_CONFIGS, WALRUS_BLOB_REGISTRY_ABI } from '../../packages/sdk/src/blockchain.js'
 import type {
   BlobResource,
   UploadResource,
@@ -10,6 +11,7 @@ import type {
   CacheStats,
   PaginatedList,
   WalrusCDNError,
+  SupportedChain,
   // Legacy types for backward compatibility
   CIDStats,
   CIDInfo,
@@ -74,10 +76,36 @@ interface TuskyFile {
 }
 
 interface UploadProgress {
+  id: string
+  object: 'upload_progress'
+  created: number
   fileName: string
+  filename: string
   progress: number
   status: 'uploading' | 'completed' | 'error'
+  size: number
+  content_type: string
+  blob_id?: string
+  vault_id?: string
+  parent_id?: string
   error?: string
+}
+
+interface BlockchainVerificationResult {
+  blobId: string
+  chain: SupportedChain
+  verified: boolean
+  transactionHash?: string
+  uploader?: string
+  timestamp?: string
+  error?: string
+}
+
+interface MultiChainStatus {
+  blobId: string
+  chains: Record<SupportedChain, BlockchainVerificationResult>
+  consensus: 'none' | 'minority' | 'majority' | 'unanimous'
+  trustedChains: SupportedChain[]
 }
 
 interface WalcacheState {
@@ -98,7 +126,13 @@ interface WalcacheState {
   // Upload Data (Tusky integration)
   vaults: TuskyVault[]
   files: TuskyFile[]
-  uploadProgress: Record<string, UploadProgress>
+  uploadProgress: Record<string, UploadProgress | UploadResource>
+
+  // Blockchain Integration State
+  blockchainIntegrator: BlockchainIntegrator | null
+  supportedChains: SupportedChain[]
+  verificationResults: Record<string, MultiChainStatus>
+  registrationProgress: Record<string, { chain: SupportedChain; status: 'pending' | 'completed' | 'failed'; txHash?: string }>
 
   // Pagination State
   pagination: {
@@ -169,6 +203,20 @@ interface WalcacheState {
   uploadToWalrusAndVerify: (
     file: File,
   ) => Promise<{ upload: any; verified: boolean; network?: string }>
+
+  // Blockchain Integration Actions
+  initializeBlockchainIntegrator: (configs: Record<SupportedChain, any>) => void
+  registerBlobOnChain: (blobId: string, metadata: any, chain: SupportedChain) => Promise<string>
+  registerBlobBatch: (blobs: Array<{ blobId: string; metadata: any }>, chain: SupportedChain) => Promise<string>
+  verifyBlobOnChain: (blobId: string, chain: SupportedChain) => Promise<BlockchainVerificationResult>
+  verifyMultiChain: (blobId: string, chains?: SupportedChain[]) => Promise<MultiChainStatus>
+  getBlobRegistrationStatus: (blobId: string, chain: SupportedChain) => Promise<{ registered: boolean; txHash?: string }>
+  uploadAndRegisterOnChain: (file: File, chain: SupportedChain, vaultId?: string) => Promise<{
+    upload: UploadResource
+    txHash: string
+    verified: boolean
+    cdnUrl: string
+  }>
 }
 
 const API_BASE = 'http://localhost:4500/api'
@@ -239,6 +287,12 @@ export const useWalcacheStore = create<WalcacheState>()(
       vaults: [],
       files: [],
       uploadProgress: {},
+
+      // Blockchain Integration state
+      blockchainIntegrator: null,
+      supportedChains: ['ethereum', 'sui'] as SupportedChain[],
+      verificationResults: {},
+      registrationProgress: {},
 
       // Pagination state
       pagination: {
@@ -726,12 +780,18 @@ export const useWalcacheStore = create<WalcacheState>()(
           existingUploadId || Math.random().toString(36).substring(2)
 
         set((state) => ({
-          uploads: {
-            ...state.uploads,
+          uploadProgress: {
+            ...state.uploadProgress,
             [uploadId]: {
+              id: uploadId,
+              object: 'upload_progress',
+              created: Math.floor(Date.now() / 1000),
               fileName: file.name,
+              filename: file.name,
               progress: 0,
               status: 'uploading',
+              size: file.size,
+              content_type: file.type,
             },
           },
         }))
@@ -763,12 +823,19 @@ export const useWalcacheStore = create<WalcacheState>()(
           const data = await response.json()
 
           set((state) => ({
-            uploads: {
-              ...state.uploads,
+            uploadProgress: {
+              ...state.uploadProgress,
               [uploadId]: {
+                id: uploadId,
+                object: 'upload_progress',
+                created: Math.floor(Date.now() / 1000),
                 fileName: file.name,
+                filename: file.name,
                 progress: 100,
                 status: 'completed',
+                size: file.size,
+                content_type: file.type,
+                blob_id: data.file.blobId,
               },
             },
             files: [...state.files, data.file],
@@ -777,21 +844,27 @@ export const useWalcacheStore = create<WalcacheState>()(
           // Remove upload after 3 seconds
           setTimeout(() => {
             set((state) => {
-              const newUploads = { ...state.uploads }
+              const newUploads = { ...state.uploadProgress }
               delete newUploads[uploadId]
-              return { uploads: newUploads }
+              return { uploadProgress: newUploads }
             })
           }, 3000)
 
           return data.file
         } catch (error) {
           set((state) => ({
-            uploads: {
-              ...state.uploads,
+            uploadProgress: {
+              ...state.uploadProgress,
               [uploadId]: {
+                id: uploadId,
+                object: 'upload_progress',
+                created: Math.floor(Date.now() / 1000),
                 fileName: file.name,
+                filename: file.name,
                 progress: 0,
                 status: 'error',
+                size: file.size,
+                content_type: file.type,
                 error: error instanceof Error ? error.message : 'Upload failed',
               },
             },
@@ -919,9 +992,9 @@ export const useWalcacheStore = create<WalcacheState>()(
           setTimeout(
             () => {
               set((state) => {
-                const newUploads = { ...state.uploads }
+                const newUploads = { ...state.uploadProgress }
                 delete newUploads[uploadId]
-                return { uploads: newUploads }
+                return { uploadProgress: newUploads }
               })
             },
             verification.available ? 3000 : 10000,
@@ -934,12 +1007,18 @@ export const useWalcacheStore = create<WalcacheState>()(
           }
         } catch (error) {
           set((state) => ({
-            uploads: {
-              ...state.uploads,
+            uploadProgress: {
+              ...state.uploadProgress,
               [uploadId]: {
+                id: uploadId,
+                object: 'upload_progress',
+                created: Math.floor(Date.now() / 1000),
                 fileName: file.name,
+                filename: file.name,
                 progress: 0,
                 status: 'error',
+                size: file.size,
+                content_type: file.type,
                 error: error instanceof Error ? error.message : 'Upload failed',
               },
             },
@@ -979,9 +1058,12 @@ export const useWalcacheStore = create<WalcacheState>()(
 
         // Start upload progress tracking
         set((state) => ({
-          uploads: {
-            ...state.uploads,
+          uploadProgress: {
+            ...state.uploadProgress,
             [uploadId]: {
+              id: uploadId,
+              object: 'upload_progress',
+              created: Math.floor(Date.now() / 1000),
               fileName: file.name,
               progress: 0,
               status: 'uploading',
@@ -994,12 +1076,18 @@ export const useWalcacheStore = create<WalcacheState>()(
           console.log(`📤 Uploading ${file.name} directly to Walrus...`)
 
           set((state) => ({
-            uploads: {
-              ...state.uploads,
+            uploadProgress: {
+              ...state.uploadProgress,
               [uploadId]: {
+                id: uploadId,
+                object: 'upload_progress',
+                created: Math.floor(Date.now() / 1000),
                 fileName: file.name,
+                filename: file.name,
                 progress: 50,
                 status: 'uploading',
+                size: file.size,
+                content_type: file.type,
               },
             },
           }))
@@ -1008,12 +1096,18 @@ export const useWalcacheStore = create<WalcacheState>()(
 
           // Step 2: Update progress to show verifying
           set((state) => ({
-            uploads: {
-              ...state.uploads,
+            uploadProgress: {
+              ...state.uploadProgress,
               [uploadId]: {
+                id: uploadId,
+                object: 'upload_progress',
+                created: Math.floor(Date.now() / 1000),
                 fileName: file.name,
+                filename: file.name,
                 progress: 80,
                 status: 'uploading', // Now verifying
+                size: file.size,
+                content_type: file.type,
               },
             },
           }))
@@ -1030,12 +1124,18 @@ export const useWalcacheStore = create<WalcacheState>()(
 
           // Step 4: Complete with verification result
           set((state) => ({
-            uploads: {
-              ...state.uploads,
+            uploadProgress: {
+              ...state.uploadProgress,
               [uploadId]: {
+                id: uploadId,
+                object: 'upload_progress',
+                created: Math.floor(Date.now() / 1000),
                 fileName: file.name,
+                filename: file.name,
                 progress: 100,
                 status: verification.available ? 'completed' : 'error',
+                size: file.size,
+                content_type: file.type,
                 error: verification.available
                   ? undefined
                   : 'Blob uploaded but not yet available on aggregators (still syncing)',
@@ -1047,9 +1147,9 @@ export const useWalcacheStore = create<WalcacheState>()(
           setTimeout(
             () => {
               set((state) => {
-                const newUploads = { ...state.uploads }
+                const newUploads = { ...state.uploadProgress }
                 delete newUploads[uploadId]
-                return { uploads: newUploads }
+                return { uploadProgress: newUploads }
               })
             },
             verification.available ? 3000 : 15000,
@@ -1062,16 +1162,213 @@ export const useWalcacheStore = create<WalcacheState>()(
           }
         } catch (error) {
           set((state) => ({
-            uploads: {
-              ...state.uploads,
+            uploadProgress: {
+              ...state.uploadProgress,
               [uploadId]: {
+                id: uploadId,
+                object: 'upload_progress',
+                created: Math.floor(Date.now() / 1000),
                 fileName: file.name,
+                filename: file.name,
                 progress: 0,
                 status: 'error',
+                size: file.size,
+                content_type: file.type,
                 error: error instanceof Error ? error.message : 'Upload failed',
               },
             },
           }))
+          throw error
+        }
+      },
+
+      // Blockchain Integration Actions
+      initializeBlockchainIntegrator: (configs: Record<SupportedChain, any>) => {
+        try {
+          const integrator = new BlockchainIntegrator(configs)
+          set({ blockchainIntegrator: integrator })
+          console.log('✅ Blockchain integrator initialized with chains:', Object.keys(configs))
+        } catch (error) {
+          set({ error: `Failed to initialize blockchain integrator: ${error instanceof Error ? error.message : 'Unknown error'}` })
+        }
+      },
+
+      registerBlobOnChain: async (blobId: string, metadata: any, chain: SupportedChain): Promise<string> => {
+        const { blockchainIntegrator } = get()
+        if (!blockchainIntegrator) {
+          throw new Error('Blockchain integrator not initialized')
+        }
+
+        const registrationId = `${blobId}-${chain}`
+        set((state) => ({
+          registrationProgress: {
+            ...state.registrationProgress,
+            [registrationId]: { chain, status: 'pending' }
+          }
+        }))
+
+        try {
+          const txHash = await blockchainIntegrator.registerBlob(blobId, metadata, chain)
+          
+          set((state) => ({
+            registrationProgress: {
+              ...state.registrationProgress,
+              [registrationId]: { chain, status: 'completed', txHash }
+            }
+          }))
+
+          console.log(`✅ Blob ${blobId} registered on ${chain}: ${txHash}`)
+          return txHash
+        } catch (error) {
+          set((state) => ({
+            registrationProgress: {
+              ...state.registrationProgress,
+              [registrationId]: { chain, status: 'failed' }
+            }
+          }))
+          throw error
+        }
+      },
+
+      registerBlobBatch: async (blobs: Array<{ blobId: string; metadata: any }>, chain: SupportedChain): Promise<string> => {
+        const { blockchainIntegrator } = get()
+        if (!blockchainIntegrator) {
+          throw new Error('Blockchain integrator not initialized')
+        }
+
+        try {
+          const txHash = await blockchainIntegrator.registerBlobBatch(
+            blobs.map(b => b.blobId),
+            blobs.map(b => b.metadata),
+            chain
+          )
+          
+          console.log(`✅ Batch of ${blobs.length} blobs registered on ${chain}: ${txHash}`)
+          return txHash
+        } catch (error) {
+          console.error(`❌ Batch registration failed on ${chain}:`, error)
+          throw error
+        }
+      },
+
+      verifyBlobOnChain: async (blobId: string, chain: SupportedChain): Promise<BlockchainVerificationResult> => {
+        const { blockchainIntegrator } = get()
+        if (!blockchainIntegrator) {
+          throw new Error('Blockchain integrator not initialized')
+        }
+
+        try {
+          const result = await blockchainIntegrator.verifyBlob(blobId, chain)
+          
+          const verificationResult: BlockchainVerificationResult = {
+            blobId,
+            chain,
+            verified: result.verified,
+            transactionHash: result.transactionHash,
+            uploader: result.uploader,
+            timestamp: result.timestamp
+          }
+
+          return verificationResult
+        } catch (error) {
+          return {
+            blobId,
+            chain,
+            verified: false,
+            error: error instanceof Error ? error.message : 'Verification failed'
+          }
+        }
+      },
+
+      verifyMultiChain: async (blobId: string, chains?: SupportedChain[]): Promise<MultiChainStatus> => {
+        const { supportedChains } = get()
+        const targetChains = chains || supportedChains
+        
+        const verificationPromises = targetChains.map(chain => 
+          get().verifyBlobOnChain(blobId, chain)
+        )
+
+        const results = await Promise.all(verificationPromises)
+        const chainResults: Record<SupportedChain, BlockchainVerificationResult> = {}
+        
+        results.forEach(result => {
+          chainResults[result.chain] = result
+        })
+
+        const verifiedChains = results.filter(r => r.verified).map(r => r.chain)
+        const totalChains = targetChains.length
+        const verifiedCount = verifiedChains.length
+
+        let consensus: 'none' | 'minority' | 'majority' | 'unanimous'
+        if (verifiedCount === 0) consensus = 'none'
+        else if (verifiedCount < totalChains / 2) consensus = 'minority'
+        else if (verifiedCount < totalChains) consensus = 'majority'
+        else consensus = 'unanimous'
+
+        const multiChainStatus: MultiChainStatus = {
+          blobId,
+          chains: chainResults,
+          consensus,
+          trustedChains: verifiedChains
+        }
+
+        set((state) => ({
+          verificationResults: {
+            ...state.verificationResults,
+            [blobId]: multiChainStatus
+          }
+        }))
+
+        return multiChainStatus
+      },
+
+      getBlobRegistrationStatus: async (blobId: string, chain: SupportedChain) => {
+        const { blockchainIntegrator } = get()
+        if (!blockchainIntegrator) {
+          throw new Error('Blockchain integrator not initialized')
+        }
+
+        try {
+          const result = await blockchainIntegrator.verifyBlob(blobId, chain)
+          return {
+            registered: result.verified,
+            txHash: result.transactionHash
+          }
+        } catch (error) {
+          return { registered: false }
+        }
+      },
+
+      uploadAndRegisterOnChain: async (file: File, chain: SupportedChain, vaultId?: string) => {
+        set({ isLoading: true, error: null })
+        
+        try {
+          // Step 1: Upload file using existing upload function
+          const upload = await get().createUpload(file, { vault_id: vaultId })
+          
+          // Step 2: Register on blockchain
+          const metadata = {
+            size: upload.size,
+            contentType: upload.content_type,
+            cdnUrl: cdnClient.getCDNUrl(upload.blob_id),
+            contentHash: upload.blob_id // In practice, compute actual hash
+          }
+          
+          const txHash = await get().registerBlobOnChain(upload.blob_id, metadata, chain)
+          
+          // Step 3: Verify registration
+          const verification = await get().verifyBlobOnChain(upload.blob_id, chain)
+          
+          set({ isLoading: false })
+          
+          return {
+            upload,
+            txHash,
+            verified: verification.verified,
+            cdnUrl: cdnClient.getCDNUrl(upload.blob_id)
+          }
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Upload and registration failed', isLoading: false })
           throw error
         }
       },

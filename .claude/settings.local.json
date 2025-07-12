@@ -12,7 +12,13 @@
       "Bash(find:*)",
       "Bash(kill:*)",
       "Bash(curl:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(rg:*)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout:*)",
+      "Bash(vite build:*)",
+      "Bash(npx vite build:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

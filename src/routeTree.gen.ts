@@ -18,6 +18,7 @@ import { Route as ExplorerRouteImport } from './routes/explorer'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CacheRouteImport } from './routes/cache'
+import { Route as ApiShowcaseRouteImport } from './routes/api-showcase'
 import { Route as ApiRouteImport } from './routes/api'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -66,6 +67,11 @@ const CacheRoute = CacheRouteImport.update({
   path: '/cache',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiShowcaseRoute = ApiShowcaseRouteImport.update({
+  id: '/api-showcase',
+  path: '/api-showcase',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRoute = ApiRouteImport.update({
   id: '/api',
   path: '/api',
@@ -80,6 +86,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api': typeof ApiRoute
+  '/api-showcase': typeof ApiShowcaseRoute
   '/cache': typeof CacheRoute
   '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api': typeof ApiRoute
+  '/api-showcase': typeof ApiShowcaseRoute
   '/cache': typeof CacheRoute
   '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api': typeof ApiRoute
+  '/api-showcase': typeof ApiShowcaseRoute
   '/cache': typeof CacheRoute
   '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api'
+    | '/api-showcase'
     | '/cache'
     | '/dashboard'
     | '/demo'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api'
+    | '/api-showcase'
     | '/cache'
     | '/dashboard'
     | '/demo'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api'
+    | '/api-showcase'
     | '/cache'
     | '/dashboard'
     | '/demo'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiRoute: typeof ApiRoute
+  ApiShowcaseRoute: typeof ApiShowcaseRoute
   CacheRoute: typeof CacheRoute
   DashboardRoute: typeof DashboardRoute
   DemoRoute: typeof DemoRoute
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CacheRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api-showcase': {
+      id: '/api-showcase'
+      path: '/api-showcase'
+      fullPath: '/api-showcase'
+      preLoaderRoute: typeof ApiShowcaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api': {
       id: '/api'
       path: '/api'
@@ -258,6 +278,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiRoute: ApiRoute,
+  ApiShowcaseRoute: ApiShowcaseRoute,
   CacheRoute: CacheRoute,
   DashboardRoute: DashboardRoute,
   DemoRoute: DemoRoute,

@@ -30,14 +30,16 @@ import { WalrusCDNError } from './types.js'
 import { verifierRegistry } from './verifiers/index.js'
 import { queryManager } from './queries/index.js'
 import { nodeManager, type NodeSelectionStrategy } from './nodes/index.js'
+import { BlockchainIntegrator, type BlockchainConfig, type OnChainBlobMetadata, type BatchRegistrationParams } from './blockchain.js'
 
 /**
  * Walrus CDN Client - Core functionality for interacting with WCDN
  */
 export class WalrusCDNClient {
   private config: Required<WalrusCDNConfig>
+  private blockchainIntegrator?: BlockchainIntegrator
 
-  constructor(config: WalrusCDNConfig) {
+  constructor(config: WalrusCDNConfig, blockchainConfig?: BlockchainConfig) {
     // Validate required config
     if (!config.baseUrl) {
       throw new WalrusCDNError('baseUrl is required in WalrusCDNConfig')
@@ -56,6 +58,11 @@ export class WalrusCDNClient {
     // Ensure HTTPS if secure is true
     if (this.config.secure && this.config.baseUrl.startsWith('http://')) {
       this.config.baseUrl = this.config.baseUrl.replace('http://', 'https://')
+    }
+
+    // Initialize blockchain integrator if config provided
+    if (blockchainConfig) {
+      this.blockchainIntegrator = new BlockchainIntegrator(blockchainConfig)
     }
   }
 
@@ -241,6 +248,75 @@ export class WalrusCDNClient {
     } catch (error) {
       throw this.handleError(error, 'Failed to list uploads')
     }
+  }
+
+  /**
+   * Upload multiple files in batch (v1 API)
+   * @param files - Array of files to upload
+   * @param options - Batch upload options
+   * @returns Promise with array of upload resources
+   */
+  async createBatchUpload(
+    files: (File | Blob)[],
+    options: { vault_id?: string; parent_id?: string; concurrency?: number } = {}
+  ): Promise<UploadResource[]> {
+    if (!Array.isArray(files) || files.length === 0) {
+      throw new WalrusCDNError('files must be a non-empty array')
+    }
+
+    const concurrency = options.concurrency || 3; // Limit concurrent uploads
+    const results: UploadResource[] = [];
+    
+    // Process files in batches to avoid overwhelming the server
+    for (let i = 0; i < files.length; i += concurrency) {
+      const batch = files.slice(i, i + concurrency);
+      const batchPromises = batch.map(file => this.createUpload(file, options));
+      
+      try {
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+      } catch (error) {
+        throw this.handleError(error, `Failed to upload batch starting at index ${i}`)
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Get multiple blobs in batch (v1 API)
+   * @param blobIds - Array of blob IDs to fetch
+   * @returns Promise with array of blob resources
+   */
+  async getBlobsBatch(blobIds: string[]): Promise<(BlobResource | null)[]> {
+    if (!Array.isArray(blobIds) || blobIds.length === 0) {
+      throw new WalrusCDNError('blobIds must be a non-empty array')
+    }
+
+    const results = await Promise.allSettled(
+      blobIds.map(blobId => this.getBlob(blobId))
+    );
+
+    return results.map(result => 
+      result.status === 'fulfilled' ? result.value : null
+    );
+  }
+
+  /**
+   * Generate multiple CDN URLs in batch
+   * @param blobIds - Array of blob IDs
+   * @param options - URL generation options
+   * @returns Array of CDN URLs
+   */
+  getBatchCDNUrls(
+    blobIds: string[],
+    options: UrlOptions = {}
+  ): string[] {
+    if (!Array.isArray(blobIds) || blobIds.length === 0) {
+      throw new WalrusCDNError('blobIds must be a non-empty array')
+    }
+
+    return blobIds.map(blobId => this.getCDNUrl(blobId, options));
   }
 
   /**
@@ -507,6 +583,301 @@ export class WalrusCDNClient {
     } catch (error) {
       throw this.handleError(error, `Failed to unpin CID ${blobId}`)
     }
+  }
+
+  // =============================================================================
+  // SMART CONTRACT INTEGRATION
+  // =============================================================================
+
+  /**
+   * Register blob metadata on blockchain
+   * @param blobId - The blob ID to register
+   * @param metadata - Blob metadata
+   * @param chain - Target blockchain (optional, registers on all configured chains if not specified)
+   * @returns Promise with transaction hashes
+   */
+  async registerBlobOnChain(
+    blobId: string,
+    metadata: {
+      size: number;
+      contentType: string;
+      cdnUrl: string;
+      contentHash: string;
+    },
+    chain?: SupportedChain
+  ): Promise<Record<SupportedChain, string | null>> {
+    if (!this.blockchainIntegrator) {
+      throw new WalrusCDNError('Blockchain integration not configured')
+    }
+
+    if (!blobId) {
+      throw new WalrusCDNError('blobId is required')
+    }
+
+    try {
+      if (chain) {
+        // Register on specific chain
+        const results: Record<SupportedChain, string | null> = {
+          ethereum: null,
+          sui: null,
+          solana: null,
+        };
+
+        switch (chain) {
+          case 'ethereum':
+            results.ethereum = await this.blockchainIntegrator.registerBlobOnEthereum(
+              blobId,
+              metadata.size,
+              metadata.contentType,
+              metadata.cdnUrl,
+              metadata.contentHash
+            );
+            break;
+          case 'sui':
+            results.sui = await this.blockchainIntegrator.registerBlobOnSui(
+              blobId,
+              metadata.size,
+              metadata.contentType,
+              metadata.cdnUrl,
+              metadata.contentHash
+            );
+            break;
+          case 'solana':
+            throw new WalrusCDNError('Solana integration not yet implemented');
+          default:
+            throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+        }
+
+        return results;
+      } else {
+        // Register on all configured chains
+        return await this.blockchainIntegrator.registerBlobMultiChain(
+          blobId,
+          metadata.size,
+          metadata.contentType,
+          metadata.cdnUrl,
+          metadata.contentHash
+        );
+      }
+    } catch (error) {
+      throw this.handleError(error, 'Failed to register blob on blockchain')
+    }
+  }
+
+  /**
+   * Register multiple blobs on blockchain in batch
+   * @param blobs - Array of blob information to register
+   * @param chain - Target blockchain
+   * @returns Promise with transaction hash
+   */
+  async registerBlobBatchOnChain(
+    blobs: Array<{
+      blobId: string;
+      size: number;
+      contentType: string;
+      cdnUrl: string;
+      contentHash: string;
+    }>,
+    chain: SupportedChain = 'ethereum'
+  ): Promise<string> {
+    if (!this.blockchainIntegrator) {
+      throw new WalrusCDNError('Blockchain integration not configured')
+    }
+
+    if (!Array.isArray(blobs) || blobs.length === 0) {
+      throw new WalrusCDNError('blobs must be a non-empty array')
+    }
+
+    try {
+      const params: BatchRegistrationParams = {
+        blobIds: blobs.map(b => b.blobId),
+        sizes: blobs.map(b => b.size),
+        contentTypes: blobs.map(b => b.contentType),
+        cdnUrls: blobs.map(b => b.cdnUrl),
+        contentHashes: blobs.map(b => b.contentHash),
+      };
+
+      switch (chain) {
+        case 'ethereum':
+          return await this.blockchainIntegrator.registerBlobBatchOnEthereum(params);
+        case 'sui':
+          throw new WalrusCDNError('Sui batch registration not yet implemented');
+        case 'solana':
+          throw new WalrusCDNError('Solana integration not yet implemented');
+        default:
+          throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+      }
+    } catch (error) {
+      throw this.handleError(error, 'Failed to register blob batch on blockchain')
+    }
+  }
+
+  /**
+   * Get blob metadata from blockchain
+   * @param blobId - The blob ID to query
+   * @param chain - Target blockchain (optional, queries all configured chains if not specified)
+   * @returns Promise with blob metadata from blockchain(s)
+   */
+  async getBlobMetadataFromChain(
+    blobId: string,
+    chain?: SupportedChain
+  ): Promise<Record<SupportedChain, OnChainBlobMetadata | null>> {
+    if (!this.blockchainIntegrator) {
+      throw new WalrusCDNError('Blockchain integration not configured')
+    }
+
+    if (!blobId) {
+      throw new WalrusCDNError('blobId is required')
+    }
+
+    try {
+      if (chain) {
+        const results: Record<SupportedChain, OnChainBlobMetadata | null> = {
+          ethereum: null,
+          sui: null,
+          solana: null,
+        };
+
+        switch (chain) {
+          case 'ethereum':
+            results.ethereum = await this.blockchainIntegrator.getBlobMetadataFromEthereum(blobId);
+            break;
+          case 'sui':
+            results.sui = await this.blockchainIntegrator.getBlobMetadataFromSui(blobId);
+            break;
+          case 'solana':
+            throw new WalrusCDNError('Solana integration not yet implemented');
+          default:
+            throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+        }
+
+        return results;
+      } else {
+        return await this.blockchainIntegrator.getBlobMetadataMultiChain(blobId);
+      }
+    } catch (error) {
+      throw this.handleError(error, 'Failed to get blob metadata from blockchain')
+    }
+  }
+
+  /**
+   * Pin blob on blockchain to prevent cache eviction
+   * @param blobId - The blob ID to pin
+   * @param chain - Target blockchain
+   * @returns Promise with transaction hash
+   */
+  async pinBlobOnChain(blobId: string, chain: SupportedChain = 'ethereum'): Promise<string> {
+    if (!this.blockchainIntegrator) {
+      throw new WalrusCDNError('Blockchain integration not configured')
+    }
+
+    if (!blobId) {
+      throw new WalrusCDNError('blobId is required')
+    }
+
+    try {
+      switch (chain) {
+        case 'ethereum':
+          return await this.blockchainIntegrator.pinBlobOnEthereum(blobId);
+        case 'sui':
+          throw new WalrusCDNError('Sui pin operation not yet implemented');
+        case 'solana':
+          throw new WalrusCDNError('Solana integration not yet implemented');
+        default:
+          throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+      }
+    } catch (error) {
+      throw this.handleError(error, 'Failed to pin blob on blockchain')
+    }
+  }
+
+  /**
+   * Verify blob content hash on blockchain
+   * @param blobId - The blob ID to verify
+   * @param contentHash - Content hash to verify against
+   * @param chain - Target blockchain
+   * @returns Promise indicating if hash matches
+   */
+  async verifyBlobHashOnChain(
+    blobId: string,
+    contentHash: string,
+    chain: SupportedChain = 'ethereum'
+  ): Promise<boolean> {
+    if (!this.blockchainIntegrator) {
+      throw new WalrusCDNError('Blockchain integration not configured')
+    }
+
+    if (!blobId) {
+      throw new WalrusCDNError('blobId is required')
+    }
+
+    try {
+      switch (chain) {
+        case 'ethereum':
+          return await this.blockchainIntegrator.verifyBlobHashOnEthereum(blobId, contentHash);
+        case 'sui':
+          throw new WalrusCDNError('Sui hash verification not yet implemented');
+        case 'solana':
+          throw new WalrusCDNError('Solana integration not yet implemented');
+        default:
+          throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+      }
+    } catch (error) {
+      throw this.handleError(error, 'Failed to verify blob hash on blockchain')
+    }
+  }
+
+  /**
+   * Get all blobs uploaded by a specific address on blockchain
+   * @param uploaderAddress - The uploader's address
+   * @param chain - Target blockchain
+   * @returns Promise with array of blob IDs
+   */
+  async getUploaderBlobsFromChain(
+    uploaderAddress: string,
+    chain: SupportedChain = 'ethereum'
+  ): Promise<string[]> {
+    if (!this.blockchainIntegrator) {
+      throw new WalrusCDNError('Blockchain integration not configured')
+    }
+
+    if (!uploaderAddress) {
+      throw new WalrusCDNError('uploaderAddress is required')
+    }
+
+    try {
+      switch (chain) {
+        case 'ethereum':
+          return await this.blockchainIntegrator.getUploaderBlobsFromEthereum(uploaderAddress);
+        case 'sui':
+          throw new WalrusCDNError('Sui uploader query not yet implemented');
+        case 'solana':
+          throw new WalrusCDNError('Solana integration not yet implemented');
+        default:
+          throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+      }
+    } catch (error) {
+      throw this.handleError(error, 'Failed to get uploader blobs from blockchain')
+    }
+  }
+
+  /**
+   * Check if blockchain integration is available
+   * @returns Boolean indicating if blockchain features are available
+   */
+  isBlockchainIntegrationAvailable(): boolean {
+    return !!this.blockchainIntegrator;
+  }
+
+  /**
+   * Get supported chains based on blockchain configuration
+   * @returns Array of supported blockchain networks
+   */
+  getSupportedChains(): SupportedChain[] {
+    if (!this.blockchainIntegrator) {
+      return [];
+    }
+    return this.blockchainIntegrator.getSupportedChains();
   }
 
   // =============================================================================

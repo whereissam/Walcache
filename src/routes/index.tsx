@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { lazy } from 'react'
 import { LazyRoute } from '../components/LazyRoute'
+import { ValueProposition } from '../components/ValueProposition'
 
 // Lazy load the Dashboard component
 const Dashboard = lazy(() =>
@@ -12,7 +13,10 @@ const Dashboard = lazy(() =>
 export const Route = createFileRoute('/')({
   component: () => (
     <LazyRoute>
-      <Dashboard />
+      <div className="space-y-12">
+        <ValueProposition />
+        <Dashboard />
+      </div>
     </LazyRoute>
   ),
 })
