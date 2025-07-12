@@ -1,9 +1,16 @@
 import type {
   WalrusCDNConfig,
-  CIDInfo,
-  UploadResponse,
+  BlobResource,
+  UploadResource,
+  CacheResource,
+  AnalyticsResource,
   PreloadResult,
-  GlobalMetrics,
+  ClearResult,
+  CacheStats,
+  GlobalAnalytics,
+  PaginatedList,
+  PaginationParams,
+  ApiError,
   UrlOptions,
   SupportedChain,
   AdvancedUrlOptions,
@@ -14,6 +21,10 @@ import type {
   AssetQueryOptions,
   AssetQueryResult,
   NodeSelectionResult,
+  // Legacy types for backward compatibility
+  CIDInfo,
+  UploadResponse,
+  GlobalMetrics,
 } from './types.js'
 import { WalrusCDNError } from './types.js'
 import { verifierRegistry } from './verifiers/index.js'
@@ -92,6 +103,50 @@ export class WalrusCDNClient {
   }
 
   /**
+   * Get information about a specific blob (v1 API)
+   * @param blobId - The Walrus blob ID
+   * @returns Promise with blob resource information
+   */
+  async getBlob(blobId: string): Promise<BlobResource> {
+    if (!blobId) {
+      throw new WalrusCDNError('blobId is required')
+    }
+
+    try {
+      const response = await this.makeRequest(`/v1/blobs/${blobId}`)
+      return response
+    } catch (error) {
+      throw this.handleError(error, `Failed to get blob info for ${blobId}`)
+    }
+  }
+
+  /**
+   * List blobs with pagination support (v1 API)
+   * @param params - Pagination and filtering parameters
+   * @returns Promise with paginated blob list
+   */
+  async listBlobs(params: PaginationParams & {
+    cached?: boolean
+    pinned?: boolean
+  } = {}): Promise<PaginatedList<BlobResource>> {
+    try {
+      const searchParams = new URLSearchParams()
+      if (params.limit) searchParams.set('limit', params.limit.toString())
+      if (params.starting_after) searchParams.set('starting_after', params.starting_after)
+      if (params.ending_before) searchParams.set('ending_before', params.ending_before)
+      if (params.cached !== undefined) searchParams.set('cached', params.cached.toString())
+      if (params.pinned !== undefined) searchParams.set('pinned', params.pinned.toString())
+
+      const url = `/v1/blobs${searchParams.toString() ? `?${searchParams}` : ''}`
+      const response = await this.makeRequest(url)
+      return response
+    } catch (error) {
+      throw this.handleError(error, 'Failed to list blobs')
+    }
+  }
+
+  /**
+   * @deprecated Use getBlob() instead for v1 API
    * Get information about a specific CID including cache status and stats
    * @param blobId - The Walrus blob ID
    * @returns Promise with CID information
@@ -102,6 +157,7 @@ export class WalrusCDNClient {
     }
 
     try {
+      // Use legacy endpoint for backward compatibility
       const response = await this.makeRequest(`/api/stats/${blobId}`)
       return response
     } catch (error) {
@@ -110,6 +166,85 @@ export class WalrusCDNClient {
   }
 
   /**
+   * Upload a file to Walrus via the CDN (v1 API)
+   * @param file - File to upload (File or Blob)
+   * @param options - Upload options including vault ID
+   * @returns Promise with upload resource
+   */
+  async createUpload(
+    file: File | Blob,
+    options: { vault_id?: string; parent_id?: string } = {}
+  ): Promise<UploadResource> {
+    if (!file) {
+      throw new WalrusCDNError('file is required')
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const searchParams = new URLSearchParams()
+      if (options.vault_id) searchParams.set('vault_id', options.vault_id)
+      if (options.parent_id) searchParams.set('parent_id', options.parent_id)
+
+      const url = `/v1/uploads${searchParams.toString() ? `?${searchParams}` : ''}`
+      const response = await this.makeRequest(url, {
+        method: 'POST',
+        body: formData,
+        headers: {}, // Let browser set Content-Type for FormData
+      })
+
+      return response
+    } catch (error) {
+      throw this.handleError(error, 'Failed to create upload')
+    }
+  }
+
+  /**
+   * Get upload information (v1 API)
+   * @param uploadId - Upload ID
+   * @returns Promise with upload resource
+   */
+  async getUpload(uploadId: string): Promise<UploadResource> {
+    if (!uploadId) {
+      throw new WalrusCDNError('uploadId is required')
+    }
+
+    try {
+      const response = await this.makeRequest(`/v1/uploads/${uploadId}`)
+      return response
+    } catch (error) {
+      throw this.handleError(error, `Failed to get upload ${uploadId}`)
+    }
+  }
+
+  /**
+   * List uploads with pagination support (v1 API)
+   * @param params - Pagination and filtering parameters
+   * @returns Promise with paginated upload list
+   */
+  async listUploads(params: PaginationParams & {
+    vault_id?: string
+    status?: 'processing' | 'completed' | 'failed'
+  } = {}): Promise<PaginatedList<UploadResource>> {
+    try {
+      const searchParams = new URLSearchParams()
+      if (params.limit) searchParams.set('limit', params.limit.toString())
+      if (params.starting_after) searchParams.set('starting_after', params.starting_after)
+      if (params.ending_before) searchParams.set('ending_before', params.ending_before)
+      if (params.vault_id) searchParams.set('vault_id', params.vault_id)
+      if (params.status) searchParams.set('status', params.status)
+
+      const url = `/v1/uploads${searchParams.toString() ? `?${searchParams}` : ''}`
+      const response = await this.makeRequest(url)
+      return response
+    } catch (error) {
+      throw this.handleError(error, 'Failed to list uploads')
+    }
+  }
+
+  /**
+   * @deprecated Use createUpload() instead for v1 API
    * Upload a file to Walrus via the CDN
    * @param file - File to upload (File or Blob)
    * @param vaultId - Optional vault ID for organization
@@ -144,7 +279,132 @@ export class WalrusCDNClient {
     }
   }
 
+  // =============================================================================
+  // CACHE MANAGEMENT (v1 API)
+  // =============================================================================
+
   /**
+   * Preload multiple blobs into the cache (v1 API)
+   * @param blobIds - Array of blob IDs to preload
+   * @returns Promise with preload results
+   */
+  async preloadBlobs(blobIds: string[]): Promise<PreloadResult> {
+    if (!Array.isArray(blobIds) || blobIds.length === 0) {
+      throw new WalrusCDNError('blobIds must be a non-empty array')
+    }
+
+    try {
+      const response = await this.makeRequest('/v1/cache/preload', {
+        method: 'POST',
+        body: JSON.stringify({ blob_ids: blobIds }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      return response
+    } catch (error) {
+      throw this.handleError(error, 'Failed to preload blobs')
+    }
+  }
+
+  /**
+   * Get cache entry information (v1 API)
+   * @param blobId - The blob ID
+   * @returns Promise with cache resource
+   */
+  async getCacheEntry(blobId: string): Promise<CacheResource> {
+    if (!blobId) {
+      throw new WalrusCDNError('blobId is required')
+    }
+
+    try {
+      const response = await this.makeRequest(`/v1/cache/${blobId}`)
+      return response
+    } catch (error) {
+      throw this.handleError(error, `Failed to get cache entry for ${blobId}`)
+    }
+  }
+
+  /**
+   * List cache entries with pagination support (v1 API)
+   * @param params - Pagination and filtering parameters
+   * @returns Promise with paginated cache list
+   */
+  async listCacheEntries(params: PaginationParams & {
+    pinned?: boolean
+  } = {}): Promise<PaginatedList<CacheResource>> {
+    try {
+      const searchParams = new URLSearchParams()
+      if (params.limit) searchParams.set('limit', params.limit.toString())
+      if (params.starting_after) searchParams.set('starting_after', params.starting_after)
+      if (params.ending_before) searchParams.set('ending_before', params.ending_before)
+      if (params.pinned !== undefined) searchParams.set('pinned', params.pinned.toString())
+
+      const url = `/v1/cache${searchParams.toString() ? `?${searchParams}` : ''}`
+      const response = await this.makeRequest(url)
+      return response
+    } catch (error) {
+      throw this.handleError(error, 'Failed to list cache entries')
+    }
+  }
+
+  /**
+   * Get cache statistics (v1 API)
+   * @returns Promise with cache statistics
+   */
+  async getCacheStats(): Promise<CacheStats> {
+    try {
+      const response = await this.makeRequest('/v1/cache/stats')
+      return response
+    } catch (error) {
+      throw this.handleError(error, 'Failed to get cache stats')
+    }
+  }
+
+  /**
+   * Clear cache entries (v1 API)
+   * @param blobIds - Optional array of specific blob IDs to clear (if empty, clears all)
+   * @returns Promise with clear operation result
+   */
+  async clearCache(blobIds?: string[]): Promise<ClearResult> {
+    try {
+      const body = blobIds ? { blob_ids: blobIds } : {}
+      const response = await this.makeRequest('/v1/cache/clear', {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      return response
+    } catch (error) {
+      throw this.handleError(error, 'Failed to clear cache')
+    }
+  }
+
+  /**
+   * Delete specific cache entry (v1 API)
+   * @param blobId - The blob ID to remove from cache
+   * @returns Promise that resolves when deleted
+   */
+  async deleteCacheEntry(blobId: string): Promise<void> {
+    if (!blobId) {
+      throw new WalrusCDNError('blobId is required')
+    }
+
+    try {
+      await this.makeRequest(`/v1/cache/${blobId}`, {
+        method: 'DELETE',
+      })
+    } catch (error) {
+      throw this.handleError(error, `Failed to delete cache entry ${blobId}`)
+    }
+  }
+
+  /**
+   * @deprecated Use preloadBlobs() instead for v1 API
    * Preload multiple CIDs into the cache
    * @param cids - Array of blob IDs to preload
    * @returns Promise with preload results
@@ -170,6 +430,47 @@ export class WalrusCDNClient {
   }
 
   /**
+   * Pin a blob to prevent it from being evicted from cache (v1 API)
+   * @param blobId - The blob ID to pin
+   * @returns Promise with updated blob resource
+   */
+  async pinBlob(blobId: string): Promise<BlobResource> {
+    if (!blobId) {
+      throw new WalrusCDNError('blobId is required')
+    }
+
+    try {
+      const response = await this.makeRequest(`/v1/blobs/${blobId}/pin`, {
+        method: 'POST',
+      })
+      return response
+    } catch (error) {
+      throw this.handleError(error, `Failed to pin blob ${blobId}`)
+    }
+  }
+
+  /**
+   * Unpin a blob to allow it to be evicted from cache (v1 API)
+   * @param blobId - The blob ID to unpin
+   * @returns Promise with updated blob resource
+   */
+  async unpinBlob(blobId: string): Promise<BlobResource> {
+    if (!blobId) {
+      throw new WalrusCDNError('blobId is required')
+    }
+
+    try {
+      const response = await this.makeRequest(`/v1/blobs/${blobId}/pin`, {
+        method: 'DELETE',
+      })
+      return response
+    } catch (error) {
+      throw this.handleError(error, `Failed to unpin blob ${blobId}`)
+    }
+  }
+
+  /**
+   * @deprecated Use pinBlob() instead for v1 API
    * Pin a CID to prevent it from being evicted from cache
    * @param blobId - The blob ID to pin
    * @returns Promise that resolves when pinned
@@ -189,6 +490,7 @@ export class WalrusCDNClient {
   }
 
   /**
+   * @deprecated Use unpinBlob() instead for v1 API
    * Unpin a CID to allow it to be evicted from cache
    * @param blobId - The blob ID to unpin
    * @returns Promise that resolves when unpinned
@@ -207,7 +509,81 @@ export class WalrusCDNClient {
     }
   }
 
+  // =============================================================================
+  // ANALYTICS (v1 API)
+  // =============================================================================
+
   /**
+   * Get analytics for a specific blob (v1 API)
+   * @param blobId - The blob ID
+   * @returns Promise with analytics resource
+   */
+  async getBlobAnalytics(blobId: string): Promise<AnalyticsResource> {
+    if (!blobId) {
+      throw new WalrusCDNError('blobId is required')
+    }
+
+    try {
+      const response = await this.makeRequest(`/v1/analytics/${blobId}`)
+      return response
+    } catch (error) {
+      throw this.handleError(error, `Failed to get analytics for blob ${blobId}`)
+    }
+  }
+
+  /**
+   * List analytics with pagination support (v1 API)
+   * @param params - Pagination and filtering parameters
+   * @returns Promise with paginated analytics list
+   */
+  async listAnalytics(params: PaginationParams & {
+    blob_id?: string
+    period?: '1h' | '24h' | '7d' | '30d'
+  } = {}): Promise<PaginatedList<AnalyticsResource>> {
+    try {
+      const searchParams = new URLSearchParams()
+      if (params.limit) searchParams.set('limit', params.limit.toString())
+      if (params.starting_after) searchParams.set('starting_after', params.starting_after)
+      if (params.ending_before) searchParams.set('ending_before', params.ending_before)
+      if (params.blob_id) searchParams.set('blob_id', params.blob_id)
+      if (params.period) searchParams.set('period', params.period)
+
+      const url = `/v1/analytics${searchParams.toString() ? `?${searchParams}` : ''}`
+      const response = await this.makeRequest(url)
+      return response
+    } catch (error) {
+      throw this.handleError(error, 'Failed to list analytics')
+    }
+  }
+
+  /**
+   * Get global analytics and performance statistics (v1 API)
+   * @returns Promise with global analytics
+   */
+  async getGlobalAnalytics(): Promise<GlobalAnalytics> {
+    try {
+      const response = await this.makeRequest('/v1/analytics/global')
+      return response
+    } catch (error) {
+      throw this.handleError(error, 'Failed to get global analytics')
+    }
+  }
+
+  /**
+   * Get Prometheus metrics (v1 API)
+   * @returns Promise with Prometheus metrics as text
+   */
+  async getPrometheusMetrics(): Promise<string> {
+    try {
+      const response = await this.makeRequest('/v1/analytics/prometheus')
+      return response
+    } catch (error) {
+      throw this.handleError(error, 'Failed to get Prometheus metrics')
+    }
+  }
+
+  /**
+   * @deprecated Use getGlobalAnalytics() instead for v1 API
    * Get global CDN metrics and performance statistics
    * @returns Promise with global metrics
    */
@@ -217,20 +593,6 @@ export class WalrusCDNClient {
       return response
     } catch (error) {
       throw this.handleError(error, 'Failed to get metrics')
-    }
-  }
-
-  /**
-   * Clear the entire cache
-   * @returns Promise that resolves when cache is cleared
-   */
-  async clearCache(): Promise<void> {
-    try {
-      await this.makeRequest('/api/cache/clear', {
-        method: 'POST',
-      })
-    } catch (error) {
-      throw this.handleError(error, 'Failed to clear cache')
     }
   }
 
@@ -611,6 +973,14 @@ export class WalrusCDNClient {
       // Handle non-2xx responses
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
+        
+        // Check if this is a v1 API error format
+        if (errorData.error && typeof errorData.error === 'object') {
+          const apiError = errorData as ApiError
+          throw WalrusCDNError.fromApiError(apiError, response.status)
+        }
+        
+        // Fallback to legacy error format
         throw new WalrusCDNError(
           errorData.message ||
             `HTTP ${response.status}: ${response.statusText}`,

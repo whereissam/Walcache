@@ -5,6 +5,7 @@ import { VaultSelector } from './VaultSelector'
 import { FileUploader } from './FileUploader'
 import { FilesList } from './FilesList'
 import { DirectUploads } from './DirectUploads'
+import { ErrorHandler, useErrorHandler } from './ErrorHandler'
 
 interface FileStatus {
   walrusExists: boolean | null // true=可用, false=不存在/同步中, null=檢查失敗
@@ -42,7 +43,13 @@ export const UploadManager = memo(function UploadManager() {
     uploadToWalrusAndVerify,
     setError,
     error,
+    // v1 API methods
+    createUpload,
+    listUploads,
+    fetchBlob,
   } = useWalcacheStore()
+
+  const { handleError, shouldShowRetry } = useErrorHandler()
 
   useEffect(() => {
     fetchVaults()
@@ -96,38 +103,64 @@ export const UploadManager = memo(function UploadManager() {
 
       const file = fileList[0]
       try {
-        // Use the new uploadAndVerify function
-        const result = await uploadAndVerify(file, selectedVault)
+        // Try v1 API first
+        try {
+          const upload = await createUpload(file, {
+            vault_id: selectedVault,
+          })
+          
+          // Get blob information
+          const blob = await fetchBlob(upload.blob_id)
+          
+          console.log(`✅ File uploaded via v1 API:`, {
+            uploadId: upload.id,
+            blobId: blob.id,
+            cached: blob.cached
+          })
+          
+          setFileStatuses((prev) => ({
+            ...prev,
+            [blob.id]: {
+              walrusExists: blob.cached,
+              lastChecked: new Date(),
+            },
+          }))
+        } catch (v1Error) {
+          console.warn('v1 API upload failed, falling back to legacy method')
+          
+          // Fallback to legacy uploadAndVerify
+          const result = await uploadAndVerify(file, selectedVault)
 
-        if (result.verified) {
-          console.log(`✅ File uploaded and verified on ${result.network}!`)
-          // Immediately update the file status since we verified it
-          setFileStatuses((prev) => ({
-            ...prev,
-            [result.file.blobId]: {
-              walrusExists: true,
-              foundOnNetwork: result.network as 'testnet' | 'mainnet',
-              lastChecked: new Date(),
-            },
-          }))
-        } else {
-          console.log(
-            `⚠️ File uploaded to Vault but blob not yet available on Walrus`,
-          )
-          // Mark as syncing
-          setFileStatuses((prev) => ({
-            ...prev,
-            [result.file.blobId]: {
-              walrusExists: false,
-              lastChecked: new Date(),
-            },
-          }))
+          if (result.verified) {
+            console.log(`✅ File uploaded and verified on ${result.network}!`)
+            setFileStatuses((prev) => ({
+              ...prev,
+              [result.file.blobId]: {
+                walrusExists: true,
+                foundOnNetwork: result.network as 'testnet' | 'mainnet',
+                lastChecked: new Date(),
+              },
+            }))
+          } else {
+            console.log(
+              `⚠️ File uploaded to Vault but blob not yet available on Walrus`,
+            )
+            setFileStatuses((prev) => ({
+              ...prev,
+              [result.file.blobId]: {
+                walrusExists: false,
+                lastChecked: new Date(),
+              },
+            }))
+          }
         }
       } catch (error) {
         console.error('Upload failed:', error)
+        const processedError = handleError(error)
+        setError(processedError)
       }
     },
-    [selectedVault, uploadAndVerify, setError],
+    [selectedVault, createUpload, fetchBlob, uploadAndVerify, setError],
   )
 
   const handleWalrusUpload = useCallback(
@@ -292,13 +325,17 @@ export const UploadManager = memo(function UploadManager() {
         onToggleLinks={setShowingLinksFor}
       />
 
-      {/* Error Display */}
+      {/* Error Display with v1 API Error Handling */}
       {error && (
-        <Card>
-          <CardContent className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">{error}</p>
-          </CardContent>
-        </Card>
+        <ErrorHandler
+          error={error}
+          onRetry={shouldShowRetry(error) ? () => {
+            // Retry last operation
+            setError(null)
+          } : undefined}
+          onDismiss={() => setError(null)}
+          showRetry={shouldShowRetry(error)}
+        />
       )}
     </div>
   )

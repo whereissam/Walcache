@@ -36,6 +36,14 @@ export function CacheManager() {
   const {
     isLoading,
     error,
+    // v1 API methods
+    preloadBlobs,
+    clearCacheEntries,
+    pinBlob,
+    unpinBlob,
+    fetchBlob,
+    blobs,
+    // Legacy methods for backward compatibility
     preloadCIDs: preloadCIDsAction,
     clearCache,
     pinCID,
@@ -51,8 +59,15 @@ export function CacheManager() {
       .filter((cid) => cid.length > 0)
 
     if (cids.length > 0) {
-      await preloadCIDsAction(cids)
-      setPreloadCIDs('')
+      try {
+        // Use v1 API for preloading
+        await preloadBlobs(cids)
+        setPreloadCIDs('')
+      } catch (error) {
+        console.warn('v1 API preload failed, falling back to legacy API')
+        await preloadCIDsAction(cids)
+        setPreloadCIDs('')
+      }
     }
   }
 
@@ -62,28 +77,54 @@ export function CacheManager() {
         'Are you sure you want to clear all cache? This action cannot be undone.',
       )
     ) {
-      await clearCache()
+      try {
+        // Use v1 API for clearing cache
+        await clearCacheEntries()
+      } catch (error) {
+        console.warn('v1 API clear failed, falling back to legacy API')
+        await clearCache()
+      }
     }
   }
 
   const handleConfigureCache = async () => {
     if (!configCID.trim()) return
 
-    // Fetch current CID info to check if it exists
-    await fetchCIDStats(configCID.trim())
+    try {
+      // Use v1 API to fetch blob info
+      await fetchBlob(configCID.trim())
+    } catch (error) {
+      console.warn('v1 API fetch failed, falling back to legacy API')
+      // Fallback to legacy CID stats
+      await fetchCIDStats(configCID.trim())
+    }
   }
 
   const handlePinToggle = async () => {
     if (!cidInfo?.cid) return
 
-    if (cidInfo.pinned) {
-      await unpinCID(cidInfo.cid)
-    } else {
-      await pinCID(cidInfo.cid)
+    try {
+      // Use v1 API for pin/unpin operations
+      if (cidInfo.pinned) {
+        await unpinBlob(cidInfo.cid)
+      } else {
+        await pinBlob(cidInfo.cid)
+      }
+      
+      // Refresh blob info using v1 API
+      await fetchBlob(cidInfo.cid)
+    } catch (error) {
+      console.warn('v1 API pin/unpin failed, falling back to legacy API')
+      // Fallback to legacy pin/unpin
+      if (cidInfo.pinned) {
+        await unpinCID(cidInfo.cid)
+      } else {
+        await pinCID(cidInfo.cid)
+      }
+      
+      // Refresh the CID info
+      await fetchCIDStats(cidInfo.cid)
     }
-
-    // Refresh the CID info
-    await fetchCIDStats(cidInfo.cid)
   }
 
   const getTTLInSeconds = () => {

@@ -145,24 +145,41 @@ bun add @walcache/sdk
 ### Backend Integration
 
 ```javascript
-import { WalcacheUseCases } from '@walcache/sdk'
+import { WalrusCDNClient } from '@walcache/sdk'
 
-// Initialize SDK
-const walcache = new WalcacheUseCases({
+// Initialize SDK (Stripe-style)
+const client = new WalrusCDNClient({
   baseUrl: 'https://your-cdn-domain.com',
-  apiKey: process.env.WALCACHE_API_KEY,
-  defaultChain: 'sui'
+  apiKey: process.env.WCDN_API_KEY,
 })
 
-// Express.js endpoint
+// Express.js endpoint - v1 API
 app.post('/api/upload', upload.single('file'), async (req, res) => {
-  const result = await walcache.uploadAsset(req.file, {
-    chain: req.body.chain || 'sui',
-    category: 'nft',
-    createNFT: true,
-    owner: req.body.owner
-  })
-  res.json(result)
+  try {
+    // Upload file to Walrus using v1 API
+    const upload = await client.createUpload(req.file, {
+      vault_id: req.body.vault_id,
+      parent_id: req.body.parent_id
+    })
+    
+    // Get blob information
+    const blob = await client.getBlob(upload.blob_id)
+    
+    res.json({
+      success: true,
+      upload,
+      blob,
+      cdnUrl: client.getCDNUrl(upload.blob_id)
+    })
+  } catch (error) {
+    res.status(error.status || 500).json({
+      error: {
+        type: error.type || 'api_error',
+        message: error.message,
+        code: error.code
+      }
+    })
+  }
 })
 ```
 
@@ -406,26 +423,68 @@ const result = await walcache.uploadAsset(file, {
 
 ## 📚 API Reference
 
-### **WalcacheUseCases**
+### **WalrusCDNClient** (v1 API)
 
 #### Core Methods
-- `uploadAsset(file, options)` - Upload any asset to any chain
-- `uploadSite(path, options)` - Deploy dApp frontend
-- `uploadGatedFile(file, options)` - Upload with access control
-- `uploadDID(did, document, options)` - Store DID document
-- `uploadLog(content, options)` - Store audit log
-- `uploadMedia(file, options)` - Upload streaming media
+- `getBlob(blobId)` - Get blob information and metadata
+- `listBlobs(params)` - List blobs with pagination support
+- `createUpload(file, options)` - Upload file to Walrus network
+- `getUpload(uploadId)` - Get upload status and information
+- `listUploads(params)` - List uploads with filtering and pagination
 
-#### Verification & Access
-- `verifyAccess(options)` - Check asset ownership
-- `downloadGatedFile(fileId, user, token)` - Download protected file
-- `streamMedia(mediaId, user)` - Stream protected media
+#### Cache Management
+- `preloadBlobs(blobIds)` - Preload multiple blobs into cache
+- `getCacheEntry(blobId)` - Get cache entry information
+- `listCacheEntries(params)` - List cache entries with pagination
+- `getCacheStats()` - Get cache statistics and health
+- `clearCache(blobIds?)` - Clear specific or all cache entries
+- `pinBlob(blobId)` - Pin blob to prevent eviction
+- `unpinBlob(blobId)` - Unpin blob to allow eviction
 
-#### Discovery & Search
-- `listAssets(criteria)` - Find user's assets
-- `getSiteUrl(options)` - Get chain-specific site URL
-- `resolveDID(did)` - Resolve DID document
-- `getLogReference(logId)` - Get smart contract reference
+#### Analytics & Monitoring
+- `getBlobAnalytics(blobId)` - Get analytics for specific blob
+- `listAnalytics(params)` - List analytics with filtering
+- `getGlobalAnalytics()` - Get global CDN performance metrics
+- `getPrometheusMetrics()` - Get Prometheus-format metrics
+
+#### URL Generation
+- `getCDNUrl(blobId, options)` - Generate CDN URL for blob
+- `getMultiChainCDNUrl(blobId, options)` - Generate multi-chain optimized URL
+- `getAdvancedCDNUrl(blobId, options)` - Generate URL with asset verification
+
+#### Multi-Chain Support
+- `verifyAsset(chain, options)` - Verify asset ownership on blockchain
+- `verifyMultiChain(chains, options)` - Verify across multiple chains
+- `queryAsset(chain, options)` - Query asset from smart contracts
+- `getMultiChainBlobStatus(blobId, chains?)` - Check blob status across chains
+- `selectOptimalNode(chain, strategy, network?)` - Select best performing node
+
+#### Error Handling
+All methods throw `WalrusCDNError` with structured error information:
+```javascript
+try {
+  await client.getBlob('invalid-id')
+} catch (error) {
+  console.log(error.type)     // 'not_found_error'
+  console.log(error.code)     // 'BLOB_NOT_FOUND'
+  console.log(error.message)  // 'Blob not found'
+  console.log(error.status)   // 404
+}
+```
+
+#### Pagination
+List methods support cursor-based pagination:
+```javascript
+const blobs = await client.listBlobs({
+  limit: 10,
+  starting_after: 'blob_123',
+  cached: true,
+  pinned: false
+})
+
+console.log(blobs.data)      // Array of BlobResource
+console.log(blobs.has_more)  // Boolean
+```
 
 ### **Utility Classes**
 

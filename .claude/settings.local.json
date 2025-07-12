@@ -9,7 +9,10 @@
       "Bash(python3:*)",
       "Bash(chmod:*)",
       "Bash(timeout 10 bun:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(kill:*)",
+      "Bash(curl:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

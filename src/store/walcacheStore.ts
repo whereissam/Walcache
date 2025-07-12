@@ -1,19 +1,23 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
+import { WalrusCDNClient } from '../../packages/sdk/src/index.js'
+import type {
+  BlobResource,
+  UploadResource,
+  CacheResource,
+  AnalyticsResource,
+  GlobalAnalytics,
+  CacheStats,
+  PaginatedList,
+  WalrusCDNError,
+  // Legacy types for backward compatibility
+  CIDStats,
+  CIDInfo,
+  GlobalMetrics
+} from '../../packages/sdk/src/types.js'
 
-interface CIDStats {
-  cid: string
-  requests: number
-  hits: number
-  misses: number
-  hitRate: number
-  avgLatency: number
-  firstAccess: string
-  lastAccess: string
-  totalSize: number
-}
-
-interface GlobalStats {
+// Legacy interface adapters for backward compatibility
+interface LegacyGlobalStats {
   totalRequests: number
   totalHits: number
   totalMisses: number
@@ -23,7 +27,7 @@ interface GlobalStats {
   geographic?: Array<{ region: string; requests: number; percentage: number }>
 }
 
-interface CacheStats {
+interface LegacyCacheStats {
   memory: {
     keys: number
     hits: number
@@ -35,15 +39,6 @@ interface CacheStats {
     memory: number
   }
   using: 'redis' | 'memory'
-}
-
-interface CIDInfo {
-  cid: string
-  stats: CIDStats | null
-  cached: boolean
-  pinned: boolean
-  cacheDate?: string
-  ttl?: number
 }
 
 interface TuskyVault {
@@ -86,38 +81,64 @@ interface UploadProgress {
 }
 
 interface WalcacheState {
-  // Data
-  cidStats: Record<string, CIDStats>
-  globalStats: GlobalStats | null
+  // v1 API Data
+  blobs: Record<string, BlobResource>
+  uploads: Record<string, UploadResource>
+  cacheEntries: Record<string, CacheResource>
+  analytics: Record<string, AnalyticsResource>
+  globalAnalytics: GlobalAnalytics | null
   cacheStats: CacheStats | null
+
+  // Legacy Data (for backward compatibility)
+  cidStats: Record<string, CIDStats>
+  globalStats: LegacyGlobalStats | null
   topCIDs: CIDStats[]
   cidInfo: CIDInfo | null
 
-  // Upload Data
+  // Upload Data (Tusky integration)
   vaults: TuskyVault[]
   files: TuskyFile[]
-  uploads: Record<string, UploadProgress>
+  uploadProgress: Record<string, UploadProgress>
+
+  // Pagination State
+  pagination: {
+    blobs: { has_more: boolean; starting_after?: string }
+    uploads: { has_more: boolean; starting_after?: string }
+    cache: { has_more: boolean; starting_after?: string }
+    analytics: { has_more: boolean; starting_after?: string }
+  }
 
   // UI State
   isLoading: boolean
-  error: string | null
+  error: WalrusCDNError | string | null
   currentCID: string
 
-  // Actions
+  // Basic Actions
   setCurrentCID: (cid: string) => void
-  setError: (error: string | null) => void
+  setError: (error: WalrusCDNError | string | null) => void
   setLoading: (loading: boolean) => void
 
-  // API Actions
+  // v1 API Actions
+  fetchBlob: (blobId: string) => Promise<BlobResource>
+  listBlobs: (params?: { limit?: number; cached?: boolean; pinned?: boolean }) => Promise<BlobResource[]>
+  createUpload: (file: File, options?: { vault_id?: string; parent_id?: string }) => Promise<UploadResource>
+  listUploads: (params?: { limit?: number; vault_id?: string; status?: string }) => Promise<UploadResource[]>
+  preloadBlobs: (blobIds: string[]) => Promise<void>
+  pinBlob: (blobId: string) => Promise<BlobResource>
+  unpinBlob: (blobId: string) => Promise<BlobResource>
+  clearCacheEntries: (blobIds?: string[]) => Promise<void>
+  fetchGlobalAnalytics: () => Promise<void>
+  fetchCacheStatistics: () => Promise<void>
+
+  // Legacy API Actions (backward compatibility)
   fetchCIDStats: (cid: string) => Promise<void>
   fetchGlobalStats: () => Promise<void>
-  fetchCacheStats: () => Promise<void>
   preloadCIDs: (cids: string[]) => Promise<void>
   pinCID: (cid: string) => Promise<void>
   unpinCID: (cid: string) => Promise<void>
   clearCache: () => Promise<void>
 
-  // Upload Actions
+  // Upload Actions (Tusky integration)
   fetchVaults: () => Promise<void>
   createVault: (name: string, description?: string) => Promise<void>
   fetchFiles: (vaultId?: string) => Promise<void>
@@ -158,6 +179,20 @@ const getAuthToken = () => {
   return authStore.state?.token || 'dev-secret-wcdn-2024' // Fallback to dev key
 }
 
+// Initialize SDK client with proper API key
+let cdnClient = new WalrusCDNClient({
+  baseUrl: 'http://localhost:4500',
+  apiKey: getAuthToken(),
+})
+
+// Function to reinitialize client with updated API key
+const updateClientApiKey = () => {
+  cdnClient = new WalrusCDNClient({
+    baseUrl: 'http://localhost:4500',
+    apiKey: getAuthToken(),
+  })
+}
+
 // Walrus aggregators for verification
 const WALRUS_AGGREGATORS = [
   // Testnet first
@@ -186,17 +221,32 @@ const WALRUS_AGGREGATORS = [
 export const useWalcacheStore = create<WalcacheState>()(
   devtools(
     (set, get) => ({
-      // Initial state
+      // v1 API state
+      blobs: {},
+      uploads: {},
+      cacheEntries: {},
+      analytics: {},
+      globalAnalytics: null,
+      cacheStats: null,
+
+      // Legacy state (backward compatibility)
       cidStats: {},
       globalStats: null,
-      cacheStats: null,
       topCIDs: [],
       cidInfo: null,
 
       // Upload state
       vaults: [],
       files: [],
-      uploads: {},
+      uploadProgress: {},
+
+      // Pagination state
+      pagination: {
+        blobs: { has_more: false },
+        uploads: { has_more: false },
+        cache: { has_more: false },
+        analytics: { has_more: false },
+      },
 
       isLoading: false,
       error: null,
@@ -204,10 +254,181 @@ export const useWalcacheStore = create<WalcacheState>()(
 
       // UI Actions
       setCurrentCID: (cid: string) => set({ currentCID: cid }),
-      setError: (error: string | null) => set({ error }),
+      setError: (error: WalrusCDNError | string | null) => set({ error }),
       setLoading: (loading: boolean) => set({ isLoading: loading }),
 
-      // API Actions
+      // v1 API Actions
+      fetchBlob: async (blobId: string): Promise<BlobResource> => {
+        set({ isLoading: true, error: null })
+        updateClientApiKey() // Ensure client has latest API key
+        try {
+          const blob = await cdnClient.getBlob(blobId)
+          set((state) => ({
+            blobs: { ...state.blobs, [blobId]: blob },
+            isLoading: false,
+          }))
+          return blob
+        } catch (error) {
+          const err = error as WalrusCDNError
+          set({ error: err, isLoading: false })
+          throw err
+        }
+      },
+
+      listBlobs: async (params = {}): Promise<BlobResource[]> => {
+        set({ isLoading: true, error: null })
+        updateClientApiKey()
+        try {
+          const result = await cdnClient.listBlobs(params)
+          const blobsMap = result.data.reduce((acc, blob) => {
+            acc[blob.id] = blob
+            return acc
+          }, {} as Record<string, BlobResource>)
+
+          set((state) => ({
+            blobs: { ...state.blobs, ...blobsMap },
+            pagination: {
+              ...state.pagination,
+              blobs: {
+                has_more: result.has_more,
+                starting_after: result.data.length > 0 ? result.data[result.data.length - 1].id : undefined
+              }
+            },
+            isLoading: false,
+          }))
+          return result.data
+        } catch (error) {
+          const err = error as WalrusCDNError
+          set({ error: err, isLoading: false })
+          throw err
+        }
+      },
+
+      createUpload: async (file: File, options = {}): Promise<UploadResource> => {
+        set({ isLoading: true, error: null })
+        updateClientApiKey()
+        try {
+          const upload = await cdnClient.createUpload(file, options)
+          set((state) => ({
+            uploads: { ...state.uploads, [upload.id]: upload },
+            isLoading: false,
+          }))
+          return upload
+        } catch (error) {
+          const err = error as WalrusCDNError
+          set({ error: err, isLoading: false })
+          throw err
+        }
+      },
+
+      listUploads: async (params = {}): Promise<UploadResource[]> => {
+        set({ isLoading: true, error: null })
+        try {
+          const result = await cdnClient.listUploads(params)
+          const uploadsMap = result.data.reduce((acc, upload) => {
+            acc[upload.id] = upload
+            return acc
+          }, {} as Record<string, UploadResource>)
+
+          set((state) => ({
+            uploads: { ...state.uploads, ...uploadsMap },
+            pagination: {
+              ...state.pagination,
+              uploads: {
+                has_more: result.has_more,
+                starting_after: result.data.length > 0 ? result.data[result.data.length - 1].id : undefined
+              }
+            },
+            isLoading: false,
+          }))
+          return result.data
+        } catch (error) {
+          const err = error as WalrusCDNError
+          set({ error: err, isLoading: false })
+          throw err
+        }
+      },
+
+      preloadBlobs: async (blobIds: string[]) => {
+        set({ isLoading: true, error: null })
+        try {
+          await cdnClient.preloadBlobs(blobIds)
+          set({ isLoading: false })
+        } catch (error) {
+          const err = error as WalrusCDNError
+          set({ error: err, isLoading: false })
+          throw err
+        }
+      },
+
+      pinBlob: async (blobId: string): Promise<BlobResource> => {
+        set({ isLoading: true, error: null })
+        try {
+          const blob = await cdnClient.pinBlob(blobId)
+          set((state) => ({
+            blobs: { ...state.blobs, [blobId]: blob },
+            isLoading: false,
+          }))
+          return blob
+        } catch (error) {
+          const err = error as WalrusCDNError
+          set({ error: err, isLoading: false })
+          throw err
+        }
+      },
+
+      unpinBlob: async (blobId: string): Promise<BlobResource> => {
+        set({ isLoading: true, error: null })
+        try {
+          const blob = await cdnClient.unpinBlob(blobId)
+          set((state) => ({
+            blobs: { ...state.blobs, [blobId]: blob },
+            isLoading: false,
+          }))
+          return blob
+        } catch (error) {
+          const err = error as WalrusCDNError
+          set({ error: err, isLoading: false })
+          throw err
+        }
+      },
+
+      clearCacheEntries: async (blobIds?: string[]) => {
+        set({ isLoading: true, error: null })
+        try {
+          await cdnClient.clearCache(blobIds)
+          set({ isLoading: false })
+        } catch (error) {
+          const err = error as WalrusCDNError
+          set({ error: err, isLoading: false })
+          throw err
+        }
+      },
+
+      fetchGlobalAnalytics: async () => {
+        set({ isLoading: true, error: null })
+        try {
+          const analytics = await cdnClient.getGlobalAnalytics()
+          set({ globalAnalytics: analytics, isLoading: false })
+        } catch (error) {
+          const err = error as WalrusCDNError
+          set({ error: err, isLoading: false })
+          throw err
+        }
+      },
+
+      fetchCacheStatistics: async () => {
+        try {
+          const stats = await cdnClient.getCacheStats()
+          set({ cacheStats: stats })
+        } catch (error) {
+          const err = error as WalrusCDNError
+          set({ error: err })
+          throw err
+        }
+      },
+
+      // Legacy API Actions (backward compatibility)
       fetchCIDStats: async (cid: string) => {
         set({ isLoading: true, error: null })
         try {
@@ -444,7 +665,7 @@ export const useWalcacheStore = create<WalcacheState>()(
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'X-API-Key': API_KEY,
+                'X-API-Key': getAuthToken(),
               },
               body: JSON.stringify({ name, description }),
             },
@@ -500,7 +721,7 @@ export const useWalcacheStore = create<WalcacheState>()(
         file: File,
         vaultId?: string,
         existingUploadId?: string,
-      ): Promise<{ file: TuskyFile; uploadId: string }> => {
+      ): Promise<TuskyFile> => {
         const uploadId =
           existingUploadId || Math.random().toString(36).substring(2)
 
@@ -525,7 +746,7 @@ export const useWalcacheStore = create<WalcacheState>()(
             {
               method: 'POST',
               headers: {
-                'X-API-Key': API_KEY,
+                'X-API-Key': getAuthToken(),
               },
               body: formData,
             },
@@ -562,7 +783,7 @@ export const useWalcacheStore = create<WalcacheState>()(
             })
           }, 3000)
 
-          return { file: data.file, uploadId }
+          return data.file
         } catch (error) {
           set((state) => ({
             uploads: {
@@ -587,7 +808,7 @@ export const useWalcacheStore = create<WalcacheState>()(
             {
               method: 'DELETE',
               headers: {
-                'X-API-Key': API_KEY,
+                'X-API-Key': getAuthToken(),
               },
             },
           )
@@ -654,10 +875,8 @@ export const useWalcacheStore = create<WalcacheState>()(
         try {
           // Step 1: Upload file (this creates its own progress tracking)
           console.log(`📤 Uploading ${file.name}...`)
-          const { file: uploadedFile, uploadId } = await get().uploadFile(
-            file,
-            vaultId,
-          )
+          const uploadedFile = await get().uploadFile(file, vaultId)
+          const uploadId = Math.random().toString(36).substring(2)
 
           // Step 2: Update progress to show verifying
           set((state) => ({
