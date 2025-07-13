@@ -40,7 +40,36 @@ yarn add walcache-sdk
 bun add walcache-sdk
 ```
 
-### 2. Backend Integration
+### 2. Configuration Options
+
+#### Local Development (Recommended for Testing)
+```javascript
+// For local development and testing
+const walcache = new WalcacheBackendService({
+  baseUrl: 'http://localhost:4500', // Your local WCDN instance
+  apiKey: process.env.WALCACHE_API_KEY,
+  defaultChain: 'sui'
+})
+```
+
+#### Production Options
+```javascript
+// Option 1: Use hosted WCDN service
+const walcache = new WalcacheBackendService({
+  baseUrl: 'https://api.walcache.com', // Hosted service
+  apiKey: process.env.WALCACHE_API_KEY,
+  defaultChain: 'sui'
+})
+
+// Option 2: Self-hosted WCDN
+const walcache = new WalcacheBackendService({
+  baseUrl: 'https://your-cdn-domain.com', // Your self-hosted instance
+  apiKey: process.env.WALCACHE_API_KEY,
+  defaultChain: 'sui'
+})
+```
+
+### 3. Backend Integration
 
 #### Express.js Example
 ```javascript
@@ -157,10 +186,14 @@ fastify.post('/api/upload', async (request, reply) => {
 await fastify.listen({ port: 3000 })
 ```
 
-### 3. Environment Configuration
+### 4. Environment Configuration
 ```bash
-# .env file
-WALCACHE_CDN_URL=https://your-cdn-domain.com
+# .env file for local development
+WALCACHE_CDN_URL=http://localhost:4500
+WALCACHE_API_KEY=your-local-dev-key
+
+# .env file for production
+WALCACHE_CDN_URL=https://your-cdn-domain.com  # or https://api.walcache.com
 WALCACHE_API_KEY=your-secret-api-key
 
 # Optional: Chain-specific configurations

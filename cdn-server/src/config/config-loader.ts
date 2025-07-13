@@ -40,6 +40,11 @@ const envSchema = z.object({
   TUSKY_API_KEY: z.string().optional(),
   TUSKY_DEFAULT_VAULT_ID: z.string().optional(),
 
+  // Seal
+  ENABLE_SEAL: z.coerce.boolean().optional(),
+  SEAL_DEFAULT_THRESHOLD: z.coerce.number().optional(),
+  SEAL_DEFAULT_PACKAGE_ID: z.string().optional(),
+
   // Logging
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).optional(),
 })
@@ -133,6 +138,12 @@ export class ConfigLoader {
           defaultVaultId:
             env.TUSKY_DEFAULT_VAULT_ID ||
             baseConfig.integrations.tusky.defaultVaultId,
+        },
+        seal: {
+          ...baseConfig.integrations.seal,
+          enabled: env.ENABLE_SEAL ?? baseConfig.integrations.seal.enabled,
+          defaultThreshold: env.SEAL_DEFAULT_THRESHOLD || baseConfig.integrations.seal.defaultThreshold,
+          defaultPackageId: env.SEAL_DEFAULT_PACKAGE_ID || baseConfig.integrations.seal.defaultPackageId,
         },
       },
       secrets: {

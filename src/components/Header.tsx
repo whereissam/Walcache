@@ -17,6 +17,7 @@ import {
   ChevronDown,
   LogIn,
   UserPlus,
+  Shield,
 } from 'lucide-react'
 import { ThemeToggle } from './ui/theme-toggle'
 import { Button } from './ui/button'
@@ -175,6 +176,15 @@ export default function Header() {
             >
               <Globe className="h-4 w-4" />
               <span>Multi-Chain</span>
+            </Link>
+
+            <Link
+              to="/seal"
+              className="flex items-center space-x-1 text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
+              activeProps={{ className: 'text-primary bg-accent' }}
+            >
+              <Shield className="h-4 w-4" />
+              <span>Seal</span>
             </Link>
 
             <Link
@@ -365,6 +375,16 @@ export default function Header() {
               >
                 <Globe className="h-5 w-5" />
                 <span>Multi-Chain Demo</span>
+              </Link>
+
+              <Link
+                to="/seal"
+                className="flex items-center space-x-3 text-muted-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-md text-base font-medium"
+                activeProps={{ className: 'text-primary bg-accent' }}
+                onClick={closeMobileMenu}
+              >
+                <Shield className="h-5 w-5" />
+                <span>Seal Encryption</span>
               </Link>
 
               <Link

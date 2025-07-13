@@ -53,6 +53,11 @@ export interface EnvironmentConfig {
       apiKey?: string
       defaultVaultId?: string
     }
+    seal: {
+      enabled: boolean
+      defaultThreshold: number
+      defaultPackageId?: string
+    }
   }
 }
 
@@ -102,6 +107,10 @@ export const developmentConfig: EnvironmentConfig = {
     tusky: {
       apiUrl: 'https://api.tusky.io',
     },
+    seal: {
+      enabled: true,
+      defaultThreshold: 2,
+    },
   },
 }
 
@@ -146,6 +155,10 @@ export const stagingConfig: EnvironmentConfig = {
   integrations: {
     tusky: {
       apiUrl: 'https://api.tusky.io',
+    },
+    seal: {
+      enabled: true,
+      defaultThreshold: 3,
     },
   },
 }
@@ -192,6 +205,10 @@ export const productionConfig: EnvironmentConfig = {
     tusky: {
       apiUrl: 'https://api.tusky.io',
     },
+    seal: {
+      enabled: true,
+      defaultThreshold: 3,
+    },
   },
 }
 
@@ -236,6 +253,10 @@ export const testConfig: EnvironmentConfig = {
   integrations: {
     tusky: {
       apiUrl: 'https://api.tusky.io',
+    },
+    seal: {
+      enabled: false,
+      defaultThreshold: 2,
     },
   },
 }

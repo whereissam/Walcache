@@ -39,13 +39,14 @@
 WCDN is an enterprise-grade CDN that bridges Walrus decentralized storage with real blockchain integration:
 
 - **🔗 Blockchain Integration**: Smart contracts on Ethereum & Sui for blob metadata storage
+- **🔐 Seal Encryption**: Client-side encryption with blockchain access control via Mysten's Seal
 - **✅ On-Chain Verification**: Cross-chain consensus verification with tamper-proof records
 - **🔔 Webhook System**: Real-time notifications for uploads, registrations, and verifications
 - **📊 Enhanced Analytics**: Comprehensive monitoring with blockchain metrics and thresholds
 - **🚀 CDN Layer**: Intelligent caching of Walrus blobs (Redis/memory fallback)
 - **⛓️ Multi-Chain Support**: Native support for Ethereum, Sui, with extensible architecture
 - **📦 SDK & CLI**: Complete developer tools with TypeScript SDK and command-line interface
-- **🔐 Enterprise Security**: API key protection, rate limiting, and secure webhook signatures
+- **🔒 Enterprise Security**: API key protection, rate limiting, secure webhooks, and encrypted storage
 
 ## 🔥 New: Complete Blockchain Integration
 
@@ -102,6 +103,103 @@ await client.uploadAndRegisterOnChain(originalVideo, 'ethereum')
 - **Tamper Detection**: Automatically detect if files have been modified
 - **Legal Compliance**: Immutable audit trails for regulatory requirements
 - **Developer-Friendly**: One function call to get blockchain-backed file storage
+
+## 🔐 Seal Encryption Integration
+
+WCDN now integrates with **Mysten's Seal** for client-side encryption with blockchain-based access control:
+
+### 🎯 Why Seal + WCDN?
+
+**Traditional Problem:**
+```typescript
+// ❌ Files stored in plain text
+const publicFile = await upload(sensitiveDocument)
+// Anyone with the URL can access your private content
+```
+
+**WCDN + Seal Solution:**
+```typescript
+// ✅ Encrypted storage with smart contract access control
+const result = await sealClient.encryptedUpload(privateFile, {
+  packageId: '0x123...', // Your access control contract
+  threshold: 2,           // Requires 2 key servers
+  accessType: 'allowlist' // Only specific users
+})
+
+// File is encrypted before hitting Walrus storage
+// Only users who pass your smart contract logic can decrypt
+```
+
+### 🚀 Seal Features in WCDN
+
+- **🔒 Client-Side Encryption**: Files encrypted before upload using Seal
+- **🎯 Smart Contract Access Control**: Define who can decrypt using Move contracts
+- **🔑 Threshold Decryption**: Configurable key server requirements
+- **⏰ Time-Based Access**: Temporary access with automatic expiration
+- **👥 Allowlist Management**: Team-based access control
+- **🌐 Public Encryption**: Encrypted at rest but publicly accessible
+
+### 📝 Access Control Patterns
+
+**Owner Only**
+```move
+// Only the file owner can decrypt
+entry fun seal_approve_owner_only(id: vector<u8>, access: &OwnerOnlyAccess, ctx: &TxContext) {
+    assert!(access.owner == tx_context::sender(ctx), ENotOwner);
+}
+```
+
+**Team Allowlist**
+```move
+// Only team members can decrypt
+entry fun seal_approve_allowlist(id: vector<u8>, access: &AllowlistAccess, ctx: &TxContext) {
+    let sender = tx_context::sender(ctx);
+    assert!(vec_set::contains(&access.allowed_users, &sender), ENotInAllowlist);
+}
+```
+
+**Time-Limited**
+```move
+// Anyone can decrypt before expiration
+entry fun seal_approve_time_based(id: vector<u8>, access: &TimeBasedAccess, clock: &Clock) {
+    assert!(clock::timestamp_ms(clock) <= access.expires_at, ETimeExpired);
+}
+```
+
+### 🛠️ Getting Started with Seal
+
+1. **Deploy Access Control Contract**
+```bash
+cd move/wcdn_access_control
+sui move build
+sui client publish
+```
+
+2. **Upload Encrypted File**
+```bash
+curl -X POST http://localhost:4500/seal/upload \
+  -F "file=@document.pdf" \
+  -F "packageId=0x123..." \
+  -F "threshold=2" \
+  -F "contentId=unique-id"
+```
+
+3. **Create Access Control**
+```bash
+# Create allowlist for team access
+sui client call --function create_allowlist_access \
+  --args unique-id \
+  --package 0x123...
+```
+
+4. **Decrypt for Authorized Users**
+```javascript
+const decrypted = await sealClient.decrypt({
+  data: encryptedContent,
+  sessionKey: userSessionKey,
+  txBytes: accessControlTransaction
+})
+```
 
 ## ⛓️ Multi-Chain Support
 

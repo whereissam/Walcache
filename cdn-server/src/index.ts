@@ -8,6 +8,7 @@ import { apiRoutes } from './routes/api.js'
 import { uploadRoutes } from './routes/upload.js'
 import { userRoutes } from './routes/user.js'
 import { v1Routes } from './routes/v1/index.js'
+import { sealRoutes } from './routes/seal.js'
 import { registerSwagger } from './routes/swagger.js'
 import { serviceContainer } from './container/service-container.js'
 import { CacheService } from './services/cache.js'
@@ -93,6 +94,9 @@ async function buildServer() {
   await fastify.register(apiRoutes, { prefix: '/api' })
   await fastify.register(uploadRoutes, { prefix: '/upload' })
   await fastify.register(userRoutes, { prefix: '/users' })
+  
+  // Seal encryption routes
+  await fastify.register(sealRoutes, { prefix: '/seal' })
 
   fastify.get('/health', async (request, reply) => {
     const cacheService = await serviceContainer.get<CacheService>('cache')
