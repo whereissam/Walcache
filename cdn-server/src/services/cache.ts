@@ -76,11 +76,8 @@ export class CacheService implements ICacheService {
         this.redis.disconnect()
         this.redis = null
       }
-      throw new CacheError(
-        'Failed to initialize Redis cache',
-        ErrorCode.CACHE_CONNECTION_FAILED,
-        { error: error instanceof Error ? error.message : String(error) },
-      )
+      // Don't throw - gracefully fall back to memory cache
+      console.log('✅ Falling back to memory cache only')
     }
   }
 

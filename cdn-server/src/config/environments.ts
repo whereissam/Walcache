@@ -64,7 +64,7 @@ export interface EnvironmentConfig {
 export const developmentConfig: EnvironmentConfig = {
   server: {
     port: 4500,
-    host: '127.0.0.1',
+    host: '0.0.0.0',
     logLevel: 'info',
     cors: {
       origins: [
@@ -215,7 +215,7 @@ export const productionConfig: EnvironmentConfig = {
 export const testConfig: EnvironmentConfig = {
   server: {
     port: 4501,
-    host: '127.0.0.1',
+    host: '0.0.0.0',
     logLevel: 'debug',
     cors: {
       origins: ['http://localhost:3000'],

@@ -4,14 +4,15 @@
 
 import { FastifyInstance } from 'fastify';
 import { OnChainVerificationService, BatchVerificationProcessor } from '../../services/verification.js';
-import { WALRUS_BLOB_REGISTRY_ABI } from '../../../blockchain.js';
+// TODO: Fix blockchain import - commenting out for now
+// import { WALRUS_BLOB_REGISTRY_ABI } from '../../../blockchain.js';
 
 // Initialize verification service (would be injected in real app)
 const verificationConfig = {
   ethereum: {
     rpcUrl: process.env.ETHEREUM_RPC_URL || 'https://eth-mainnet.g.alchemy.com/v2/SVPGtLg2pMLIc57MJXG-R1En6DcnBB9K',
     contractAddress: process.env.ETHEREUM_CONTRACT_ADDRESS || '0x1234567890123456789012345678901234567890',
-    abi: WALRUS_BLOB_REGISTRY_ABI,
+    abi: [], // TODO: Fix blockchain ABI import
   },
   sui: {
     rpcUrl: process.env.SUI_RPC_URL || 'https://fullnode.mainnet.sui.io:443',

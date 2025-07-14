@@ -18,7 +18,15 @@
       "Bash(timeout:*)",
       "Bash(vite build:*)",
       "Bash(npx vite build:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker rm:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker stop:*)"
     ],
     "deny": []
   }

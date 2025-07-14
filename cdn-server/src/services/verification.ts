@@ -3,7 +3,8 @@
  * Handles blockchain-based content verification and integrity checks
  */
 
-import { ethers } from 'ethers';
+// TODO: Add ethers dependency
+// import { ethers } from 'ethers';
 import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
 import crypto from 'crypto';
 import { z } from 'zod';

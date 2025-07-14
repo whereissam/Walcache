@@ -4,6 +4,7 @@ import { config } from '../config/config-loader.js'
 import { tuskyService } from '../services/tusky.js'
 import { cacheService } from '../services/cache.js'
 import { analyticsService } from '../services/analytics.js'
+import { optionalAuth, requireAuth } from '../middleware/auth.js'
 
 let sealService: SealService | null = null
 
@@ -69,11 +70,7 @@ export async function sealRoutes(fastify: FastifyInstance) {
 
   // Encrypted file upload endpoint
   fastify.post('/seal/upload', {
-    preHandler: fastify.auth([
-      fastify.optionalAuth,
-    ], {
-      relation: 'or'
-    })
+    preHandler: optionalAuth
   }, async (request: EncryptedFileRequest, reply: FastifyReply) => {
     if (!sealService || !sealService.isReady()) {
       return reply.code(503).send({
@@ -214,9 +211,7 @@ export async function sealRoutes(fastify: FastifyInstance) {
 
   // Decrypt endpoint
   fastify.post('/seal/decrypt/:blobId', {
-    preHandler: fastify.auth([
-      fastify.requireAuth,
-    ])
+    preHandler: requireAuth
   }, async (request: DecryptRequest & { params: { blobId: string } }, reply: FastifyReply) => {
     if (!sealService || !sealService.isReady()) {
       return reply.code(503).send({
@@ -297,11 +292,7 @@ export async function sealRoutes(fastify: FastifyInstance) {
 
   // Get encrypted file metadata
   fastify.get('/seal/metadata/:blobId', {
-    preHandler: fastify.auth([
-      fastify.optionalAuth,
-    ], {
-      relation: 'or'
-    })
+    preHandler: optionalAuth
   }, async (request: FastifyRequest & { params: { blobId: string } }, reply: FastifyReply) => {
     try {
       const { blobId } = request.params
