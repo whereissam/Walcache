@@ -15,6 +15,7 @@ export const config = {
   MAX_CACHE_SIZE: appConfig.cache.maxSize,
 
   API_KEY_SECRET: appConfig.secrets.apiKeySecret,
+  WEBHOOK_SECRET: appConfig.secrets.webhookSecret,
   ALLOWED_ORIGINS: appConfig.server.cors.origins.join(','),
 
   ENABLE_ANALYTICS: appConfig.monitoring.enableAnalytics,

@@ -28,6 +28,7 @@ const envSchema = z.object({
 
   // Security
   API_KEY_SECRET: z.string().min(1).default('dev-secret-key'),
+  WEBHOOK_SECRET: z.string().min(32).optional(),
   ALLOWED_ORIGINS: z.string().optional(),
 
   // Monitoring
@@ -55,6 +56,7 @@ export interface AppConfig extends EnvironmentConfig {
   env: Environment
   secrets: {
     apiKeySecret: string
+    webhookSecret?: string
     tuskyApiKey?: string
     tuskyDefaultVaultId?: string
   }
@@ -148,6 +150,7 @@ export class ConfigLoader {
       },
       secrets: {
         apiKeySecret: env.API_KEY_SECRET,
+        webhookSecret: env.WEBHOOK_SECRET,
         tuskyApiKey: env.TUSKY_API_KEY,
         tuskyDefaultVaultId: env.TUSKY_DEFAULT_VAULT_ID,
       },

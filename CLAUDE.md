@@ -80,6 +80,7 @@ Backend requires these environment variables (create `.env` in project root):
 - `TUSKY_API_URL`: Tusky API endpoint (default: https://api.tusky.io)
 - `REDIS_URL`: Redis connection string (default: redis://localhost:6379)
 - `PORT`: Server port (default: 4500)
+- `WEBHOOK_SECRET`: Required for webhook authentication (minimum 32 characters)
 
 ### TypeScript Configuration
 

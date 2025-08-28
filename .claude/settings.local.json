@@ -26,7 +26,8 @@
       "Bash(mv:*)",
       "Bash(rm:*)",
       "Bash(docker exec:*)",
-      "Bash(docker stop:*)"
+      "Bash(docker stop:*)",
+      "Bash(WEBHOOK_SECRET=\"supersecretwebhooksignaturesecretkey123456\" bun dev)"
     ],
     "deny": []
   }

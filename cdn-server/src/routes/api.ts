@@ -9,6 +9,8 @@ import {
   optionalAuth,
   type AuthenticatedRequest,
 } from '../middleware/auth.js'
+import { WebhookService } from '../services/webhook.js'
+import { appConfig } from '../config/index.js'
 
 const preloadSchema = z.object({
   cids: z.array(z.string().min(1)).min(1).max(100),
@@ -16,6 +18,12 @@ const preloadSchema = z.object({
 
 const pinSchema = z.object({
   cid: z.string().min(1),
+})
+
+const webhookCacheInvalidateSchema = z.object({
+  type: z.enum(['file_deleted', 'file_updated']),
+  blobId: z.string().min(1).optional(),
+  oldBlobId: z.string().min(1).optional(),
 })
 
 const cacheInvalidateSchema = z.object({
@@ -354,9 +362,36 @@ export async function apiRoutes(fastify: FastifyInstance) {
     '/webhook/cache-invalidate',
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        const body = request.body as any
+        // Check if webhook secret is configured
+        if (!appConfig.secrets.webhookSecret) {
+          fastify.log.error('Webhook secret not configured - rejecting webhook request')
+          return reply.status(401).send({ error: 'Webhook authentication not configured' })
+        }
 
-        // Validate webhook signature or API key here if needed
+        // Verify webhook signature
+        const signature = request.headers['x-wcdn-signature'] as string
+        if (!signature) {
+          fastify.log.error('Missing webhook signature')
+          return reply.status(401).send({ error: 'Missing webhook signature' })
+        }
+
+        const rawBody = JSON.stringify(request.body)
+        let isValid = false
+        
+        try {
+          isValid = WebhookService.verifySignature(rawBody, signature, appConfig.secrets.webhookSecret)
+        } catch (signatureError) {
+          fastify.log.error('Webhook signature verification failed:', signatureError)
+          return reply.status(401).send({ error: 'Invalid webhook signature format' })
+        }
+        
+        if (!isValid) {
+          fastify.log.error('Invalid webhook signature')
+          return reply.status(401).send({ error: 'Invalid webhook signature' })
+        }
+
+        // Validate request body
+        const body = webhookCacheInvalidateSchema.parse(request.body)
 
         if (body.type === 'file_deleted' || body.type === 'file_updated') {
           const { blobId, oldBlobId } = body
@@ -376,6 +411,10 @@ export async function apiRoutes(fastify: FastifyInstance) {
 
         return reply.send({ status: 'processed' })
       } catch (error) {
+        if (error.name === 'ZodError') {
+          fastify.log.error('Invalid webhook payload:', error.issues)
+          return reply.status(400).send({ error: 'Invalid webhook payload' })
+        }
         fastify.log.error('Webhook cache invalidate error:', error)
         return reply.status(500).send({ error: 'Internal server error' })
       }
