@@ -69,17 +69,20 @@ seal_approve_public(id, access, ctx)
 1. **Install Sui CLI**: Follow [Sui installation guide](https://docs.sui.io/build/install)
 
 2. **Build the package**:
+
 ```bash
 cd move/wcdn_access_control
 sui move build
 ```
 
 3. **Deploy to testnet**:
+
 ```bash
 sui client publish --gas-budget 50000000
 ```
 
 4. **Deploy to mainnet**:
+
 ```bash
 sui client publish --gas-budget 50000000
 ```
@@ -91,7 +94,7 @@ sui client publish --gas-budget 50000000
 ```javascript
 // When uploading encrypted content
 const result = await sealService.encryptData(fileBuffer, {
-  packageId: "0x...", // Your deployed package ID
+  packageId: '0x...', // Your deployed package ID
   id: contentId,
   threshold: 2,
 })
@@ -110,18 +113,13 @@ await tuskyService.uploadFile({
 const tx = new Transaction()
 tx.moveCall({
   target: `${packageId}::wcdn_access::create_allowlist_access`,
-  arguments: [
-    tx.pure.vector("u8", contentIdBytes),
-  ]
+  arguments: [tx.pure.vector('u8', contentIdBytes)],
 })
 
 // Add team members
 tx.moveCall({
   target: `${packageId}::wcdn_access::add_to_allowlist`,
-  arguments: [
-    tx.object(accessObjectId),
-    tx.pure.address(teamMemberAddress),
-  ]
+  arguments: [tx.object(accessObjectId), tx.pure.address(teamMemberAddress)],
 })
 ```
 
@@ -145,10 +143,7 @@ sessionKey.setPersonalMessageSignature(signature)
 const tx = new Transaction()
 tx.moveCall({
   target: `${packageId}::wcdn_access::seal_approve_allowlist`,
-  arguments: [
-    tx.pure.vector("u8", contentIdBytes),
-    tx.object(accessObjectId),
-  ]
+  arguments: [tx.pure.vector('u8', contentIdBytes), tx.object(accessObjectId)],
 })
 
 const txBytes = tx.build({ client: suiClient, onlyTransactionKind: true })

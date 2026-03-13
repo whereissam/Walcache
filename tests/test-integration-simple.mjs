@@ -10,15 +10,15 @@ try {
   const types = await import('./packages/sdk/src/types.js')
   const requiredTypes = [
     'BlobResource',
-    'UploadResource', 
+    'UploadResource',
     'CacheResource',
     'AnalyticsResource',
     'GlobalAnalytics',
     'PaginatedList',
-    'WalrusCDNError'
+    'WalrusCDNError',
   ]
-  
-  const missingTypes = requiredTypes.filter(type => !types[type])
+
+  const missingTypes = requiredTypes.filter((type) => !types[type])
   if (missingTypes.length === 0) {
     console.log('✅ All required v1 API types available')
   } else {
@@ -58,7 +58,7 @@ try {
 console.log('\nTest 4: Error Class Validation')
 try {
   const { WalrusCDNError } = await import('./packages/sdk/src/types.js')
-  
+
   // Test error creation
   const error = new WalrusCDNError('Test error', 'TEST_CODE', 400)
   if (error.name === 'WalrusCDNError' && error.code === 'TEST_CODE') {
@@ -66,18 +66,21 @@ try {
   } else {
     console.log('❌ WalrusCDNError class validation failed')
   }
-  
+
   // Test API error conversion
   const apiError = {
     error: {
       type: 'validation_error',
       message: 'Invalid input',
-      code: 'INVALID_PARAM'
-    }
+      code: 'INVALID_PARAM',
+    },
   }
-  
+
   const convertedError = WalrusCDNError.fromApiError(apiError, 400)
-  if (convertedError.type === 'validation_error' && convertedError.code === 'INVALID_PARAM') {
+  if (
+    convertedError.type === 'validation_error' &&
+    convertedError.code === 'INVALID_PARAM'
+  ) {
     console.log('✅ API error conversion works correctly')
   } else {
     console.log('❌ API error conversion failed')
@@ -90,19 +93,36 @@ try {
 console.log('\nTest 5: v1 API Type Structure Validation')
 try {
   const types = await import('./packages/sdk/src/types.js')
-  
+
   // Check BlobResource structure
-  const blobFields = ['id', 'object', 'created', 'cid', 'size', 'content_type', 'cached', 'pinned']
+  const blobFields = [
+    'id',
+    'object',
+    'created',
+    'cid',
+    'size',
+    'content_type',
+    'cached',
+    'pinned',
+  ]
   console.log('✅ BlobResource has required Stripe-style fields')
-  
-  // Check UploadResource structure  
-  const uploadFields = ['id', 'object', 'created', 'filename', 'size', 'content_type', 'blob_id', 'status']
+
+  // Check UploadResource structure
+  const uploadFields = [
+    'id',
+    'object',
+    'created',
+    'filename',
+    'size',
+    'content_type',
+    'blob_id',
+    'status',
+  ]
   console.log('✅ UploadResource has required Stripe-style fields')
-  
+
   // Check PaginatedList structure
   const paginationFields = ['object', 'data', 'has_more', 'url']
   console.log('✅ PaginatedList has required Stripe-style fields')
-  
 } catch (error) {
   console.log('❌ Type structure validation failed:', error.message)
 }
@@ -110,7 +130,7 @@ try {
 console.log('\n🏁 Integration validation completed')
 console.log('\n📋 Summary:')
 console.log('- ✅ v1 API types follow Stripe standards')
-console.log('- ✅ SDK client supports new v1 endpoints') 
+console.log('- ✅ SDK client supports new v1 endpoints')
 console.log('- ✅ Frontend store integrated with v1 API')
 console.log('- ✅ Error handling standardized')
 console.log('- ✅ Pagination support implemented')

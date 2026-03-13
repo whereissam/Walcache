@@ -1,21 +1,21 @@
 import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { Button } from './Button'
 import {
-  ChevronRight,
-  Zap,
-  Shield,
-  Globe,
-  Waves,
-  Database,
-  Cloud,
-  Server,
   Activity,
   ArrowRight,
+  ChevronRight,
+  Cloud,
+  Database,
+  Globe,
   Rocket,
+  Server,
+  Shield,
+  Waves,
+  Zap,
 } from 'lucide-react'
 import walcacheLogo from '../assets/walcache-logo.jpeg'
+import { Button } from './Button'
 
 gsap.registerPlugin(ScrollTrigger)
 

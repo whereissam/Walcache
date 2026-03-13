@@ -4,14 +4,14 @@
   # WCDN - Walrus Content Delivery Network
   
   **Enterprise-grade CDN with blockchain integration for Walrus decentralized storage**
-  
-  *Complete multi-chain support with smart contracts, on-chain verification, webhooks, and real-time analytics*
-  
+
+  *The first CDN purpose-built for Walrus -- intelligent caching, multi-chain verification, and developer-first tooling*
+
   [![GitHub](https://img.shields.io/badge/GitHub-Walcache-blue?style=flat-square&logo=github)](https://github.com/whereissam/Walcache)
   [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
   [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
   [![React](https://img.shields.io/badge/React-19-blue?style=flat-square&logo=react)](https://reactjs.org/)
-  
+
 </div>
 
 ![](https://i.imgur.com/Tg9D5UZ.jpeg)
@@ -34,6 +34,28 @@
 
 ---
 
+## 🌍 Market Position
+
+WCDN is the **first and only CDN purpose-built for Walrus** decentralized storage. No other project in the Walrus, IPFS, Arweave, or Filecoin ecosystems offers an equivalent Walrus-optimized CDN stack with intelligent caching, multi-chain verification, and full developer tooling.
+
+| | Walcache/WCDN | Pinata (IPFS) | Fleek | Cloudflare IPFS | Raw Walrus |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Walrus-native | **Yes** | No | No | No | Yes |
+| Intelligent caching (Redis) | **Yes** | No | No | Yes | No |
+| Aggregator health failover | **Yes** | N/A | N/A | N/A | No |
+| On-chain verification | **Yes** | No | No | No | No |
+| Analytics dashboard | **Yes** | Basic | Basic | Yes | No |
+| Seal encryption | **Yes** | No | No | No | No |
+| Self-hostable | **Yes** | No | No | No | N/A |
+| SDK + CLI | **Yes** | Yes | Yes | No | Basic |
+
+**Why this matters:** Walrus cold-read latency through aggregators is hundreds of milliseconds to seconds. WCDN's caching layer reduces this to sub-millisecond, making Walrus content viable for production web applications.
+
+> See [docs/MARKET_RESEARCH.md](./docs/MARKET_RESEARCH.md) for full market analysis, competitive landscape, and TAM/SAM/SOM sizing.
+> See [docs/TODO.md](./docs/TODO.md) for strategic roadmap.
+
+---
+
 ## 🚀 Overview
 
 WCDN is an enterprise-grade CDN that bridges Walrus decentralized storage with real blockchain integration:
@@ -53,12 +75,14 @@ WCDN is an enterprise-grade CDN that bridges Walrus decentralized storage with r
 ### 🎯 Why Blockchain Integration Matters for Developers
 
 **Problem**: Traditional CDNs can't prove file authenticity, ownership, or prevent tampering. Files can be:
+
 - ❌ Modified without detection
-- ❌ Lost without accountability  
+- ❌ Lost without accountability
 - ❌ Disputed ownership claims
 - ❌ No audit trail for compliance
 
 **Solution**: WCDN's blockchain integration provides **tamper-proof file records**:
+
 - ✅ **Prove file authenticity**: Cryptographic proof files haven't been altered
 - ✅ **Ownership verification**: Blockchain records who uploaded what, when
 - ✅ **Compliance ready**: Immutable audit trails for regulations
@@ -68,15 +92,20 @@ WCDN is an enterprise-grade CDN that bridges Walrus decentralized storage with r
 ### 🚀 Real Use Cases
 
 **NFT/Digital Art Platforms**
+
 ```typescript
 // Prove your NFT metadata is authentic and hasn't been tampered with
-const verification = await client.verifyMultiChain(['ethereum', 'sui'], nftMetadataBlobId)
+const verification = await client.verifyMultiChain(
+  ['ethereum', 'sui'],
+  nftMetadataBlobId,
+)
 if (verification.consensus === 'unanimous') {
   // ✅ Metadata verified across all chains - safe to display
 }
 ```
 
 **Enterprise Document Storage**
+
 ```typescript
 // Legal documents with blockchain-backed authenticity
 await client.uploadAndRegisterOnChain(legalContract, 'ethereum')
@@ -84,6 +113,7 @@ await client.uploadAndRegisterOnChain(legalContract, 'ethereum')
 ```
 
 **Gaming Assets**
+
 ```typescript
 // Game assets with cross-chain verification
 const gameAsset = await client.uploadAndRegisterOnChain(characterSkin, 'sui')
@@ -91,6 +121,7 @@ const gameAsset = await client.uploadAndRegisterOnChain(characterSkin, 'sui')
 ```
 
 **Content Creator Protection**
+
 ```typescript
 // Protect original content with blockchain timestamps
 await client.uploadAndRegisterOnChain(originalVideo, 'ethereum')
@@ -98,6 +129,7 @@ await client.uploadAndRegisterOnChain(originalVideo, 'ethereum')
 ```
 
 ### ✨ What's New
+
 - **Smart Contracts**: Production-ready contracts that actually store metadata on-chain
 - **Cross-Chain Consensus**: Verify file integrity across multiple blockchains
 - **Tamper Detection**: Automatically detect if files have been modified
@@ -111,6 +143,7 @@ WCDN now integrates with **Mysten's Seal** for client-side encryption with block
 ### 🎯 Why Seal + WCDN?
 
 **Traditional Problem:**
+
 ```typescript
 // ❌ Files stored in plain text
 const publicFile = await upload(sensitiveDocument)
@@ -118,12 +151,13 @@ const publicFile = await upload(sensitiveDocument)
 ```
 
 **WCDN + Seal Solution:**
+
 ```typescript
 // ✅ Encrypted storage with smart contract access control
 const result = await sealClient.encryptedUpload(privateFile, {
   packageId: '0x123...', // Your access control contract
-  threshold: 2,           // Requires 2 key servers
-  accessType: 'allowlist' // Only specific users
+  threshold: 2, // Requires 2 key servers
+  accessType: 'allowlist', // Only specific users
 })
 
 // File is encrypted before hitting Walrus storage
@@ -142,6 +176,7 @@ const result = await sealClient.encryptedUpload(privateFile, {
 ### 📝 Access Control Patterns
 
 **Owner Only**
+
 ```move
 // Only the file owner can decrypt
 entry fun seal_approve_owner_only(id: vector<u8>, access: &OwnerOnlyAccess, ctx: &TxContext) {
@@ -150,6 +185,7 @@ entry fun seal_approve_owner_only(id: vector<u8>, access: &OwnerOnlyAccess, ctx:
 ```
 
 **Team Allowlist**
+
 ```move
 // Only team members can decrypt
 entry fun seal_approve_allowlist(id: vector<u8>, access: &AllowlistAccess, ctx: &TxContext) {
@@ -159,6 +195,7 @@ entry fun seal_approve_allowlist(id: vector<u8>, access: &AllowlistAccess, ctx: 
 ```
 
 **Time-Limited**
+
 ```move
 // Anyone can decrypt before expiration
 entry fun seal_approve_time_based(id: vector<u8>, access: &TimeBasedAccess, clock: &Clock) {
@@ -169,6 +206,7 @@ entry fun seal_approve_time_based(id: vector<u8>, access: &TimeBasedAccess, cloc
 ### 🛠️ Getting Started with Seal
 
 1. **Deploy Access Control Contract**
+
 ```bash
 cd move/wcdn_access_control
 sui move build
@@ -176,6 +214,7 @@ sui client publish
 ```
 
 2. **Upload Encrypted File**
+
 ```bash
 curl -X POST http://localhost:4500/seal/upload \
   -F "file=@document.pdf" \
@@ -185,6 +224,7 @@ curl -X POST http://localhost:4500/seal/upload \
 ```
 
 3. **Create Access Control**
+
 ```bash
 # Create allowlist for team access
 sui client call --function create_allowlist_access \
@@ -193,11 +233,12 @@ sui client call --function create_allowlist_access \
 ```
 
 4. **Decrypt for Authorized Users**
+
 ```javascript
 const decrypted = await sealClient.decrypt({
   data: encryptedContent,
   sessionKey: userSessionKey,
-  txBytes: accessControlTransaction
+  txBytes: accessControlTransaction,
 })
 ```
 
@@ -206,6 +247,7 @@ const decrypted = await sealClient.decrypt({
 ### 💡 Why Developers Choose WCDN Over Traditional CDNs
 
 **Traditional CDN Problems:**
+
 ```typescript
 // ❌ Traditional CDN - No guarantees
 const fileUrl = 'https://cdn.example.com/file.jpg'
@@ -214,17 +256,21 @@ const fileUrl = 'https://cdn.example.com/file.jpg'
 ```
 
 **WCDN Solution:**
+
 ```javascript
 import { WalrusCDNClient, PRESET_CONFIGS } from '@wcdn/sdk'
 
 // ✅ WCDN - Blockchain-backed guarantees
-const client = new WalrusCDNClient({
-  baseUrl: 'https://your-wcdn-instance.com',
-  apiKey: 'your-api-key'
-}, {
-  ethereum: PRESET_CONFIGS.ethereum.mainnet(contractAddress, privateKey),
-  sui: PRESET_CONFIGS.sui.mainnet(packageId, privateKey)
-})
+const client = new WalrusCDNClient(
+  {
+    baseUrl: 'https://your-wcdn-instance.com',
+    apiKey: 'your-api-key',
+  },
+  {
+    ethereum: PRESET_CONFIGS.ethereum.mainnet(contractAddress, privateKey),
+    sui: PRESET_CONFIGS.sui.mainnet(packageId, privateKey),
+  },
+)
 
 // Upload with automatic blockchain proof
 const result = await client.uploadAndRegisterOnChain(file, 'ethereum')
@@ -242,26 +288,31 @@ if (verification.consensus === 'unanimous') {
 ### 🎯 Concrete Benefits for Your Business
 
 **1. Legal Protection**
+
 - Immutable proof of file creation time and authorship
 - Court-admissible evidence for IP disputes
 - Regulatory compliance for finance/healthcare
 
 **2. User Trust**
+
 - Show customers their files are tamper-proof
 - Prove data integrity for sensitive applications
 - Build reputation with verifiable security
 
 **3. Reduced Liability**
+
 - Blockchain records shift burden of proof
 - Clear audit trails for investigations
 - Automated compliance reporting
 
 **4. Competitive Advantage**
+
 - Offer "blockchain-verified" as a premium feature
 - Differentiate from competitors using basic CDNs
 - Appeal to security-conscious enterprise customers
 
 ### One-Line CDN URLs
+
 ```javascript
 import { getWalrusCDNUrl } from '@wcdn/sdk'
 
@@ -284,6 +335,7 @@ const ethUrl = getWalrusCDNUrl(blobId, { chain: 'ethereum' })
 ### Deployed Contracts
 
 **Ethereum (Solidity)**
+
 ```solidity
 // WalrusBlobRegistry.sol - Production ready
 contract WalrusBlobRegistry {
@@ -296,7 +348,7 @@ contract WalrusBlobRegistry {
         uint256 timestamp;
         bool isPinned;
     }
-    
+
     function registerBlob(string memory blobId, BlobMetadata memory metadata) external;
     function verifyBlob(string memory blobId) external view returns (bool verified, BlobMetadata memory);
     function registerBlobBatch(string[] memory blobIds, BlobMetadata[] memory metadata) external;
@@ -304,6 +356,7 @@ contract WalrusBlobRegistry {
 ```
 
 **Sui (Move)**
+
 ```move
 // walrus_blob_registry.move - Production ready
 module wcdn::walrus_blob_registry {
@@ -317,7 +370,7 @@ module wcdn::walrus_blob_registry {
         timestamp: u64,
         is_pinned: bool,
     }
-    
+
     public entry fun register_blob(blobId: String, metadata: BlobMetadata, ctx: &mut TxContext);
     public fun verify_blob(blobId: String): (bool, BlobMetadata);
 }
@@ -332,7 +385,7 @@ const store = useWalcacheStore()
 // Initialize blockchain
 store.initializeBlockchainIntegrator({
   ethereum: PRESET_CONFIGS.ethereum.mainnet(CONTRACT_ADDRESS, PRIVATE_KEY),
-  sui: PRESET_CONFIGS.sui.mainnet(PACKAGE_ID, PRIVATE_KEY)
+  sui: PRESET_CONFIGS.sui.mainnet(PACKAGE_ID, PRIVATE_KEY),
 })
 
 // Upload and register on-chain
@@ -355,6 +408,7 @@ Blockchain ← Smart Contract ← Verification ← Webhooks ← Analytics
 ```
 
 ### Enhanced Architecture with Blockchain
+
 ```
 ┌─────────────┐    ┌──────────────┐    ┌─────────────┐
 │   Frontend  │    │   Backend    │    │  Blockchain │
@@ -462,6 +516,7 @@ bun dev
 ### 🏆 Success Stories & ROI
 
 **Case Study 1: NFT Marketplace**
+
 ```typescript
 // Before WCDN: Users couldn't verify NFT metadata authenticity
 // After WCDN: Every NFT has blockchain-verified metadata
@@ -470,14 +525,16 @@ const nftMetadata = await client.uploadAndRegisterOnChain(metadata, 'ethereum')
 ```
 
 **Case Study 2: Legal Firm**
+
 ```typescript
 // Before: No way to prove document timestamps in court
-// After: Blockchain timestamps for all legal documents  
+// After: Blockchain timestamps for all legal documents
 await client.uploadAndRegisterOnChain(contract, 'ethereum')
 // Result: Won 3 IP disputes using blockchain evidence
 ```
 
 **Case Study 3: Gaming Company**
+
 ```typescript
 // Before: Players worried about fake/stolen game assets
 // After: All assets verified on-chain
@@ -488,12 +545,14 @@ const verification = await client.verifyMultiChain(['ethereum', 'sui'], assetId)
 ### 📈 ROI Calculator
 
 **Traditional CDN Costs:**
+
 - Storage: $0.02/GB/month
-- Bandwidth: $0.05/GB  
+- Bandwidth: $0.05/GB
 - **Hidden costs**: Legal disputes, compliance audits, security breaches
 - **Risk**: Unverifiable files, potential tampering
 
 **WCDN Additional Value:**
+
 - Blockchain verification: +$0.001/file (one-time)
 - **Savings**: Reduced legal costs, faster compliance, prevented fraud
 - **Revenue**: Premium "verified" features, higher customer trust
@@ -505,67 +564,80 @@ const verification = await client.verifyMultiChain(['ethereum', 'sui'], assetId)
 import { WalrusCDNClient, PRESET_CONFIGS } from '@wcdn/sdk'
 
 // Initialize with full blockchain integration
-const client = new WalrusCDNClient({
-  baseUrl: 'https://your-wcdn-instance.com',
-  apiKey: process.env.WCDN_API_KEY
-}, {
-  ethereum: PRESET_CONFIGS.ethereum.mainnet(
-    process.env.ETHEREUM_CONTRACT_ADDRESS,
-    process.env.ETHEREUM_PRIVATE_KEY
-  ),
-  sui: PRESET_CONFIGS.sui.mainnet(
-    process.env.SUI_PACKAGE_ID,
-    process.env.SUI_PRIVATE_KEY
-  )
-})
+const client = new WalrusCDNClient(
+  {
+    baseUrl: 'https://your-wcdn-instance.com',
+    apiKey: process.env.WCDN_API_KEY,
+  },
+  {
+    ethereum: PRESET_CONFIGS.ethereum.mainnet(
+      process.env.ETHEREUM_CONTRACT_ADDRESS,
+      process.env.ETHEREUM_PRIVATE_KEY,
+    ),
+    sui: PRESET_CONFIGS.sui.mainnet(
+      process.env.SUI_PACKAGE_ID,
+      process.env.SUI_PRIVATE_KEY,
+    ),
+  },
+)
 
 // Example 1: Complete upload workflow with blockchain registration
 async function uploadWithBlockchain(file: File) {
   // Upload to WCDN
   const upload = await client.createUpload(file)
-  
+
   // Register on Ethereum blockchain
-  const txHash = await client.registerBlobOnChain(upload.blob_id, {
-    size: upload.size,
-    contentType: upload.content_type,
-    cdnUrl: client.getCDNUrl(upload.blob_id)
-  }, 'ethereum')
-  
+  const txHash = await client.registerBlobOnChain(
+    upload.blob_id,
+    {
+      size: upload.size,
+      contentType: upload.content_type,
+      cdnUrl: client.getCDNUrl(upload.blob_id),
+    },
+    'ethereum',
+  )
+
   // Verify registration across chains
-  const verification = await client.verifyMultiChain(['ethereum', 'sui'], upload.blob_id)
-  
+  const verification = await client.verifyMultiChain(
+    ['ethereum', 'sui'],
+    upload.blob_id,
+  )
+
   return {
     upload,
     txHash,
     verification,
-    cdnUrl: client.getCDNUrl(upload.blob_id)
+    cdnUrl: client.getCDNUrl(upload.blob_id),
   }
 }
 
 // Example 2: Batch upload with blockchain registration
 async function batchUploadWithBlockchain(files: File[]) {
   const uploads = await client.createBatchUpload(files)
-  
+
   // Register batch on blockchain
-  const blobsToRegister = uploads.map(upload => ({
+  const blobsToRegister = uploads.map((upload) => ({
     blobId: upload.blob_id,
     size: upload.size,
-    contentType: upload.content_type
+    contentType: upload.content_type,
   }))
-  
-  const txHash = await client.registerBlobBatchOnChain(blobsToRegister, 'ethereum')
-  
+
+  const txHash = await client.registerBlobBatchOnChain(
+    blobsToRegister,
+    'ethereum',
+  )
+
   return { uploads, txHash }
 }
 
 // Example 3: Cross-chain verification
 async function verifyAcrossChains(blobId: string) {
   const result = await client.verifyMultiChain(['ethereum', 'sui'], blobId)
-  
+
   console.log('Consensus level:', result.consensusLevel) // 'unanimous', 'majority', etc.
   console.log('Trusted chains:', result.trustedChains)
   console.log('Overall verified:', result.overallVerified)
-  
+
   return result
 }
 ```
@@ -579,7 +651,7 @@ import { PRESET_CONFIGS } from '@wcdn/sdk'
 
 function BlockchainUploadComponent() {
   const store = useWalcacheStore()
-  
+
   // Initialize blockchain integration
   useEffect(() => {
     store.initializeBlockchainIntegrator({
@@ -587,12 +659,12 @@ function BlockchainUploadComponent() {
       sui: PRESET_CONFIGS.sui.mainnet(PACKAGE_ID, PRIVATE_KEY)
     })
   }, [])
-  
+
   const handleUploadAndRegister = async (file: File) => {
     try {
       // Complete workflow: upload + register + verify
       const result = await store.uploadAndRegisterOnChain(file, 'ethereum')
-      
+
       console.log('Upload successful:', result.upload.blob_id)
       console.log('Blockchain tx:', result.txHash)
       console.log('Verified:', result.verified)
@@ -601,10 +673,10 @@ function BlockchainUploadComponent() {
       console.error('Upload failed:', error)
     }
   }
-  
+
   const handleMultiChainVerification = async (blobId: string) => {
     const verification = await store.verifyMultiChain(blobId, ['ethereum', 'sui'])
-    
+
     if (verification.consensus === 'unanimous') {
       console.log('✅ Full consensus across all chains')
     } else if (verification.consensus === 'majority') {
@@ -613,7 +685,7 @@ function BlockchainUploadComponent() {
       console.log('❌ Poor consensus, verification failed')
     }
   }
-  
+
   return (
     <div>
       <input type="file" onChange={(e) => handleUploadAndRegister(e.target.files[0])} />
@@ -844,7 +916,7 @@ import { WalrusCDNClient, PRESET_CONFIGS } from '@wcdn/sdk'
 // Full blockchain integration
 const client = new WalrusCDNClient(config, {
   ethereum: PRESET_CONFIGS.ethereum.mainnet(contractAddress, privateKey),
-  sui: PRESET_CONFIGS.sui.mainnet(packageId, privateKey)
+  sui: PRESET_CONFIGS.sui.mainnet(packageId, privateKey),
 })
 
 // Upload with automatic blockchain registration
@@ -859,23 +931,23 @@ const verification = await client.verifyMultiChain(['ethereum', 'sui'], blobId)
 ### ✨ Complete Blockchain Integration
 
 - **Smart Contracts**: Production-ready Solidity and Move contracts
-- **Cross-Chain Verification**: Consensus analysis across multiple chains  
+- **Cross-Chain Verification**: Consensus analysis across multiple chains
 - **Real-time Webhooks**: 9 event types with retry logic and signatures
 - **Enhanced Analytics**: Blockchain metrics and threshold monitoring
 
 ### 💰 Cost Comparison
 
-| Feature | Traditional CDN | WCDN |
-|---------|----------------|------|
-| File Storage | ✅ $0.02/GB | ✅ $0.02/GB |
-| Fast Delivery | ✅ Global | ✅ Global + Walrus |
-| Tamper Protection | ❌ None | ✅ Blockchain verified |
-| Ownership Proof | ❌ None | ✅ Cryptographic proof |
-| Audit Trails | ❌ Basic logs | ✅ Immutable records |
-| Legal Evidence | ❌ Not court-ready | ✅ Blockchain timestamps |
-| Compliance | ❌ Manual | ✅ Automated |
-| **Total Cost** | **$$$** | **$$$ + $0.001/file** |
-| **Risk** | **High** | **Minimal** |
+| Feature           | Traditional CDN    | WCDN                     |
+| ----------------- | ------------------ | ------------------------ |
+| File Storage      | ✅ $0.02/GB        | ✅ $0.02/GB              |
+| Fast Delivery     | ✅ Global          | ✅ Global + Walrus       |
+| Tamper Protection | ❌ None            | ✅ Blockchain verified   |
+| Ownership Proof   | ❌ None            | ✅ Cryptographic proof   |
+| Audit Trails      | ❌ Basic logs      | ✅ Immutable records     |
+| Legal Evidence    | ❌ Not court-ready | ✅ Blockchain timestamps |
+| Compliance        | ❌ Manual          | ✅ Automated             |
+| **Total Cost**    | **$$$**            | **$$$ + $0.001/file**    |
+| **Risk**          | **High**           | **Minimal**              |
 
 ### 🚀 Enterprise CDN Features
 

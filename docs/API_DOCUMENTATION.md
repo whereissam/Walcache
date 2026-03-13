@@ -10,17 +10,23 @@ The WCDN (Walrus Content Delivery Network) API follows Stripe-style REST princip
 ## 📚 Interactive Documentation
 
 ### Swagger UI
+
 Access the interactive API documentation and test endpoints directly:
+
 - **Local Development:** `http://localhost:4500/docs`
 - **Production:** `https://api.wcdn.dev/docs`
 
 ### OpenAPI Specification
+
 Download the OpenAPI specification:
+
 - **YAML Format:** `http://localhost:4500/openapi.yaml`
 - **JSON Format:** `http://localhost:4500/openapi.json`
 
 ### Testing with Swagger
+
 The Swagger UI allows you to:
+
 - ✅ Test all API endpoints interactively
 - ✅ See real request/response examples
 - ✅ Generate client code in multiple languages
@@ -30,17 +36,21 @@ The Swagger UI allows you to:
 ## Core Principles
 
 ### 1. RESTful Design
+
 - Resources are nouns (`/blobs`, `/uploads`, `/cache`)
 - Standard HTTP methods (GET, POST, PATCH, DELETE)
 - Idempotent operations where appropriate
 
 ### 2. Consistent Resource Structure
+
 All objects have:
+
 - `id` - Unique identifier
 - `object` - Resource type
 - `created` - Unix timestamp
 
 ### 3. Standardized Errors
+
 ```json
 {
   "error": {
@@ -53,7 +63,9 @@ All objects have:
 ```
 
 ### 4. Pagination
+
 Cursor-based pagination using `starting_after` and `ending_before`:
+
 ```json
 {
   "object": "list",
@@ -66,6 +78,7 @@ Cursor-based pagination using `starting_after` and `ending_before`:
 ## Authentication
 
 Include your API key in the Authorization header:
+
 ```
 Authorization: Bearer sk_live_abc123...
 ```
@@ -101,9 +114,11 @@ GET /v1/blobs/{id}
 ```
 
 **Parameters:**
+
 - `id` (required) - The blob ID
 
 **Example:**
+
 ```bash
 curl https://api.wcdn.dev/v1/blobs/GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -118,6 +133,7 @@ GET /v1/blobs
 ```
 
 **Parameters:**
+
 - `limit` (optional) - Number of results (1-100, default: 10)
 - `starting_after` (optional) - Cursor for pagination
 - `ending_before` (optional) - Cursor for pagination
@@ -125,6 +141,7 @@ GET /v1/blobs
 - `pinned` (optional) - Filter by pinned status
 
 **Example:**
+
 ```bash
 curl "https://api.wcdn.dev/v1/blobs?limit=20&cached=true" \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -141,6 +158,7 @@ POST /v1/blobs/{id}/pin
 Pins a blob to prevent cache eviction.
 
 **Example:**
+
 ```bash
 curl -X POST https://api.wcdn.dev/v1/blobs/GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c/pin \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -153,6 +171,7 @@ DELETE /v1/blobs/{id}/pin
 ```
 
 **Example:**
+
 ```bash
 curl -X DELETE https://api.wcdn.dev/v1/blobs/GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c/pin \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -165,6 +184,7 @@ DELETE /v1/blobs/{id}
 ```
 
 **Example:**
+
 ```bash
 curl -X DELETE https://api.wcdn.dev/v1/blobs/GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -200,12 +220,14 @@ POST /v1/uploads
 ```
 
 **Parameters:**
+
 - `vault_id` (optional) - Tusky vault ID
 - `parent_id` (optional) - Parent folder ID
 
 **Body:** Multipart form data with file
 
 **Example:**
+
 ```bash
 curl -X POST https://api.wcdn.dev/v1/uploads \\
   -H "Authorization: Bearer sk_live_abc123" \\
@@ -220,6 +242,7 @@ GET /v1/uploads/{id}
 ```
 
 **Example:**
+
 ```bash
 curl https://api.wcdn.dev/v1/uploads/upload_1720000000_abc123 \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -232,6 +255,7 @@ GET /v1/uploads
 ```
 
 **Parameters:**
+
 - `limit` (optional) - Number of results (1-100, default: 10)
 - `starting_after` (optional) - Cursor for pagination
 - `ending_before` (optional) - Cursor for pagination
@@ -239,6 +263,7 @@ GET /v1/uploads
 - `status` (optional) - Filter by status (processing, completed, failed)
 
 **Example:**
+
 ```bash
 curl "https://api.wcdn.dev/v1/uploads?status=completed&limit=20" \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -251,6 +276,7 @@ DELETE /v1/uploads/{id}
 ```
 
 **Example:**
+
 ```bash
 curl -X DELETE https://api.wcdn.dev/v1/uploads/upload_1720000000_abc123 \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -285,6 +311,7 @@ GET /v1/cache/{id}
 ```
 
 **Example:**
+
 ```bash
 curl https://api.wcdn.dev/v1/cache/GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -297,12 +324,14 @@ GET /v1/cache
 ```
 
 **Parameters:**
+
 - `limit` (optional) - Number of results (1-100, default: 10)
 - `starting_after` (optional) - Cursor for pagination
 - `ending_before` (optional) - Cursor for pagination
 - `pinned` (optional) - Filter by pinned status
 
 **Example:**
+
 ```bash
 curl "https://api.wcdn.dev/v1/cache?pinned=true" \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -315,12 +344,14 @@ GET /v1/cache/stats
 ```
 
 **Example:**
+
 ```bash
 curl https://api.wcdn.dev/v1/cache/stats \\
   -H "Authorization: Bearer sk_live_abc123"
 ```
 
 **Response:**
+
 ```json
 {
   "object": "cache_stats",
@@ -341,6 +372,7 @@ POST /v1/cache/preload
 ```
 
 **Body:**
+
 ```json
 {
   "blob_ids": [
@@ -351,6 +383,7 @@ POST /v1/cache/preload
 ```
 
 **Example:**
+
 ```bash
 curl -X POST https://api.wcdn.dev/v1/cache/preload \\
   -H "Authorization: Bearer sk_live_abc123" \\
@@ -365,21 +398,22 @@ POST /v1/cache/clear
 ```
 
 **Body (optional):**
+
 ```json
 {
-  "blob_ids": [
-    "GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c"
-  ]
+  "blob_ids": ["GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c"]
 }
 ```
 
 Clear entire cache (if no blob_ids provided):
+
 ```bash
 curl -X POST https://api.wcdn.dev/v1/cache/clear \\
   -H "Authorization: Bearer sk_live_abc123"
 ```
 
 Clear specific blobs:
+
 ```bash
 curl -X POST https://api.wcdn.dev/v1/cache/clear \\
   -H "Authorization: Bearer sk_live_abc123" \\
@@ -394,6 +428,7 @@ DELETE /v1/cache/{id}
 ```
 
 **Example:**
+
 ```bash
 curl -X DELETE https://api.wcdn.dev/v1/cache/GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -433,6 +468,7 @@ GET /v1/analytics/{blob_id}
 ```
 
 **Example:**
+
 ```bash
 curl https://api.wcdn.dev/v1/analytics/GvonK6tzar1onhLJwdPz8Q8MQY6Nx17UZQw3UmL1i8c \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -445,6 +481,7 @@ GET /v1/analytics
 ```
 
 **Parameters:**
+
 - `limit` (optional) - Number of results (1-100, default: 10)
 - `starting_after` (optional) - Cursor for pagination
 - `ending_before` (optional) - Cursor for pagination
@@ -452,6 +489,7 @@ GET /v1/analytics
 - `period` (optional) - Time period (1h, 24h, 7d, 30d)
 
 **Example:**
+
 ```bash
 curl "https://api.wcdn.dev/v1/analytics?period=24h&limit=20" \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -464,12 +502,14 @@ GET /v1/analytics/global
 ```
 
 **Example:**
+
 ```bash
 curl https://api.wcdn.dev/v1/analytics/global \\
   -H "Authorization: Bearer sk_live_abc123"
 ```
 
 **Response:**
+
 ```json
 {
   "object": "global_analytics",
@@ -507,6 +547,7 @@ GET /v1/analytics/prometheus
 ```
 
 **Example:**
+
 ```bash
 curl https://api.wcdn.dev/v1/analytics/prometheus \\
   -H "Authorization: Bearer sk_live_abc123"
@@ -518,24 +559,26 @@ Returns metrics in Prometheus format for monitoring integration.
 
 ## Error Types
 
-| Type | Description | HTTP Status |
-|------|-------------|-------------|
-| `validation_error` | Invalid request parameters | 400 |
-| `authentication_error` | Missing or invalid API key | 401 |
-| `permission_error` | Insufficient permissions | 403 |
-| `not_found_error` | Resource not found | 404 |
-| `rate_limit_error` | Too many requests | 429 |
-| `api_error` | Internal server error | 500 |
-| `network_error` | External service error | 502 |
+| Type                   | Description                | HTTP Status |
+| ---------------------- | -------------------------- | ----------- |
+| `validation_error`     | Invalid request parameters | 400         |
+| `authentication_error` | Missing or invalid API key | 401         |
+| `permission_error`     | Insufficient permissions   | 403         |
+| `not_found_error`      | Resource not found         | 404         |
+| `rate_limit_error`     | Too many requests          | 429         |
+| `api_error`            | Internal server error      | 500         |
+| `network_error`        | External service error     | 502         |
 
 ## Rate Limiting
 
 API requests are rate limited based on your plan:
+
 - **Free:** 100 requests per minute
-- **Pro:** 1,000 requests per minute  
+- **Pro:** 1,000 requests per minute
 - **Enterprise:** 10,000 requests per minute
 
 Rate limit headers are included in responses:
+
 ```
 X-RateLimit-Limit: 1000
 X-RateLimit-Remaining: 999
@@ -547,6 +590,7 @@ X-RateLimit-Reset: 1720000060
 WCDN can send webhooks for events like successful uploads, cache evictions, and errors.
 
 ### Event Types
+
 - `blob.uploaded` - New blob uploaded
 - `blob.cached` - Blob cached
 - `blob.evicted` - Blob evicted from cache
@@ -554,6 +598,7 @@ WCDN can send webhooks for events like successful uploads, cache evictions, and 
 - `upload.failed` - Upload failed
 
 ### Webhook Format
+
 ```json
 {
   "id": "evt_1720000000_abc123",
@@ -572,12 +617,15 @@ WCDN can send webhooks for events like successful uploads, cache evictions, and 
 ## 🛠️ Development Tools
 
 ### Interactive API Testing
+
 - **Swagger UI:** `http://localhost:4500/docs` - Test all endpoints with a web interface
 - **OpenAPI Spec:** `http://localhost:4500/openapi.yaml` - Download specification for tools
 - **Postman Collection:** Generate from OpenAPI spec for team collaboration
 
 ### Code Generation
+
 Generate client SDKs from the OpenAPI specification:
+
 ```bash
 # Install OpenAPI Generator
 npm install @openapitools/openapi-generator-cli -g
@@ -585,7 +633,7 @@ npm install @openapitools/openapi-generator-cli -g
 # Generate TypeScript SDK
 openapi-generator-cli generate -i http://localhost:4500/openapi.yaml -g typescript-axios -o ./sdk-typescript
 
-# Generate Python SDK  
+# Generate Python SDK
 openapi-generator-cli generate -i http://localhost:4500/openapi.yaml -g python -o ./sdk-python
 
 # Generate Go SDK
@@ -593,11 +641,13 @@ openapi-generator-cli generate -i http://localhost:4500/openapi.yaml -g go -o ./
 ```
 
 ### Testing with cURL
+
 All examples in this documentation include cURL commands. You can also copy them directly from the Swagger UI interface.
 
 ## SDKs
 
 Official SDKs are available for:
+
 - [JavaScript/TypeScript](https://github.com/wcdn/sdk-js)
 - [Python](https://github.com/wcdn/sdk-python)
 - [Go](https://github.com/wcdn/sdk-go)
@@ -618,6 +668,7 @@ Generate additional SDKs using the OpenAPI specification above.
 ## 🚀 Quick Start
 
 1. **Start the server:**
+
    ```bash
    cd cdn-server
    bun install
@@ -625,6 +676,7 @@ Generate additional SDKs using the OpenAPI specification above.
    ```
 
 2. **Access interactive documentation:**
+
    ```
    http://localhost:4500/docs
    ```
