@@ -2,29 +2,29 @@ import { config } from '../config/index.js'
 import type { AnalyticsEvent, CIDStats } from '../types/analytics.js'
 
 export interface IAnalyticsService {
-  initialize(): Promise<void>
-  recordFetch(
+  initialize: () => Promise<void>
+  recordFetch: (
     cid: string,
     hit: boolean,
     latency: number,
     size?: number,
     clientIP?: string,
     userAgent?: string,
-  ): void
-  recordPreload(cids: string[]): void
-  recordPin(cid: string): void
-  recordUnpin(cid: string): void
-  getCIDStats(cid: string): CIDStats | null
-  getTopCIDs(limit?: number): CIDStats[]
-  getGlobalStats(): any
-  getRecentEvents(limit?: number): AnalyticsEvent[]
-  sendWebhook(event: AnalyticsEvent): Promise<void>
-  getGeographicStats(): any[]
+  ) => void
+  recordPreload: (cids: Array<string>) => void
+  recordPin: (cid: string) => void
+  recordUnpin: (cid: string) => void
+  getCIDStats: (cid: string) => CIDStats | null
+  getTopCIDs: (limit?: number) => Array<CIDStats>
+  getGlobalStats: () => any
+  getRecentEvents: (limit?: number) => Array<AnalyticsEvent>
+  sendWebhook: (event: AnalyticsEvent) => Promise<void>
+  getGeographicStats: () => Array<any>
 }
 
 export class AnalyticsService implements IAnalyticsService {
   private stats: Map<string, CIDStats> = new Map()
-  private events: AnalyticsEvent[] = []
+  private events: Array<AnalyticsEvent> = []
   private enabled: boolean = config.ENABLE_ANALYTICS
   private geoStats: Map<string, number> = new Map()
 
@@ -72,7 +72,7 @@ export class AnalyticsService implements IAnalyticsService {
     }
   }
 
-  recordPreload(cids: string[]): void {
+  recordPreload(cids: Array<string>): void {
     if (!this.enabled) return
 
     const event: AnalyticsEvent = {
@@ -145,7 +145,7 @@ export class AnalyticsService implements IAnalyticsService {
     return this.stats.get(cid) || null
   }
 
-  getTopCIDs(limit: number = 10): CIDStats[] {
+  getTopCIDs(limit: number = 10): Array<CIDStats> {
     return Array.from(this.stats.values())
       .sort((a, b) => b.requests - a.requests)
       .slice(0, limit)
@@ -177,7 +177,7 @@ export class AnalyticsService implements IAnalyticsService {
     }
   }
 
-  getRecentEvents(limit: number = 100): AnalyticsEvent[] {
+  getRecentEvents(limit: number = 100): Array<AnalyticsEvent> {
     return this.events.slice(-limit).reverse()
   }
 

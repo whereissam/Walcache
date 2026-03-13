@@ -1,12 +1,13 @@
-import axios, {
-  type AxiosInstance,
-  type AxiosRequestConfig,
-  type InternalAxiosRequestConfig,
-} from 'axios'
-import { Agent } from 'http'
-import { Agent as HttpsAgent } from 'https'
+import { Agent } from 'node:http'
+import { Agent as HttpsAgent } from 'node:https'
+import axios from 'axios'
+import { ErrorCode, TimeoutError } from '../errors/base-error.js'
 import { CircuitBreaker } from './circuit-breaker.js'
-import { TimeoutError, ErrorCode } from '../errors/base-error.js'
+import type {
+  AxiosInstance,
+  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
+} from 'axios'
 
 // Extend the Axios config type to include metadata
 declare module 'axios' {

@@ -1,20 +1,18 @@
 import axios from 'axios'
 import { config } from '../config/index.js'
-import {
-  WALRUS_ENDPOINTS,
-  type WalrusNetwork,
-} from '../config/walrus-endpoints.js'
+import { WALRUS_ENDPOINTS } from '../config/walrus-endpoints.js'
 import { metricsService } from './metrics.js'
+import type { WalrusNetwork } from '../config/walrus-endpoints.js'
 
 export interface IEndpointHealthService {
-  initialize(): Promise<void>
-  checkAllEndpoints(): Promise<void>
-  getHealthyAggregators(): string[]
-  getHealthyPublishers(): string[]
-  getBestAggregator(): string | null
-  getBestPublisher(): string | null
-  getHealthStatus(): any
-  destroy(): void
+  initialize: () => Promise<void>
+  checkAllEndpoints: () => Promise<void>
+  getHealthyAggregators: () => Array<string>
+  getHealthyPublishers: () => Array<string>
+  getBestAggregator: () => string | null
+  getBestPublisher: () => string | null
+  getHealthStatus: () => any
+  destroy: () => void
 }
 
 interface EndpointHealth {
@@ -47,7 +45,7 @@ export class EndpointHealthService implements IEndpointHealthService {
   }
 
   async checkAllEndpoints(): Promise<void> {
-    const network = config.WALRUS_NETWORK as WalrusNetwork
+    const network = config.WALRUS_NETWORK
     const endpoints = WALRUS_ENDPOINTS[network]
 
     console.log(`🌐 Checking ${network} endpoints...`)
@@ -179,16 +177,16 @@ export class EndpointHealthService implements IEndpointHealthService {
     }
   }
 
-  getHealthyAggregators(): string[] {
-    const network = config.WALRUS_NETWORK as WalrusNetwork
+  getHealthyAggregators(): Array<string> {
+    const network = config.WALRUS_NETWORK
     return WALRUS_ENDPOINTS[network].aggregators.filter((url) => {
       const health = this.aggregatorHealth.get(url)
       return health?.isHealthy
     })
   }
 
-  getHealthyPublishers(): string[] {
-    const network = config.WALRUS_NETWORK as WalrusNetwork
+  getHealthyPublishers(): Array<string> {
+    const network = config.WALRUS_NETWORK
     return WALRUS_ENDPOINTS[network].publishers.filter((url) => {
       const health = this.publisherHealth.get(url)
       return health?.isHealthy

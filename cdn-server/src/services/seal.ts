@@ -25,7 +25,7 @@ export interface SealEncryptResult {
     packageId: string
     id: string
     threshold: number
-    keyServerIds: string[]
+    keyServerIds: Array<string>
     timestamp: number
   }
 }
@@ -43,12 +43,14 @@ export class SealService {
   private suiClient: SuiClient
   private sealClient: SealClient | null = null
   private config: AppConfig
-  private keyServerIds: string[] = []
+  private keyServerIds: Array<string> = []
 
   constructor(config: AppConfig) {
     this.config = config
-    this.suiClient = new SuiClient({ 
-      url: getFullnodeUrl(config.walrus.network === 'mainnet' ? 'mainnet' : 'testnet') 
+    this.suiClient = new SuiClient({
+      url: getFullnodeUrl(
+        config.walrus.network === 'mainnet' ? 'mainnet' : 'testnet',
+      ),
     })
   }
 
@@ -58,7 +60,8 @@ export class SealService {
   async initialize(): Promise<void> {
     try {
       // Get allowlisted key servers for the network
-      const network = this.config.walrus.network === 'mainnet' ? 'mainnet' : 'testnet'
+      const network =
+        this.config.walrus.network === 'mainnet' ? 'mainnet' : 'testnet'
       this.keyServerIds = getAllowlistedKeyServers(network)
 
       // Create Seal client with key servers
@@ -71,7 +74,9 @@ export class SealService {
         verifyKeyServers: true, // Verify servers for security
       })
 
-      console.log(`✅ Seal service initialized with ${this.keyServerIds.length} key servers`)
+      console.log(
+        `✅ Seal service initialized with ${this.keyServerIds.length} key servers`,
+      )
     } catch (error) {
       console.error('❌ Failed to initialize Seal service:', error)
       throw new Error(`Seal initialization failed: ${error}`)
@@ -81,22 +86,27 @@ export class SealService {
   /**
    * Encrypt data using Seal
    */
-  async encryptData(data: Buffer, options: SealEncryptOptions): Promise<SealEncryptResult> {
+  async encryptData(
+    data: Buffer,
+    options: SealEncryptOptions,
+  ): Promise<SealEncryptResult> {
     if (!this.sealClient) {
       throw new Error('Seal service not initialized. Call initialize() first.')
     }
 
     try {
-      const threshold = options.threshold || Math.ceil(this.keyServerIds.length / 2) // Default to majority
-      
+      const threshold =
+        options.threshold || Math.ceil(this.keyServerIds.length / 2) // Default to majority
+
       // Convert hex string to Uint8Array if needed
-      const packageIdBytes = options.packageId.startsWith('0x') 
+      const packageIdBytes = options.packageId.startsWith('0x')
         ? this.hexToUint8Array(options.packageId)
         : new TextEncoder().encode(options.packageId)
-      
-      const idBytes = typeof options.id === 'string'
-        ? this.hexToUint8Array(options.id)
-        : options.id
+
+      const idBytes =
+        typeof options.id === 'string'
+          ? this.hexToUint8Array(options.id)
+          : options.id
 
       // Encrypt the data
       const result = await this.sealClient.encrypt({
@@ -182,7 +192,7 @@ export class SealService {
    */
   private uint8ArrayToHex(bytes: Uint8Array): string {
     return Array.from(bytes)
-      .map(b => b.toString(16).padStart(2, '0'))
+      .map((b) => b.toString(16).padStart(2, '0'))
       .join('')
   }
 

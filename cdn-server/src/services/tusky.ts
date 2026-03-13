@@ -90,7 +90,7 @@ export class TuskyService {
     }
   }
 
-  async getVaults(): Promise<TuskyVault[]> {
+  async getVaults(): Promise<Array<TuskyVault>> {
     try {
       console.log('Getting vaults with fallback to API...')
 
@@ -108,7 +108,7 @@ export class TuskyService {
         )
       }
 
-      const data = (await response.json()) as { items?: any[] }
+      const data = (await response.json()) as { items?: Array<any> }
       const vaults = data.items || []
       console.log(`Found ${vaults.length} vaults via API`)
 
@@ -250,7 +250,10 @@ export class TuskyService {
     }
   }
 
-  async getFiles(vaultId?: string, parentId?: string): Promise<TuskyFile[]> {
+  async getFiles(
+    vaultId?: string,
+    parentId?: string,
+  ): Promise<Array<TuskyFile>> {
     try {
       console.log('Getting files with API fallback...')
 
@@ -275,7 +278,7 @@ export class TuskyService {
         )
       }
 
-      const data = (await response.json()) as { items?: any[] }
+      const data = (await response.json()) as { items?: Array<any> }
       const files = data.items || []
       console.log(`Found ${files.length} files via API`)
 

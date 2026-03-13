@@ -1,34 +1,34 @@
 import axios from 'axios'
 import { config } from '../config/index.js'
-import { WalrusError, WALRUS_ERROR_CODES } from '../types/walrus.js'
+import { WALRUS_ERROR_CODES, WalrusError } from '../types/walrus.js'
 import type { WalrusBlob } from '../types/walrus.js'
 import type { IEndpointHealthService } from './endpoint-health.js'
 
 export interface IWalrusService {
-  initialize(endpointHealthService: IEndpointHealthService): Promise<void>
-  fetchBlob(cid: string): Promise<WalrusBlob | null>
-  fetchBlobWithRetry(
+  initialize: (endpointHealthService: IEndpointHealthService) => Promise<void>
+  fetchBlob: (cid: string) => Promise<WalrusBlob | null>
+  fetchBlobWithRetry: (
     cid: string,
     maxRetries?: number,
     interval?: number,
-  ): Promise<WalrusBlob | null>
-  uploadBlob(
+  ) => Promise<WalrusBlob | null>
+  uploadBlob: (
     data: Buffer,
     contentType: string,
     epochs?: number,
-  ): Promise<string>
-  healthCheck(): Promise<boolean>
-  waitForAggregatorSync(
+  ) => Promise<string>
+  healthCheck: () => Promise<boolean>
+  waitForAggregatorSync: (
     blobId: string,
     maxRetries?: number,
     delayMs?: number,
-  ): Promise<boolean>
-  uploadAndWaitForSync(
+  ) => Promise<boolean>
+  uploadAndWaitForSync: (
     data: Buffer,
     contentType: string,
     epochs?: number,
-  ): Promise<{ blobId: string; synced: boolean }>
-  validateCID(cid: string): boolean
+  ) => Promise<{ blobId: string; synced: boolean }>
+  validateCID: (cid: string) => boolean
 }
 
 export class WalrusService implements IWalrusService {
@@ -66,7 +66,7 @@ export class WalrusService implements IWalrusService {
     )
   }
 
-  private getAllHealthyAggregators(): string[] {
+  private getAllHealthyAggregators(): Array<string> {
     const healthy = this.endpointHealthService?.getHealthyAggregators() || []
     // Always include primary as fallback
     if (!healthy.includes(this.primaryAggregator)) {

@@ -1,28 +1,28 @@
 import Redis from 'ioredis'
 import NodeCache from 'node-cache'
 import { config } from '../config/index.js'
-import type { CachedBlob, CacheStats } from '../types/cache.js'
 import { CacheError, ErrorCode } from '../errors/base-error.js'
+import type { CacheStats, CachedBlob } from '../types/cache.js'
 
 export interface ICacheService {
-  initialize(): Promise<void>
-  get(cid: string): Promise<CachedBlob | null>
-  set(cid: string, blob: CachedBlob, ttl?: number): Promise<void>
-  pin(cid: string): Promise<void>
-  unpin(cid: string): Promise<void>
-  isPinned(cid: string): Promise<boolean>
-  delete(cid: string): Promise<void>
-  clear(): Promise<void>
-  getStats(): Promise<CacheStats>
-  healthCheck(): Promise<{ status: string; using: string }>
-  warmCache(cids: string[]): Promise<void>
-  preloadPopularContent(): Promise<void>
+  initialize: () => Promise<void>
+  get: (cid: string) => Promise<CachedBlob | null>
+  set: (cid: string, blob: CachedBlob, ttl?: number) => Promise<void>
+  pin: (cid: string) => Promise<void>
+  unpin: (cid: string) => Promise<void>
+  isPinned: (cid: string) => Promise<boolean>
+  delete: (cid: string) => Promise<void>
+  clear: () => Promise<void>
+  getStats: () => Promise<CacheStats>
+  healthCheck: () => Promise<{ status: string; using: string }>
+  warmCache: (cids: Array<string>) => Promise<void>
+  preloadPopularContent: () => Promise<void>
 }
 
 export class CacheService implements ICacheService {
   private redis: Redis | null = null
   private memoryCache: NodeCache
-  private useRedis: boolean = true
+  private useRedis = true
 
   constructor() {
     this.memoryCache = new NodeCache({
@@ -255,7 +255,7 @@ export class CacheService implements ICacheService {
     return { status: 'healthy', using }
   }
 
-  async warmCache(cids: string[]): Promise<void> {
+  async warmCache(cids: Array<string>): Promise<void> {
     console.log(`🔥 Warming cache for ${cids.length} CIDs...`)
 
     const batchSize = 10

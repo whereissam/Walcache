@@ -12,7 +12,7 @@ export interface PaginationParams {
 
 export interface PaginatedResponse<T> {
   object: 'list'
-  data: T[]
+  data: Array<T>
   has_more: boolean
   url: string
 }
@@ -26,7 +26,7 @@ export interface ApiError {
   }
 }
 
-export type ErrorType = 
+export type ErrorType =
   | 'validation_error'
   | 'authentication_error'
   | 'permission_error'

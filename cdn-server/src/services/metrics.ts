@@ -1,4 +1,4 @@
-import { performance } from 'perf_hooks'
+import { performance } from 'node:perf_hooks'
 import { config } from '../config/index.js'
 
 export interface MetricPoint {
@@ -13,7 +13,7 @@ export interface HistogramBucket {
 }
 
 export interface HistogramMetric {
-  buckets: HistogramBucket[]
+  buckets: Array<HistogramBucket>
   sum: number
   count: number
 }
@@ -172,7 +172,7 @@ export class MetricsService {
     return duration
   }
 
-  private createHistogramBuckets(): HistogramBucket[] {
+  private createHistogramBuckets(): Array<HistogramBucket> {
     const bounds = [
       0.001,
       0.01,
@@ -264,7 +264,7 @@ export class MetricsService {
   }
 
   getPrometheusMetrics(): string {
-    const lines: string[] = []
+    const lines: Array<string> = []
 
     // Add counters
     for (const [key, metric] of this.counters) {

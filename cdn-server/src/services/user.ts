@@ -1,42 +1,51 @@
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 import bcrypt from 'bcrypt'
-import type {
-  User,
-  ApiToken,
-  TokenUsage,
-  TokenLimits,
-  ApiPermission,
-  UserRegistration,
-  LoginCredentials,
-  TokenRequest,
-  AuthenticatedUser,
-  SubscriptionPlan,
-} from '../types/user.js'
-import { SubscriptionTier, SubscriptionStatus } from '../types/user.js'
+import { SubscriptionStatus, SubscriptionTier } from '../types/user.js'
 import { BaseError, ErrorCode } from '../errors/base-error.js'
 import { metricsService } from './metrics.js'
+import type {
+  ApiPermission,
+  ApiToken,
+  AuthenticatedUser,
+  LoginCredentials,
+  SubscriptionPlan,
+  TokenLimits,
+  TokenRequest,
+  TokenUsage,
+  User,
+  UserRegistration,
+} from '../types/user.js'
 
 export interface IUserService {
-  initialize(): Promise<void>
-  registerUser(registration: UserRegistration): Promise<User>
-  loginUser(credentials: LoginCredentials): Promise<AuthenticatedUser>
-  getUserById(id: string): Promise<User | null>
-  getUserByEmail(email: string): Promise<User | null>
-  updateUserSubscription(userId: string, tier: SubscriptionTier): Promise<User>
-  createApiToken(userId: string, tokenRequest: TokenRequest): Promise<ApiToken>
-  validateApiToken(token: string): Promise<AuthenticatedUser | null>
-  revokeApiToken(tokenId: string): Promise<void>
-  getUserTokens(userId: string): Promise<ApiToken[]>
-  updateTokenUsage(tokenId: string, usage: Partial<TokenUsage>): Promise<void>
-  getSubscriptionPlans(): SubscriptionPlan[]
-  checkUsageLimits(token: ApiToken): Promise<boolean>
+  initialize: () => Promise<void>
+  registerUser: (registration: UserRegistration) => Promise<User>
+  loginUser: (credentials: LoginCredentials) => Promise<AuthenticatedUser>
+  getUserById: (id: string) => Promise<User | null>
+  getUserByEmail: (email: string) => Promise<User | null>
+  updateUserSubscription: (
+    userId: string,
+    tier: SubscriptionTier,
+  ) => Promise<User>
+  createApiToken: (
+    userId: string,
+    tokenRequest: TokenRequest,
+  ) => Promise<ApiToken>
+  validateApiToken: (token: string) => Promise<AuthenticatedUser | null>
+  revokeApiToken: (tokenId: string) => Promise<void>
+  getUserTokens: (userId: string) => Promise<Array<ApiToken>>
+  updateTokenUsage: (
+    tokenId: string,
+    usage: Partial<TokenUsage>,
+  ) => Promise<void>
+  getSubscriptionPlans: () => Array<SubscriptionPlan>
+  checkUsageLimits: (token: ApiToken) => Promise<boolean>
 }
 
 export class UserService implements IUserService {
   private users = new Map<string, User>()
   private tokens = new Map<string, ApiToken>()
   private tokensByUser = new Map<string, Set<string>>()
-  private subscriptionPlans: SubscriptionPlan[] = []
+  private subscriptionPlans: Array<SubscriptionPlan> = []
 
   async initialize(): Promise<void> {
     this.initializeSubscriptionPlans()
@@ -394,9 +403,9 @@ export class UserService implements IUserService {
     }
   }
 
-  async getUserTokens(userId: string): Promise<ApiToken[]> {
+  async getUserTokens(userId: string): Promise<Array<ApiToken>> {
     const tokenIds = this.tokensByUser.get(userId) || new Set()
-    const tokens: ApiToken[] = []
+    const tokens: Array<ApiToken> = []
 
     for (const tokenId of tokenIds) {
       const token = this.tokens.get(tokenId)
@@ -423,7 +432,7 @@ export class UserService implements IUserService {
     }
   }
 
-  getSubscriptionPlans(): SubscriptionPlan[] {
+  getSubscriptionPlans(): Array<SubscriptionPlan> {
     return this.subscriptionPlans.filter((plan) => plan.isActive)
   }
 

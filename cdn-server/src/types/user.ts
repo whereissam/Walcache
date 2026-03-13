@@ -19,7 +19,7 @@ export interface ApiToken {
   token: string
   tokenHash: string
   name: string
-  permissions: ApiPermission[]
+  permissions: Array<ApiPermission>
   usage: TokenUsage
   limits: TokenLimits
   createdAt: Date
@@ -51,7 +51,7 @@ export interface TokenLimits {
   maxStorageSize: number // in bytes
   maxUploadSize: number // in bytes
   maxConcurrentConnections: number
-  allowedFeatures: string[]
+  allowedFeatures: Array<string>
 }
 
 export enum SubscriptionTier {
@@ -84,7 +84,7 @@ export interface SubscriptionPlan {
   currency: string
   billingPeriod: 'monthly' | 'yearly'
   limits: TokenLimits
-  features: string[]
+  features: Array<string>
   isActive: boolean
 }
 
@@ -102,7 +102,7 @@ export interface UsageBilling {
 
 export interface TokenRequest {
   name: string
-  permissions: ApiPermission[]
+  permissions: Array<ApiPermission>
   expiresAt?: Date
   description?: string
 }
@@ -126,5 +126,5 @@ export interface AuthenticatedUser {
   subscriptionTier: SubscriptionTier
   subscriptionStatus: SubscriptionStatus
   token?: ApiToken
-  permissions: ApiPermission[]
+  permissions: Array<ApiPermission>
 }

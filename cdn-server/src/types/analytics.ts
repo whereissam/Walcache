@@ -1,7 +1,7 @@
 export interface AnalyticsEvent {
   type: 'fetch' | 'preload' | 'pin' | 'unpin' | 'download'
   cid?: string
-  cids?: string[]
+  cids?: Array<string>
   timestamp: Date
   hit?: boolean
   latency?: number
