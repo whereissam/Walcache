@@ -1,9 +1,9 @@
+import { nodeManager } from '../nodes/index.js'
 import type {
-  SupportedChain,
   AssetQueryOptions,
   AssetQueryResult,
+  SupportedChain,
 } from '../types.js'
-import { nodeManager } from '../nodes/index.js'
 
 /**
  * Smart contract query interface for different blockchain networks
@@ -12,11 +12,13 @@ export interface ContractQueryEngine {
   /** Target blockchain */
   chain: SupportedChain
   /** Query asset information from smart contracts */
-  queryAsset(options: AssetQueryOptions): Promise<AssetQueryResult>
+  queryAsset: (options: AssetQueryOptions) => Promise<AssetQueryResult>
   /** Query multiple assets in batch */
-  batchQueryAssets(options: AssetQueryOptions[]): Promise<AssetQueryResult[]>
+  batchQueryAssets: (
+    options: Array<AssetQueryOptions>,
+  ) => Promise<Array<AssetQueryResult>>
   /** Check if query engine is properly configured */
-  isConfigured(): boolean
+  isConfigured: () => boolean
 }
 
 /**
@@ -44,8 +46,8 @@ export class SuiQueryEngine implements ContractQueryEngine {
   }
 
   async batchQueryAssets(
-    options: AssetQueryOptions[],
-  ): Promise<AssetQueryResult[]> {
+    options: Array<AssetQueryOptions>,
+  ): Promise<Array<AssetQueryResult>> {
     const nodeUrl = await this.getOptimalNode()
     return Promise.all(
       options.map((option) => this.querySuiObject(nodeUrl, option)),
@@ -157,8 +159,8 @@ export class EthereumQueryEngine implements ContractQueryEngine {
   }
 
   async batchQueryAssets(
-    options: AssetQueryOptions[],
-  ): Promise<AssetQueryResult[]> {
+    options: Array<AssetQueryOptions>,
+  ): Promise<Array<AssetQueryResult>> {
     const nodeUrl = await this.getOptimalNode()
     return Promise.all(
       options.map((option) => this.queryEthereumContract(nodeUrl, option)),
@@ -261,7 +263,7 @@ export class EthereumQueryEngine implements ContractQueryEngine {
   private async makeEthRpcCall(
     nodeUrl: string,
     method: string,
-    params: any[],
+    params: Array<any>,
   ): Promise<string | null> {
     try {
       const response = await fetch(nodeUrl, {
@@ -355,8 +357,8 @@ export class SolanaQueryEngine implements ContractQueryEngine {
   }
 
   async batchQueryAssets(
-    options: AssetQueryOptions[],
-  ): Promise<AssetQueryResult[]> {
+    options: Array<AssetQueryOptions>,
+  ): Promise<Array<AssetQueryResult>> {
     const nodeUrl = await this.getOptimalNode()
     return Promise.all(
       options.map((option) => this.querySolanaToken(nodeUrl, option)),
@@ -485,8 +487,8 @@ export class QueryManager {
 
   async batchQueryAssets(
     chain: SupportedChain,
-    options: AssetQueryOptions[],
-  ): Promise<AssetQueryResult[]> {
+    options: Array<AssetQueryOptions>,
+  ): Promise<Array<AssetQueryResult>> {
     const engine = this.getEngine(chain)
     if (!engine) {
       throw new Error(`No query engine registered for chain: ${chain}`)
@@ -496,7 +498,7 @@ export class QueryManager {
   }
 
   async queryMultiChain(
-    chains: SupportedChain[],
+    chains: Array<SupportedChain>,
     options: AssetQueryOptions,
   ): Promise<Record<SupportedChain, AssetQueryResult>> {
     const results: Partial<Record<SupportedChain, AssetQueryResult>> = {}
@@ -518,7 +520,7 @@ export class QueryManager {
     return results as Record<SupportedChain, AssetQueryResult>
   }
 
-  getSupportedChains(): SupportedChain[] {
+  getSupportedChains(): Array<SupportedChain> {
     return Array.from(this.engines.keys())
   }
 }

@@ -23,16 +23,16 @@
 // Import statements first
 import { WalrusCDNClient } from './client.js'
 import type {
-  WalrusCDNConfig,
-  UrlOptions,
-  SupportedChain,
-  GetWalrusCDNUrlOptions,
-  ChainEndpointConfig,
   AdvancedUrlOptions,
   AssetVerificationOptions,
   AssetVerificationResult,
+  ChainEndpointConfig,
+  GetWalrusCDNUrlOptions,
   MultiChainVerificationResult,
   NodeSelectionResult,
+  SupportedChain,
+  UrlOptions,
+  WalrusCDNConfig,
 } from './types.js'
 import type { NodeSelectionStrategy } from './nodes/index.js'
 
@@ -288,7 +288,7 @@ export async function uploadFile(file: File | Blob, vaultId?: string) {
 /**
  * Preload CIDs using the default client
  */
-export async function preloadCIDs(cids: string[]) {
+export async function preloadCIDs(cids: Array<string>) {
   return getDefaultClient().preloadCIDs(cids)
 }
 
@@ -344,7 +344,7 @@ export async function verifyAsset(
  * @returns Promise with multi-chain verification result
  */
 export async function verifyMultiChain(
-  chains: SupportedChain[],
+  chains: Array<SupportedChain>,
   options: AssetVerificationOptions,
 ): Promise<MultiChainVerificationResult> {
   return getDefaultClient().verifyMultiChain(chains, options)
@@ -358,7 +358,7 @@ export async function verifyMultiChain(
  */
 export async function getMultiChainBlobStatus(
   blobId: string,
-  chains?: SupportedChain[],
+  chains?: Array<SupportedChain>,
 ) {
   return getDefaultClient().getMultiChainBlobStatus(blobId, chains)
 }
@@ -454,7 +454,7 @@ export function isSupportedChain(chain: string): chain is SupportedChain {
  */
 export async function getBlobStatus(
   blobId: string,
-  chains?: SupportedChain[],
+  chains?: Array<SupportedChain>,
 ): Promise<any> {
   if (defaultClient) {
     return defaultClient.getMultiChainBlobStatus(blobId, chains)
@@ -466,7 +466,7 @@ export async function getBlobStatus(
     blobId,
     chains: {} as Record<SupportedChain, any>,
     summary: {
-      availableChains: [] as SupportedChain[],
+      availableChains: [] as Array<SupportedChain>,
       totalChains: targetChains.length,
       bestChain: undefined as SupportedChain | undefined,
     },
@@ -536,21 +536,21 @@ export {
   type EnhancedMetadata,
   type ERC721Metadata,
   type SuiDisplayMetadata,
-  type MetaplexMetadata
+  type MetaplexMetadata,
 } from './metadata-normalizer.js'
 
 export {
   UnifiedVerifier,
   type VerificationOptions,
   type VerificationResult,
-  type GatingConfig
+  type GatingConfig,
 } from './unified-verifier.js'
 
 export {
   CrossChainSearchEngine,
   type SearchCriteria,
   type UnifiedAsset,
-  type SearchResult
+  type SearchResult,
 } from './cross-chain-search.js'
 
 export {
@@ -558,7 +558,7 @@ export {
   WalcacheError,
   WalcacheErrorCode,
   ErrorSeverity,
-  type ErrorContext
+  type ErrorContext,
 } from './error-handler.js'
 
 export {
@@ -572,7 +572,7 @@ export {
   type OptimizationOptions,
   type AccessControlOptions,
   type CrossChainOptions,
-  type ContractOptions
+  type ContractOptions,
 } from './enhanced-uploader.js'
 
 export {
@@ -583,7 +583,7 @@ export {
   type SiteUploadOptions,
   type MediaUploadOptions,
   type GameAssetOptions,
-  type DIDDocument
+  type DIDDocument,
 } from './use-cases.js'
 
 // Version information

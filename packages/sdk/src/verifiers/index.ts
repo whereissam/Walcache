@@ -1,10 +1,10 @@
 import type {
-  SupportedChain,
-  ChainVerifier,
-  AssetVerificationOptions,
-  AssetVerificationResult,
   AssetQueryOptions,
   AssetQueryResult,
+  AssetVerificationOptions,
+  AssetVerificationResult,
+  ChainVerifier,
+  SupportedChain,
 } from '../types.js'
 
 /**
@@ -356,7 +356,7 @@ export class VerifierRegistry {
     return await verifier.queryAsset(options)
   }
 
-  getSupportedChains(): SupportedChain[] {
+  getSupportedChains(): Array<SupportedChain> {
     return Array.from(this.verifiers.keys())
   }
 }

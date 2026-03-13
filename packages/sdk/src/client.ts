@@ -1,3 +1,14 @@
+import { WalrusCDNError } from './types.js'
+import { verifierRegistry } from './verifiers/index.js'
+import { queryManager } from './queries/index.js'
+import { nodeManager } from './nodes/index.js'
+import { BlockchainIntegrator } from './blockchain.js'
+import type { NodeSelectionStrategy } from './nodes/index.js'
+import type {
+  BatchRegistrationParams,
+  BlockchainConfig,
+  OnChainBlobMetadata,
+} from './blockchain.js'
 import type {
   WalrusCDNConfig,
   BlobResource,
@@ -26,11 +37,6 @@ import type {
   UploadResponse,
   GlobalMetrics,
 } from './types.js'
-import { WalrusCDNError } from './types.js'
-import { verifierRegistry } from './verifiers/index.js'
-import { queryManager } from './queries/index.js'
-import { nodeManager, type NodeSelectionStrategy } from './nodes/index.js'
-import { BlockchainIntegrator, type BlockchainConfig, type OnChainBlobMetadata, type BatchRegistrationParams } from './blockchain.js'
 
 /**
  * Walrus CDN Client - Core functionality for interacting with WCDN
@@ -132,17 +138,23 @@ export class WalrusCDNClient {
    * @param params - Pagination and filtering parameters
    * @returns Promise with paginated blob list
    */
-  async listBlobs(params: PaginationParams & {
-    cached?: boolean
-    pinned?: boolean
-  } = {}): Promise<PaginatedList<BlobResource>> {
+  async listBlobs(
+    params: PaginationParams & {
+      cached?: boolean
+      pinned?: boolean
+    } = {},
+  ): Promise<PaginatedList<BlobResource>> {
     try {
       const searchParams = new URLSearchParams()
       if (params.limit) searchParams.set('limit', params.limit.toString())
-      if (params.starting_after) searchParams.set('starting_after', params.starting_after)
-      if (params.ending_before) searchParams.set('ending_before', params.ending_before)
-      if (params.cached !== undefined) searchParams.set('cached', params.cached.toString())
-      if (params.pinned !== undefined) searchParams.set('pinned', params.pinned.toString())
+      if (params.starting_after)
+        searchParams.set('starting_after', params.starting_after)
+      if (params.ending_before)
+        searchParams.set('ending_before', params.ending_before)
+      if (params.cached !== undefined)
+        searchParams.set('cached', params.cached.toString())
+      if (params.pinned !== undefined)
+        searchParams.set('pinned', params.pinned.toString())
 
       const url = `/v1/blobs${searchParams.toString() ? `?${searchParams}` : ''}`
       const response = await this.makeRequest(url)
@@ -180,7 +192,7 @@ export class WalrusCDNClient {
    */
   async createUpload(
     file: File | Blob,
-    options: { vault_id?: string; parent_id?: string } = {}
+    options: { vault_id?: string; parent_id?: string } = {},
   ): Promise<UploadResource> {
     if (!file) {
       throw new WalrusCDNError('file is required')
@@ -230,15 +242,19 @@ export class WalrusCDNClient {
    * @param params - Pagination and filtering parameters
    * @returns Promise with paginated upload list
    */
-  async listUploads(params: PaginationParams & {
-    vault_id?: string
-    status?: 'processing' | 'completed' | 'failed'
-  } = {}): Promise<PaginatedList<UploadResource>> {
+  async listUploads(
+    params: PaginationParams & {
+      vault_id?: string
+      status?: 'processing' | 'completed' | 'failed'
+    } = {},
+  ): Promise<PaginatedList<UploadResource>> {
     try {
       const searchParams = new URLSearchParams()
       if (params.limit) searchParams.set('limit', params.limit.toString())
-      if (params.starting_after) searchParams.set('starting_after', params.starting_after)
-      if (params.ending_before) searchParams.set('ending_before', params.ending_before)
+      if (params.starting_after)
+        searchParams.set('starting_after', params.starting_after)
+      if (params.ending_before)
+        searchParams.set('ending_before', params.ending_before)
       if (params.vault_id) searchParams.set('vault_id', params.vault_id)
       if (params.status) searchParams.set('status', params.status)
 
@@ -257,30 +273,39 @@ export class WalrusCDNClient {
    * @returns Promise with array of upload resources
    */
   async createBatchUpload(
-    files: (File | Blob)[],
-    options: { vault_id?: string; parent_id?: string; concurrency?: number } = {}
-  ): Promise<UploadResource[]> {
+    files: Array<File | Blob>,
+    options: {
+      vault_id?: string
+      parent_id?: string
+      concurrency?: number
+    } = {},
+  ): Promise<Array<UploadResource>> {
     if (!Array.isArray(files) || files.length === 0) {
       throw new WalrusCDNError('files must be a non-empty array')
     }
 
-    const concurrency = options.concurrency || 3; // Limit concurrent uploads
-    const results: UploadResource[] = [];
-    
+    const concurrency = options.concurrency || 3 // Limit concurrent uploads
+    const results: Array<UploadResource> = []
+
     // Process files in batches to avoid overwhelming the server
     for (let i = 0; i < files.length; i += concurrency) {
-      const batch = files.slice(i, i + concurrency);
-      const batchPromises = batch.map(file => this.createUpload(file, options));
-      
+      const batch = files.slice(i, i + concurrency)
+      const batchPromises = batch.map((file) =>
+        this.createUpload(file, options),
+      )
+
       try {
-        const batchResults = await Promise.all(batchPromises);
-        results.push(...batchResults);
+        const batchResults = await Promise.all(batchPromises)
+        results.push(...batchResults)
       } catch (error) {
-        throw this.handleError(error, `Failed to upload batch starting at index ${i}`)
+        throw this.handleError(
+          error,
+          `Failed to upload batch starting at index ${i}`,
+        )
       }
     }
 
-    return results;
+    return results
   }
 
   /**
@@ -288,18 +313,20 @@ export class WalrusCDNClient {
    * @param blobIds - Array of blob IDs to fetch
    * @returns Promise with array of blob resources
    */
-  async getBlobsBatch(blobIds: string[]): Promise<(BlobResource | null)[]> {
+  async getBlobsBatch(
+    blobIds: Array<string>,
+  ): Promise<Array<BlobResource | null>> {
     if (!Array.isArray(blobIds) || blobIds.length === 0) {
       throw new WalrusCDNError('blobIds must be a non-empty array')
     }
 
     const results = await Promise.allSettled(
-      blobIds.map(blobId => this.getBlob(blobId))
-    );
+      blobIds.map((blobId) => this.getBlob(blobId)),
+    )
 
-    return results.map(result => 
-      result.status === 'fulfilled' ? result.value : null
-    );
+    return results.map((result) =>
+      result.status === 'fulfilled' ? result.value : null,
+    )
   }
 
   /**
@@ -309,14 +336,14 @@ export class WalrusCDNClient {
    * @returns Array of CDN URLs
    */
   getBatchCDNUrls(
-    blobIds: string[],
-    options: UrlOptions = {}
-  ): string[] {
+    blobIds: Array<string>,
+    options: UrlOptions = {},
+  ): Array<string> {
     if (!Array.isArray(blobIds) || blobIds.length === 0) {
       throw new WalrusCDNError('blobIds must be a non-empty array')
     }
 
-    return blobIds.map(blobId => this.getCDNUrl(blobId, options));
+    return blobIds.map((blobId) => this.getCDNUrl(blobId, options))
   }
 
   /**
@@ -364,7 +391,7 @@ export class WalrusCDNClient {
    * @param blobIds - Array of blob IDs to preload
    * @returns Promise with preload results
    */
-  async preloadBlobs(blobIds: string[]): Promise<PreloadResult> {
+  async preloadBlobs(blobIds: Array<string>): Promise<PreloadResult> {
     if (!Array.isArray(blobIds) || blobIds.length === 0) {
       throw new WalrusCDNError('blobIds must be a non-empty array')
     }
@@ -407,15 +434,20 @@ export class WalrusCDNClient {
    * @param params - Pagination and filtering parameters
    * @returns Promise with paginated cache list
    */
-  async listCacheEntries(params: PaginationParams & {
-    pinned?: boolean
-  } = {}): Promise<PaginatedList<CacheResource>> {
+  async listCacheEntries(
+    params: PaginationParams & {
+      pinned?: boolean
+    } = {},
+  ): Promise<PaginatedList<CacheResource>> {
     try {
       const searchParams = new URLSearchParams()
       if (params.limit) searchParams.set('limit', params.limit.toString())
-      if (params.starting_after) searchParams.set('starting_after', params.starting_after)
-      if (params.ending_before) searchParams.set('ending_before', params.ending_before)
-      if (params.pinned !== undefined) searchParams.set('pinned', params.pinned.toString())
+      if (params.starting_after)
+        searchParams.set('starting_after', params.starting_after)
+      if (params.ending_before)
+        searchParams.set('ending_before', params.ending_before)
+      if (params.pinned !== undefined)
+        searchParams.set('pinned', params.pinned.toString())
 
       const url = `/v1/cache${searchParams.toString() ? `?${searchParams}` : ''}`
       const response = await this.makeRequest(url)
@@ -443,7 +475,7 @@ export class WalrusCDNClient {
    * @param blobIds - Optional array of specific blob IDs to clear (if empty, clears all)
    * @returns Promise with clear operation result
    */
-  async clearCache(blobIds?: string[]): Promise<ClearResult> {
+  async clearCache(blobIds?: Array<string>): Promise<ClearResult> {
     try {
       const body = blobIds ? { blob_ids: blobIds } : {}
       const response = await this.makeRequest('/v1/cache/clear', {
@@ -485,7 +517,7 @@ export class WalrusCDNClient {
    * @param cids - Array of blob IDs to preload
    * @returns Promise with preload results
    */
-  async preloadCIDs(cids: string[]): Promise<PreloadResult> {
+  async preloadCIDs(cids: Array<string>): Promise<PreloadResult> {
     if (!Array.isArray(cids) || cids.length === 0) {
       throw new WalrusCDNError('cids must be a non-empty array')
     }
@@ -599,12 +631,12 @@ export class WalrusCDNClient {
   async registerBlobOnChain(
     blobId: string,
     metadata: {
-      size: number;
-      contentType: string;
-      cdnUrl: string;
-      contentHash: string;
+      size: number
+      contentType: string
+      cdnUrl: string
+      contentHash: string
     },
-    chain?: SupportedChain
+    chain?: SupportedChain,
   ): Promise<Record<SupportedChain, string | null>> {
     if (!this.blockchainIntegrator) {
       throw new WalrusCDNError('Blockchain integration not configured')
@@ -621,34 +653,35 @@ export class WalrusCDNClient {
           ethereum: null,
           sui: null,
           solana: null,
-        };
+        }
 
         switch (chain) {
           case 'ethereum':
-            results.ethereum = await this.blockchainIntegrator.registerBlobOnEthereum(
-              blobId,
-              metadata.size,
-              metadata.contentType,
-              metadata.cdnUrl,
-              metadata.contentHash
-            );
-            break;
+            results.ethereum =
+              await this.blockchainIntegrator.registerBlobOnEthereum(
+                blobId,
+                metadata.size,
+                metadata.contentType,
+                metadata.cdnUrl,
+                metadata.contentHash,
+              )
+            break
           case 'sui':
             results.sui = await this.blockchainIntegrator.registerBlobOnSui(
               blobId,
               metadata.size,
               metadata.contentType,
               metadata.cdnUrl,
-              metadata.contentHash
-            );
-            break;
+              metadata.contentHash,
+            )
+            break
           case 'solana':
-            throw new WalrusCDNError('Solana integration not yet implemented');
+            throw new WalrusCDNError('Solana integration not yet implemented')
           default:
-            throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+            throw new WalrusCDNError(`Unsupported chain: ${chain}`)
         }
 
-        return results;
+        return results
       } else {
         // Register on all configured chains
         return await this.blockchainIntegrator.registerBlobMultiChain(
@@ -656,8 +689,8 @@ export class WalrusCDNClient {
           metadata.size,
           metadata.contentType,
           metadata.cdnUrl,
-          metadata.contentHash
-        );
+          metadata.contentHash,
+        )
       }
     } catch (error) {
       throw this.handleError(error, 'Failed to register blob on blockchain')
@@ -672,13 +705,13 @@ export class WalrusCDNClient {
    */
   async registerBlobBatchOnChain(
     blobs: Array<{
-      blobId: string;
-      size: number;
-      contentType: string;
-      cdnUrl: string;
-      contentHash: string;
+      blobId: string
+      size: number
+      contentType: string
+      cdnUrl: string
+      contentHash: string
     }>,
-    chain: SupportedChain = 'ethereum'
+    chain: SupportedChain = 'ethereum',
   ): Promise<string> {
     if (!this.blockchainIntegrator) {
       throw new WalrusCDNError('Blockchain integration not configured')
@@ -690,25 +723,30 @@ export class WalrusCDNClient {
 
     try {
       const params: BatchRegistrationParams = {
-        blobIds: blobs.map(b => b.blobId),
-        sizes: blobs.map(b => b.size),
-        contentTypes: blobs.map(b => b.contentType),
-        cdnUrls: blobs.map(b => b.cdnUrl),
-        contentHashes: blobs.map(b => b.contentHash),
-      };
+        blobIds: blobs.map((b) => b.blobId),
+        sizes: blobs.map((b) => b.size),
+        contentTypes: blobs.map((b) => b.contentType),
+        cdnUrls: blobs.map((b) => b.cdnUrl),
+        contentHashes: blobs.map((b) => b.contentHash),
+      }
 
       switch (chain) {
         case 'ethereum':
-          return await this.blockchainIntegrator.registerBlobBatchOnEthereum(params);
+          return await this.blockchainIntegrator.registerBlobBatchOnEthereum(
+            params,
+          )
         case 'sui':
-          throw new WalrusCDNError('Sui batch registration not yet implemented');
+          throw new WalrusCDNError('Sui batch registration not yet implemented')
         case 'solana':
-          throw new WalrusCDNError('Solana integration not yet implemented');
+          throw new WalrusCDNError('Solana integration not yet implemented')
         default:
-          throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+          throw new WalrusCDNError(`Unsupported chain: ${chain}`)
       }
     } catch (error) {
-      throw this.handleError(error, 'Failed to register blob batch on blockchain')
+      throw this.handleError(
+        error,
+        'Failed to register blob batch on blockchain',
+      )
     }
   }
 
@@ -720,7 +758,7 @@ export class WalrusCDNClient {
    */
   async getBlobMetadataFromChain(
     blobId: string,
-    chain?: SupportedChain
+    chain?: SupportedChain,
   ): Promise<Record<SupportedChain, OnChainBlobMetadata | null>> {
     if (!this.blockchainIntegrator) {
       throw new WalrusCDNError('Blockchain integration not configured')
@@ -736,27 +774,34 @@ export class WalrusCDNClient {
           ethereum: null,
           sui: null,
           solana: null,
-        };
+        }
 
         switch (chain) {
           case 'ethereum':
-            results.ethereum = await this.blockchainIntegrator.getBlobMetadataFromEthereum(blobId);
-            break;
+            results.ethereum =
+              await this.blockchainIntegrator.getBlobMetadataFromEthereum(
+                blobId,
+              )
+            break
           case 'sui':
-            results.sui = await this.blockchainIntegrator.getBlobMetadataFromSui(blobId);
-            break;
+            results.sui =
+              await this.blockchainIntegrator.getBlobMetadataFromSui(blobId)
+            break
           case 'solana':
-            throw new WalrusCDNError('Solana integration not yet implemented');
+            throw new WalrusCDNError('Solana integration not yet implemented')
           default:
-            throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+            throw new WalrusCDNError(`Unsupported chain: ${chain}`)
         }
 
-        return results;
+        return results
       } else {
-        return await this.blockchainIntegrator.getBlobMetadataMultiChain(blobId);
+        return await this.blockchainIntegrator.getBlobMetadataMultiChain(blobId)
       }
     } catch (error) {
-      throw this.handleError(error, 'Failed to get blob metadata from blockchain')
+      throw this.handleError(
+        error,
+        'Failed to get blob metadata from blockchain',
+      )
     }
   }
 
@@ -766,7 +811,10 @@ export class WalrusCDNClient {
    * @param chain - Target blockchain
    * @returns Promise with transaction hash
    */
-  async pinBlobOnChain(blobId: string, chain: SupportedChain = 'ethereum'): Promise<string> {
+  async pinBlobOnChain(
+    blobId: string,
+    chain: SupportedChain = 'ethereum',
+  ): Promise<string> {
     if (!this.blockchainIntegrator) {
       throw new WalrusCDNError('Blockchain integration not configured')
     }
@@ -778,13 +826,13 @@ export class WalrusCDNClient {
     try {
       switch (chain) {
         case 'ethereum':
-          return await this.blockchainIntegrator.pinBlobOnEthereum(blobId);
+          return await this.blockchainIntegrator.pinBlobOnEthereum(blobId)
         case 'sui':
-          throw new WalrusCDNError('Sui pin operation not yet implemented');
+          throw new WalrusCDNError('Sui pin operation not yet implemented')
         case 'solana':
-          throw new WalrusCDNError('Solana integration not yet implemented');
+          throw new WalrusCDNError('Solana integration not yet implemented')
         default:
-          throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+          throw new WalrusCDNError(`Unsupported chain: ${chain}`)
       }
     } catch (error) {
       throw this.handleError(error, 'Failed to pin blob on blockchain')
@@ -801,7 +849,7 @@ export class WalrusCDNClient {
   async verifyBlobHashOnChain(
     blobId: string,
     contentHash: string,
-    chain: SupportedChain = 'ethereum'
+    chain: SupportedChain = 'ethereum',
   ): Promise<boolean> {
     if (!this.blockchainIntegrator) {
       throw new WalrusCDNError('Blockchain integration not configured')
@@ -814,13 +862,16 @@ export class WalrusCDNClient {
     try {
       switch (chain) {
         case 'ethereum':
-          return await this.blockchainIntegrator.verifyBlobHashOnEthereum(blobId, contentHash);
+          return await this.blockchainIntegrator.verifyBlobHashOnEthereum(
+            blobId,
+            contentHash,
+          )
         case 'sui':
-          throw new WalrusCDNError('Sui hash verification not yet implemented');
+          throw new WalrusCDNError('Sui hash verification not yet implemented')
         case 'solana':
-          throw new WalrusCDNError('Solana integration not yet implemented');
+          throw new WalrusCDNError('Solana integration not yet implemented')
         default:
-          throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+          throw new WalrusCDNError(`Unsupported chain: ${chain}`)
       }
     } catch (error) {
       throw this.handleError(error, 'Failed to verify blob hash on blockchain')
@@ -835,8 +886,8 @@ export class WalrusCDNClient {
    */
   async getUploaderBlobsFromChain(
     uploaderAddress: string,
-    chain: SupportedChain = 'ethereum'
-  ): Promise<string[]> {
+    chain: SupportedChain = 'ethereum',
+  ): Promise<Array<string>> {
     if (!this.blockchainIntegrator) {
       throw new WalrusCDNError('Blockchain integration not configured')
     }
@@ -848,16 +899,21 @@ export class WalrusCDNClient {
     try {
       switch (chain) {
         case 'ethereum':
-          return await this.blockchainIntegrator.getUploaderBlobsFromEthereum(uploaderAddress);
+          return await this.blockchainIntegrator.getUploaderBlobsFromEthereum(
+            uploaderAddress,
+          )
         case 'sui':
-          throw new WalrusCDNError('Sui uploader query not yet implemented');
+          throw new WalrusCDNError('Sui uploader query not yet implemented')
         case 'solana':
-          throw new WalrusCDNError('Solana integration not yet implemented');
+          throw new WalrusCDNError('Solana integration not yet implemented')
         default:
-          throw new WalrusCDNError(`Unsupported chain: ${chain}`);
+          throw new WalrusCDNError(`Unsupported chain: ${chain}`)
       }
     } catch (error) {
-      throw this.handleError(error, 'Failed to get uploader blobs from blockchain')
+      throw this.handleError(
+        error,
+        'Failed to get uploader blobs from blockchain',
+      )
     }
   }
 
@@ -866,18 +922,18 @@ export class WalrusCDNClient {
    * @returns Boolean indicating if blockchain features are available
    */
   isBlockchainIntegrationAvailable(): boolean {
-    return !!this.blockchainIntegrator;
+    return !!this.blockchainIntegrator
   }
 
   /**
    * Get supported chains based on blockchain configuration
    * @returns Array of supported blockchain networks
    */
-  getSupportedChains(): SupportedChain[] {
+  getSupportedChains(): Array<SupportedChain> {
     if (!this.blockchainIntegrator) {
-      return [];
+      return []
     }
-    return this.blockchainIntegrator.getSupportedChains();
+    return this.blockchainIntegrator.getSupportedChains()
   }
 
   // =============================================================================
@@ -898,7 +954,10 @@ export class WalrusCDNClient {
       const response = await this.makeRequest(`/v1/analytics/${blobId}`)
       return response
     } catch (error) {
-      throw this.handleError(error, `Failed to get analytics for blob ${blobId}`)
+      throw this.handleError(
+        error,
+        `Failed to get analytics for blob ${blobId}`,
+      )
     }
   }
 
@@ -907,15 +966,19 @@ export class WalrusCDNClient {
    * @param params - Pagination and filtering parameters
    * @returns Promise with paginated analytics list
    */
-  async listAnalytics(params: PaginationParams & {
-    blob_id?: string
-    period?: '1h' | '24h' | '7d' | '30d'
-  } = {}): Promise<PaginatedList<AnalyticsResource>> {
+  async listAnalytics(
+    params: PaginationParams & {
+      blob_id?: string
+      period?: '1h' | '24h' | '7d' | '30d'
+    } = {},
+  ): Promise<PaginatedList<AnalyticsResource>> {
     try {
       const searchParams = new URLSearchParams()
       if (params.limit) searchParams.set('limit', params.limit.toString())
-      if (params.starting_after) searchParams.set('starting_after', params.starting_after)
-      if (params.ending_before) searchParams.set('ending_before', params.ending_before)
+      if (params.starting_after)
+        searchParams.set('starting_after', params.starting_after)
+      if (params.ending_before)
+        searchParams.set('ending_before', params.ending_before)
       if (params.blob_id) searchParams.set('blob_id', params.blob_id)
       if (params.period) searchParams.set('period', params.period)
 
@@ -1081,7 +1144,7 @@ export class WalrusCDNClient {
    * @returns Promise with multi-chain verification result
    */
   async verifyMultiChain(
-    chains: SupportedChain[],
+    chains: Array<SupportedChain>,
     options: AssetVerificationOptions,
   ): Promise<MultiChainVerificationResult> {
     try {
@@ -1168,7 +1231,7 @@ export class WalrusCDNClient {
    */
   async getMultiChainBlobStatus(
     blobId: string,
-    chains?: SupportedChain[],
+    chains?: Array<SupportedChain>,
   ): Promise<MultichainBlobStatus> {
     if (!blobId) {
       throw new WalrusCDNError('blobId is required')
@@ -1297,7 +1360,7 @@ export class WalrusCDNClient {
       if (chain) {
         await nodeManager.healthCheckChain(chain)
       } else {
-        const chains: SupportedChain[] = ['sui', 'ethereum', 'solana']
+        const chains: Array<SupportedChain> = ['sui', 'ethereum', 'solana']
         await Promise.all(chains.map((c) => nodeManager.healthCheckChain(c)))
       }
     } catch (error) {
@@ -1344,13 +1407,13 @@ export class WalrusCDNClient {
       // Handle non-2xx responses
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        
+
         // Check if this is a v1 API error format
         if (errorData.error && typeof errorData.error === 'object') {
           const apiError = errorData as ApiError
           throw WalrusCDNError.fromApiError(apiError, response.status)
         }
-        
+
         // Fallback to legacy error format
         throw new WalrusCDNError(
           errorData.message ||

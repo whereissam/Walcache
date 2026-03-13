@@ -1,6 +1,6 @@
 /**
  * Unified Metadata Normalization System
- * 
+ *
  * Handles conversion between different blockchain NFT/asset standards:
  * - Ethereum: ERC-721/1155
  * - Sui: Display Standard
@@ -23,7 +23,12 @@ export interface UnifiedNFTMetadata {
   attributes: Array<{
     trait_type: string
     value: string | number
-    display_type?: 'boost_number' | 'boost_percentage' | 'number' | 'date' | string
+    display_type?:
+      | 'boost_number'
+      | 'boost_percentage'
+      | 'number'
+      | 'date'
+      | string
   }>
   /** External URL for more info */
   externalUrl?: string
@@ -173,7 +178,7 @@ export class MetadataNormalizer {
       contractAddress?: string
       tokenId?: string
       creator?: string
-    }
+    },
   ): Promise<UnifiedNFTMetadata> {
     switch (chain) {
       case 'ethereum':
@@ -183,7 +188,9 @@ export class MetadataNormalizer {
       case 'solana':
         return this.fromMetaplex(rawMetadata as MetaplexMetadata, context)
       default:
-        throw new Error(`Unsupported chain for metadata normalization: ${chain}`)
+        throw new Error(
+          `Unsupported chain for metadata normalization: ${chain}`,
+        )
     }
   }
 
@@ -192,7 +199,7 @@ export class MetadataNormalizer {
    */
   static async toChainFormat(
     metadata: UnifiedNFTMetadata,
-    targetChain: SupportedChain
+    targetChain: SupportedChain,
   ): Promise<ERC721Metadata | SuiDisplayMetadata | MetaplexMetadata> {
     switch (targetChain) {
       case 'ethereum':
@@ -211,17 +218,18 @@ export class MetadataNormalizer {
    */
   private static fromERC721(
     metadata: ERC721Metadata,
-    context?: any
+    context?: any,
   ): UnifiedNFTMetadata {
     return {
       name: metadata.name || 'Unnamed Asset',
       description: metadata.description || '',
       image: metadata.image || '',
-      attributes: metadata.attributes?.map(attr => ({
-        trait_type: attr.trait_type,
-        value: attr.value,
-        display_type: attr.display_type
-      })) || [],
+      attributes:
+        metadata.attributes?.map((attr) => ({
+          trait_type: attr.trait_type,
+          value: attr.value,
+          display_type: attr.display_type,
+        })) || [],
       externalUrl: metadata.external_url,
       animationUrl: metadata.animation_url,
       backgroundColor: metadata.background_color,
@@ -231,8 +239,8 @@ export class MetadataNormalizer {
         originalFormat: metadata,
         contractAddress: context?.contractAddress,
         tokenId: context?.tokenId,
-        creator: context?.creator
-      }
+        creator: context?.creator,
+      },
     }
   }
 
@@ -241,10 +249,10 @@ export class MetadataNormalizer {
    */
   private static fromSuiDisplay(
     metadata: SuiDisplayMetadata,
-    context?: any
+    context?: any,
   ): UnifiedNFTMetadata {
     const display = metadata.display || metadata
-    
+
     // Convert Sui properties to attributes
     const attributes: UnifiedNFTMetadata['attributes'] = []
     if (metadata.properties) {
@@ -252,7 +260,7 @@ export class MetadataNormalizer {
         if (typeof value === 'string' || typeof value === 'number') {
           attributes.push({
             trait_type: key,
-            value: value
+            value: value,
           })
         }
       })
@@ -267,8 +275,8 @@ export class MetadataNormalizer {
       chainSpecific: {
         chain: 'sui',
         originalFormat: metadata,
-        creator: display.creator || metadata.creator || context?.creator
-      }
+        creator: display.creator || metadata.creator || context?.creator,
+      },
     }
   }
 
@@ -277,23 +285,25 @@ export class MetadataNormalizer {
    */
   private static fromMetaplex(
     metadata: MetaplexMetadata,
-    context?: any
+    context?: any,
   ): UnifiedNFTMetadata {
     return {
       name: metadata.name || 'Unnamed Asset',
       description: metadata.description || '',
       image: metadata.image || '',
-      attributes: metadata.attributes?.map(attr => ({
-        trait_type: attr.trait_type,
-        value: attr.value
-      })) || [],
+      attributes:
+        metadata.attributes?.map((attr) => ({
+          trait_type: attr.trait_type,
+          value: attr.value,
+        })) || [],
       externalUrl: metadata.external_url,
       animationUrl: metadata.animation_url,
       chainSpecific: {
         chain: 'solana',
         originalFormat: metadata,
-        creator: metadata.properties?.creators?.[0]?.address || context?.creator
-      }
+        creator:
+          metadata.properties?.creators?.[0]?.address || context?.creator,
+      },
     }
   }
 
@@ -309,21 +319,23 @@ export class MetadataNormalizer {
       animation_url: metadata.animationUrl,
       background_color: metadata.backgroundColor,
       youtube_url: metadata.youtubeUrl,
-      attributes: metadata.attributes.map(attr => ({
+      attributes: metadata.attributes.map((attr) => ({
         trait_type: attr.trait_type,
         value: attr.value,
-        display_type: attr.display_type
-      }))
+        display_type: attr.display_type,
+      })),
     }
   }
 
   /**
    * Convert unified metadata to Sui Display format
    */
-  private static toSuiDisplay(metadata: UnifiedNFTMetadata): SuiDisplayMetadata {
+  private static toSuiDisplay(
+    metadata: UnifiedNFTMetadata,
+  ): SuiDisplayMetadata {
     // Convert attributes to properties
     const properties: Record<string, any> = {}
-    metadata.attributes.forEach(attr => {
+    metadata.attributes.forEach((attr) => {
       properties[attr.trait_type] = attr.value
     })
 
@@ -340,8 +352,8 @@ export class MetadataNormalizer {
         description: metadata.description,
         image_url: metadata.image,
         creator: metadata.chainSpecific.creator,
-        project_url: metadata.externalUrl
-      }
+        project_url: metadata.externalUrl,
+      },
     }
   }
 
@@ -356,22 +368,28 @@ export class MetadataNormalizer {
       image: metadata.image,
       external_url: metadata.externalUrl,
       animation_url: metadata.animationUrl,
-      attributes: metadata.attributes.map(attr => ({
+      attributes: metadata.attributes.map((attr) => ({
         trait_type: attr.trait_type,
-        value: attr.value
+        value: attr.value,
       })),
       properties: {
-        creators: metadata.chainSpecific.creator ? [{
-          address: metadata.chainSpecific.creator,
-          verified: false,
-          share: 100
-        }] : [],
-        files: [{
-          uri: metadata.image,
-          type: this.detectMimeType(metadata.image)
-        }],
-        category: 'image'
-      }
+        creators: metadata.chainSpecific.creator
+          ? [
+              {
+                address: metadata.chainSpecific.creator,
+                verified: false,
+                share: 100,
+              },
+            ]
+          : [],
+        files: [
+          {
+            uri: metadata.image,
+            type: this.detectMimeType(metadata.image),
+          },
+        ],
+        category: 'image',
+      },
     }
   }
 
@@ -381,16 +399,16 @@ export class MetadataNormalizer {
   private static detectMimeType(url: string): string {
     const extension = url.split('.').pop()?.toLowerCase()
     const mimeTypes: Record<string, string> = {
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'webp': 'image/webp',
-      'svg': 'image/svg+xml',
-      'mp4': 'video/mp4',
-      'webm': 'video/webm',
-      'mp3': 'audio/mpeg',
-      'wav': 'audio/wav'
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      svg: 'image/svg+xml',
+      mp4: 'video/mp4',
+      webm: 'video/webm',
+      mp3: 'audio/mpeg',
+      wav: 'audio/wav',
     }
     return mimeTypes[extension || ''] || 'application/octet-stream'
   }
@@ -400,10 +418,10 @@ export class MetadataNormalizer {
    */
   static validateMetadata(metadata: UnifiedNFTMetadata): {
     isValid: boolean
-    issues: string[]
+    issues: Array<string>
     score: number // 0-100 quality score
   } {
-    const issues: string[] = []
+    const issues: Array<string> = []
     let score = 100
 
     // Required fields
@@ -452,7 +470,7 @@ export class MetadataNormalizer {
     return {
       isValid: issues.length === 0,
       issues,
-      score: Math.max(0, score)
+      score: Math.max(0, score),
     }
   }
 
@@ -482,13 +500,13 @@ export class MetadataEnhancer {
       includeMarketData?: boolean
       includeVerification?: boolean
       includePerformance?: boolean
-    } = {}
+    } = {},
   ): Promise<EnhancedMetadata> {
     const enhanced: EnhancedMetadata = {
       ...metadata,
       verification: {
-        verified: false
-      }
+        verified: false,
+      },
     }
 
     // Add market data if requested
@@ -512,39 +530,45 @@ export class MetadataEnhancer {
   /**
    * Fetch market data (mock implementation)
    */
-  private static async fetchMarketData(metadata: UnifiedNFTMetadata): Promise<EnhancedMetadata['market']> {
+  private static async fetchMarketData(
+    metadata: UnifiedNFTMetadata,
+  ): Promise<EnhancedMetadata['market']> {
     // In real implementation, this would call marketplace APIs
     return {
       lastSale: {
         price: Math.random() * 10,
         currency: 'ETH',
-        date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-      }
+        date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+      },
     }
   }
 
   /**
    * Check verification status (mock implementation)
    */
-  private static async checkVerificationStatus(metadata: UnifiedNFTMetadata): Promise<EnhancedMetadata['verification']> {
+  private static async checkVerificationStatus(
+    metadata: UnifiedNFTMetadata,
+  ): Promise<EnhancedMetadata['verification']> {
     // In real implementation, this would check verification databases
     return {
       verified: Math.random() > 0.5,
       verifiedBy: 'OpenSea',
-      verifiedAt: new Date()
+      verifiedAt: new Date(),
     }
   }
 
   /**
    * Get performance metrics (mock implementation)
    */
-  private static async getPerformanceMetrics(metadata: UnifiedNFTMetadata): Promise<EnhancedMetadata['performance']> {
+  private static async getPerformanceMetrics(
+    metadata: UnifiedNFTMetadata,
+  ): Promise<EnhancedMetadata['performance']> {
     // In real implementation, this would fetch from analytics
     return {
       views: Math.floor(Math.random() * 1000),
       likes: Math.floor(Math.random() * 100),
       shares: Math.floor(Math.random() * 50),
-      loadTime: Math.random() * 2000 + 500
+      loadTime: Math.random() * 2000 + 500,
     }
   }
 }

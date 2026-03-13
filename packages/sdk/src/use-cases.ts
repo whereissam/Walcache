@@ -1,6 +1,6 @@
 /**
  * Real-World Use Case Implementations
- * 
+ *
  * Provides high-level methods for common multi-chain storage patterns:
  * - dApp Frontend Hosting with Chain-Based Routing
  * - Data Marketplaces with Gated File Access
@@ -10,13 +10,22 @@
  * - Media Streaming with On-Chain Gating
  */
 
-import type { SupportedChain } from './types.js'
-import type { UnifiedNFTMetadata } from './metadata-normalizer.js'
-import type { VerificationResult, GatingConfig } from './unified-verifier.js'
 import { UnifiedVerifier } from './unified-verifier.js'
-import { universalStore, type UniversalUploadOptions, type EnhancedUploadResult } from './enhanced-uploader.js'
-import { CrossChainSearchEngine, type SearchCriteria, type UnifiedAsset } from './cross-chain-search.js'
-import { ErrorHandler, WalcacheError, WalcacheErrorCode } from './error-handler.js'
+import { universalStore } from './enhanced-uploader.js'
+import { CrossChainSearchEngine } from './cross-chain-search.js'
+import {
+  ErrorHandler,
+  WalcacheError,
+  WalcacheErrorCode,
+} from './error-handler.js'
+import type {
+  EnhancedUploadResult,
+  UniversalUploadOptions,
+} from './enhanced-uploader.js'
+import type { SearchCriteria, UnifiedAsset } from './cross-chain-search.js'
+import type { GatingConfig, VerificationResult } from './unified-verifier.js'
+import type { UnifiedNFTMetadata } from './metadata-normalizer.js'
+import type { SupportedChain } from './types.js'
 
 /**
  * Configuration for use case implementations
@@ -33,7 +42,11 @@ interface UseCaseConfig {
  */
 interface FileGating {
   /** Type of gating */
-  type: 'token_ownership' | 'nft_ownership' | 'custom_contract' | 'multi_requirement'
+  type:
+    | 'token_ownership'
+    | 'nft_ownership'
+    | 'custom_contract'
+    | 'multi_requirement'
   /** Required token/NFT contract address */
   contractAddress?: string
   /** Minimum token balance (for ERC-20) */
@@ -45,7 +58,7 @@ interface FileGating {
   /** Custom verification logic */
   customVerifier?: (userAddress: string) => Promise<boolean>
   /** Multiple requirements */
-  requirements?: FileGating[]
+  requirements?: Array<FileGating>
   /** Logic for multiple requirements */
   logic?: 'AND' | 'OR'
 }
@@ -77,7 +90,7 @@ interface MediaUploadOptions {
   /** Quality settings */
   quality?: 'low' | 'medium' | 'high' | 'ultra'
   /** Streaming format preferences */
-  formats?: string[]
+  formats?: Array<string>
   /** Gating configuration */
   gating?: FileGating
   /** Enable transcoding */
@@ -108,9 +121,9 @@ interface GameAssetOptions {
  * DID document structure
  */
 interface DIDDocument {
-  '@context': string[]
+  '@context': Array<string>
   id: string
-  controller?: string[]
+  controller?: Array<string>
   verificationMethod?: Array<{
     id: string
     type: string
@@ -118,8 +131,8 @@ interface DIDDocument {
     publicKeyMultibase?: string
     publicKeyJwk?: any
   }>
-  authentication?: string[]
-  assertionMethod?: string[]
+  authentication?: Array<string>
+  assertionMethod?: Array<string>
   service?: Array<{
     id: string
     type: string
@@ -159,18 +172,19 @@ export class WalcacheUseCases {
    */
   async uploadSite(
     sitePath: string | File,
-    options: SiteUploadOptions
+    options: SiteUploadOptions,
   ): Promise<{
     siteId: string
     chain: SupportedChain
     deploymentUrl: string
     version: string
-    assets: string[]
+    assets: Array<string>
   }> {
     try {
-      const siteFile = typeof sitePath === 'string' 
-        ? await this.createSiteArchive(sitePath)
-        : sitePath
+      const siteFile =
+        typeof sitePath === 'string'
+          ? await this.createSiteArchive(sitePath)
+          : sitePath
 
       const uploadResult = await universalStore(siteFile, {
         targetChain: options.chain,
@@ -180,13 +194,18 @@ export class WalcacheUseCases {
           name: `${options.name} - ${options.chain}`,
           description: `Static site deployment for ${options.name} on ${options.chain}`,
           category: 'site',
-          tags: ['dapp', 'frontend', options.chain, options.environment || 'production'],
-          creator: options.customDomain
+          tags: [
+            'dapp',
+            'frontend',
+            options.chain,
+            options.environment || 'production',
+          ],
+          creator: options.customDomain,
         },
         optimization: {
           enabled: true,
-          compression: 'medium'
-        }
+          compression: 'medium',
+        },
       })
 
       // Create deployment record
@@ -204,7 +223,7 @@ export class WalcacheUseCases {
         customDomain: options.customDomain,
         environment: options.environment,
         cacheTTL: options.cacheTTL || 3600,
-        createdAt: new Date()
+        createdAt: new Date(),
       })
 
       return {
@@ -212,14 +231,13 @@ export class WalcacheUseCases {
         chain: options.chain,
         deploymentUrl,
         version,
-        assets: [uploadResult.blobId]
+        assets: [uploadResult.blobId],
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.UPLOAD_FAILED, {
         operation: 'uploadSite',
         chain: options.chain,
-        siteName: options.name
+        siteName: options.name,
       })
     }
   }
@@ -235,17 +253,17 @@ export class WalcacheUseCases {
     url: string
     chain: SupportedChain
     version: string
-    fallbackUrls: string[]
+    fallbackUrls: Array<string>
   }> {
     try {
       // Detect user chain if not provided
-      const userChain = options.userChain || await this.detectUserChain()
-      
+      const userChain = options.userChain || (await this.detectUserChain())
+
       // Try to find site for user's chain
       const siteMetadata = await this.getSiteMetadata(
-        options.siteName, 
-        userChain, 
-        options.environment
+        options.siteName,
+        userChain,
+        options.environment,
       )
 
       if (siteMetadata) {
@@ -253,7 +271,7 @@ export class WalcacheUseCases {
           url: siteMetadata.customDomain || siteMetadata.deploymentUrl,
           chain: userChain,
           version: siteMetadata.version,
-          fallbackUrls: await this.getFallbackSiteUrls(options.siteName)
+          fallbackUrls: await this.getFallbackSiteUrls(options.siteName),
         }
       }
 
@@ -262,13 +280,13 @@ export class WalcacheUseCases {
       const fallbackSite = await this.getSiteMetadata(
         options.siteName,
         fallbackChain,
-        options.environment
+        options.environment,
       )
 
       if (!fallbackSite) {
         throw new WalcacheError(
           WalcacheErrorCode.ASSET_NOT_FOUND,
-          `Site ${options.siteName} not found for any supported chain`
+          `Site ${options.siteName} not found for any supported chain`,
         )
       }
 
@@ -276,14 +294,13 @@ export class WalcacheUseCases {
         url: fallbackSite.deploymentUrl,
         chain: fallbackChain,
         version: fallbackSite.version,
-        fallbackUrls: []
+        fallbackUrls: [],
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.ASSET_NOT_FOUND, {
         operation: 'getSiteUrl',
         siteName: options.siteName,
-        userChain: options.userChain
+        userChain: options.userChain,
       })
     }
   }
@@ -297,7 +314,9 @@ export class WalcacheUseCases {
       // Check for Ethereum wallets
       if ((window as any).ethereum) {
         try {
-          const chainId = await (window as any).ethereum.request({ method: 'eth_chainId' })
+          const chainId = await (window as any).ethereum.request({
+            method: 'eth_chainId',
+          })
           if (chainId === '0x1' || chainId === '0x5') return 'ethereum'
         } catch {}
       }
@@ -335,7 +354,7 @@ export class WalcacheUseCases {
         license?: string
       }
       permanent?: boolean
-    }
+    },
   ): Promise<{
     fileId: string
     accessUrl: string
@@ -352,16 +371,17 @@ export class WalcacheUseCases {
           description: options.metadata?.description,
           category: 'gated-data',
           tags: ['marketplace', 'gated', options.gating.chain],
-          license: options.metadata?.license
+          license: options.metadata?.license,
         },
         access: {
           type: 'token-gated',
           tokenRequirements: {
             contractAddress: options.gating.contractAddress!,
             minimumBalance: options.gating.minimumBalance || '1',
-            tokenType: options.gating.type === 'nft_ownership' ? 'ERC721' : 'ERC20'
-          }
-        }
+            tokenType:
+              options.gating.type === 'nft_ownership' ? 'ERC721' : 'ERC20',
+          },
+        },
       })
 
       const fileId = `gated_${uploadResult.blobId}`
@@ -373,21 +393,20 @@ export class WalcacheUseCases {
         gating: options.gating,
         metadata: options.metadata,
         permanent: options.permanent || false,
-        createdAt: new Date()
+        createdAt: new Date(),
       })
 
       return {
         fileId,
         accessUrl,
         gating: options.gating,
-        metadata: options.metadata
+        metadata: options.metadata,
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.UPLOAD_FAILED, {
         operation: 'uploadGatedFile',
         chain: options.gating.chain,
-        fileName: file.name
+        fileName: file.name,
       })
     }
   }
@@ -410,48 +429,55 @@ export class WalcacheUseCases {
       if (!gatingConfig) {
         throw new WalcacheError(
           WalcacheErrorCode.ASSET_NOT_FOUND,
-          `Gated file ${options.fileId} not found`
+          `Gated file ${options.fileId} not found`,
         )
       }
 
       const chain = options.chain || gatingConfig.gating.chain
-      
+
       // Convert FileGating to VerificationOptions
       const verificationResult = await UnifiedVerifier.verifyOwnership(
         options.userAddress,
-        gatingConfig.gating.contractAddress!,
+        gatingConfig.gating.contractAddress,
         chain,
         {
-          type: gatingConfig.gating.type === 'nft_ownership' ? 'nft_ownership' : 'token_balance',
+          type:
+            gatingConfig.gating.type === 'nft_ownership'
+              ? 'nft_ownership'
+              : 'token_balance',
           contractAddress: gatingConfig.gating.contractAddress,
           tokenId: gatingConfig.gating.tokenId,
           minimumBalance: gatingConfig.gating.minimumBalance,
-          cacheDuration: 300 // Cache for 5 minutes
-        }
+          cacheDuration: 300, // Cache for 5 minutes
+        },
       )
 
       if (verificationResult.hasAccess) {
         const downloadUrl = `${this.config.baseUrl}/download/${gatingConfig.blobId}?token=${await this.generateAccessToken(options.userAddress, options.fileId)}`
-        
+
         return {
           hasAccess: true,
           downloadUrl,
-          verificationResult
+          verificationResult,
         }
       }
 
       return {
         hasAccess: false,
-        reason: verificationResult.error?.message || 'Access requirements not met',
-        verificationResult
+        reason:
+          verificationResult.error?.message || 'Access requirements not met',
+        verificationResult,
       }
-
     } catch (error) {
-      throw ErrorHandler.createError(error, WalcacheErrorCode.VERIFICATION_FAILED, {
-        operation: 'verifyAccess',
-        fileId: options.fileId,
-        userAddress: options.userAddress
-      })
+      throw ErrorHandler.createError(
+        error,
+        WalcacheErrorCode.VERIFICATION_FAILED,
+        {
+          operation: 'verifyAccess',
+          fileId: options.fileId,
+          userAddress: options.userAddress,
+        },
+      )
     }
   }
 
@@ -461,7 +487,7 @@ export class WalcacheUseCases {
   async downloadGatedFile(
     fileId: string,
     userAddress: string,
-    accessToken: string
+    accessToken: string,
   ): Promise<{
     fileUrl: string
     expiresAt: Date
@@ -473,11 +499,15 @@ export class WalcacheUseCases {
   }> {
     try {
       // Verify access token
-      const isValidToken = await this.verifyAccessToken(accessToken, userAddress, fileId)
+      const isValidToken = await this.verifyAccessToken(
+        accessToken,
+        userAddress,
+        fileId,
+      )
       if (!isValidToken) {
         throw new WalcacheError(
           WalcacheErrorCode.ACCESS_DENIED,
-          'Invalid or expired access token'
+          'Invalid or expired access token',
         )
       }
 
@@ -485,7 +515,7 @@ export class WalcacheUseCases {
       if (!gatingConfig) {
         throw new WalcacheError(
           WalcacheErrorCode.ASSET_NOT_FOUND,
-          `File ${fileId} not found`
+          `File ${fileId} not found`,
         )
       }
 
@@ -498,15 +528,14 @@ export class WalcacheUseCases {
         fileInfo: {
           name: gatingConfig.metadata?.name || 'download',
           size: 0, // Would be populated from actual file metadata
-          type: 'application/octet-stream' // Would be detected from file
-        }
+          type: 'application/octet-stream', // Would be detected from file
+        },
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.ACCESS_DENIED, {
         operation: 'downloadGatedFile',
         fileId,
-        userAddress
+        userAddress,
       })
     }
   }
@@ -524,7 +553,7 @@ export class WalcacheUseCases {
       owner: string
       chain: SupportedChain
       metadata?: any
-    }
+    },
   ): Promise<{
     assetId: string
     owner: string
@@ -539,31 +568,36 @@ export class WalcacheUseCases {
         apiKey: this.config.apiKey,
         metadata: {
           name: options.metadata?.name || `${options.category} - ${file.name}`,
-          description: options.metadata?.description || `Gaming ${options.category} for ${options.gameId}`,
+          description:
+            options.metadata?.description ||
+            `Gaming ${options.category} for ${options.gameId}`,
           category: 'game-asset',
           tags: [
             'gaming',
             options.gameId,
             options.category,
             options.rarity || 'common',
-            options.chain
+            options.chain,
           ],
           creator: options.owner,
           attributes: [
             { trait_type: 'Game', value: options.gameId },
             { trait_type: 'Category', value: options.category },
             { trait_type: 'Rarity', value: options.rarity || 'common' },
-            { trait_type: 'Tradeable', value: options.tradeable ? 'Yes' : 'No' },
-            ...(options.metadata?.attributes || [])
-          ]
+            {
+              trait_type: 'Tradeable',
+              value: options.tradeable ? 'Yes' : 'No',
+            },
+            ...(options.metadata?.attributes || []),
+          ],
         },
         contract: {
           autoDeploy: true,
           collection: {
             name: `${options.gameId} Assets`,
-            symbol: options.gameId.toUpperCase().slice(0, 6)
-          }
-        }
+            symbol: options.gameId.toUpperCase().slice(0, 6),
+          },
+        },
       })
 
       const assetId = `asset_${options.gameId}_${uploadResult.blobId}`
@@ -580,7 +614,7 @@ export class WalcacheUseCases {
         permissions: options.permissions,
         contractAddress: uploadResult.contractAddress,
         tokenId: uploadResult.tokenId,
-        createdAt: new Date()
+        createdAt: new Date(),
       })
 
       return {
@@ -588,15 +622,14 @@ export class WalcacheUseCases {
         owner: options.owner,
         chain: options.chain,
         assetUrl: uploadResult.cdnUrl,
-        metadata: uploadResult.optimization as any // This would be properly typed
+        metadata: uploadResult.optimization as any, // This would be properly typed
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.UPLOAD_FAILED, {
         operation: 'uploadAsset',
         chain: options.chain,
         gameId: options.gameId,
-        owner: options.owner
+        owner: options.owner,
       })
     }
   }
@@ -633,66 +666,80 @@ export class WalcacheUseCases {
         textSearch: options.gameId,
         attributes: [],
         limit: options.limit || 50,
-        offset: options.offset || 0
+        offset: options.offset || 0,
       }
 
       // Add attribute filters
       if (options.gameId) {
         searchCriteria.attributes!.push({
           trait_type: 'Game',
-          value: options.gameId
+          value: options.gameId,
         })
       }
 
       if (options.category) {
         searchCriteria.attributes!.push({
           trait_type: 'Category',
-          value: options.category
+          value: options.category,
         })
       }
 
       if (options.rarity) {
         searchCriteria.attributes!.push({
           trait_type: 'Rarity',
-          value: options.rarity
+          value: options.rarity,
         })
       }
 
       const searchResult = await CrossChainSearchEngine.findAssetsByOwner(
         options.owner || '',
-        searchCriteria
+        searchCriteria,
       )
 
       // Filter for gaming assets and convert format
       const gameAssets = searchResult.assets
-        .filter(asset => 
-          asset.metadata.category === 'game-asset' &&
-          (!options.gameId || asset.metadata.attributes.some(attr => 
-            attr.trait_type === 'Game' && attr.value === options.gameId
-          ))
+        .filter(
+          (asset) =>
+            asset.metadata.category === 'game-asset' &&
+            (!options.gameId ||
+              asset.metadata.attributes.some(
+                (attr) =>
+                  attr.trait_type === 'Game' && attr.value === options.gameId,
+              )),
         )
-        .map(asset => ({
+        .map((asset) => ({
           assetId: asset.id,
           owner: asset.ownership.currentOwner,
-          gameId: asset.metadata.attributes.find(attr => attr.trait_type === 'Game')?.value as string || '',
-          category: asset.metadata.attributes.find(attr => attr.trait_type === 'Category')?.value as string || '',
-          rarity: asset.metadata.attributes.find(attr => attr.trait_type === 'Rarity')?.value as string || 'common',
+          gameId:
+            (asset.metadata.attributes.find(
+              (attr) => attr.trait_type === 'Game',
+            )?.value as string) || '',
+          category:
+            (asset.metadata.attributes.find(
+              (attr) => attr.trait_type === 'Category',
+            )?.value as string) || '',
+          rarity:
+            (asset.metadata.attributes.find(
+              (attr) => attr.trait_type === 'Rarity',
+            )?.value as string) || 'common',
           assetUrl: asset.metadata.image,
-          tradeable: asset.metadata.attributes.find(attr => attr.trait_type === 'Tradeable')?.value === 'Yes',
-          metadata: asset.metadata
+          tradeable:
+            asset.metadata.attributes.find(
+              (attr) => attr.trait_type === 'Tradeable',
+            )?.value === 'Yes',
+          metadata: asset.metadata,
         }))
 
       return {
         assets: gameAssets,
         totalCount: gameAssets.length,
-        hasMore: searchResult.pagination.hasNext
+        hasMore: searchResult.pagination.hasNext,
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.SEARCH_FAILED, {
         operation: 'listAssets',
         owner: options.owner,
-        gameId: options.gameId
+        gameId: options.gameId,
       })
     }
   }
@@ -711,7 +758,7 @@ export class WalcacheUseCases {
       chain: SupportedChain
       controller?: string
       updatePolicy?: 'owner_only' | 'controller_only' | 'multi_sig'
-    }
+    },
   ): Promise<{
     did: string
     documentUrl: string
@@ -719,13 +766,18 @@ export class WalcacheUseCases {
     version: number
   }> {
     try {
-      const documentContent = typeof document === 'string' 
-        ? document 
-        : JSON.stringify(document, null, 2)
+      const documentContent =
+        typeof document === 'string'
+          ? document
+          : JSON.stringify(document, null, 2)
 
-      const documentFile = new File([documentContent], `${did.replace(/[^a-zA-Z0-9]/g, '_')}.json`, {
-        type: 'application/json'
-      })
+      const documentFile = new File(
+        [documentContent],
+        `${did.replace(/[^a-zA-Z0-9]/g, '_')}.json`,
+        {
+          type: 'application/json',
+        },
+      )
 
       const uploadResult = await universalStore(documentFile, {
         targetChain: options.chain,
@@ -736,8 +788,8 @@ export class WalcacheUseCases {
           description: `Decentralized Identity Document for ${did}`,
           category: 'identity',
           tags: ['did', 'identity', options.chain],
-          creator: options.controller
-        }
+          creator: options.controller,
+        },
       })
 
       const version = await this.getNextDIDVersion(did)
@@ -752,21 +804,20 @@ export class WalcacheUseCases {
         version,
         documentUrl,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
 
       return {
         did,
         documentUrl,
         chain: options.chain,
-        version
+        version,
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.UPLOAD_FAILED, {
         operation: 'uploadDID',
         did,
-        chain: options.chain
+        chain: options.chain,
       })
     }
   }
@@ -788,18 +839,18 @@ export class WalcacheUseCases {
       if (!didMetadata) {
         throw new WalcacheError(
           WalcacheErrorCode.ASSET_NOT_FOUND,
-          `DID document not found: ${did}`
+          `DID document not found: ${did}`,
         )
       }
 
       // Fetch document content from CDN
       const documentUrl = `${this.config.baseUrl}/cdn/${didMetadata.blobId}`
       const response = await fetch(documentUrl)
-      
+
       if (!response.ok) {
         throw new WalcacheError(
           WalcacheErrorCode.ASSET_NOT_FOUND,
-          `Failed to fetch DID document: ${response.statusText}`
+          `Failed to fetch DID document: ${response.statusText}`,
         )
       }
 
@@ -812,14 +863,13 @@ export class WalcacheUseCases {
           chain: didMetadata.chain,
           version: didMetadata.version,
           lastUpdated: didMetadata.updatedAt,
-          documentUrl: didMetadata.documentUrl
-        }
+          documentUrl: didMetadata.documentUrl,
+        },
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.ASSET_NOT_FOUND, {
         operation: 'resolveDID',
-        did
+        did,
       })
     }
   }
@@ -840,9 +890,9 @@ export class WalcacheUseCases {
         timestamp?: Date
         source?: string
         level?: 'info' | 'warn' | 'error' | 'debug'
-        tags?: string[]
+        tags?: Array<string>
       }
-    }
+    },
   ): Promise<{
     logId: string
     logHash: string
@@ -851,9 +901,12 @@ export class WalcacheUseCases {
     logUrl: string
   }> {
     try {
-      const logFile = typeof logContent === 'string'
-        ? new File([logContent], `log_${Date.now()}.txt`, { type: 'text/plain' })
-        : logContent
+      const logFile =
+        typeof logContent === 'string'
+          ? new File([logContent], `log_${Date.now()}.txt`, {
+              type: 'text/plain',
+            })
+          : logContent
 
       const uploadResult = await universalStore(logFile, {
         targetChain: options.chain,
@@ -863,14 +916,22 @@ export class WalcacheUseCases {
           name: `Log: ${options.logType}`,
           description: `${options.logType} log entry`,
           category: 'log',
-          tags: ['log', options.logType, options.chain, ...(options.metadata?.tags || [])],
-          creator: options.metadata?.source
-        }
+          tags: [
+            'log',
+            options.logType,
+            options.chain,
+            ...(options.metadata?.tags || []),
+          ],
+          creator: options.metadata?.source,
+        },
       })
 
       const logId = `log_${options.logType}_${uploadResult.blobId}`
       const logHash = await this.calculateContentHash(logContent)
-      const referenceHash = await this.generateReferenceHash(logId, options.chain)
+      const referenceHash = await this.generateReferenceHash(
+        logId,
+        options.chain,
+      )
 
       // Store log metadata
       await this.storeLogMetadata(logId, {
@@ -880,7 +941,7 @@ export class WalcacheUseCases {
         chain: options.chain,
         logType: options.logType,
         metadata: options.metadata,
-        createdAt: new Date()
+        createdAt: new Date(),
       })
 
       return {
@@ -888,14 +949,13 @@ export class WalcacheUseCases {
         logHash,
         referenceHash,
         chain: options.chain,
-        logUrl: uploadResult.cdnUrl
+        logUrl: uploadResult.cdnUrl,
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.UPLOAD_FAILED, {
         operation: 'uploadLog',
         chain: options.chain,
-        logType: options.logType
+        logType: options.logType,
       })
     }
   }
@@ -918,7 +978,7 @@ export class WalcacheUseCases {
       if (!logMetadata) {
         throw new WalcacheError(
           WalcacheErrorCode.ASSET_NOT_FOUND,
-          `Log not found: ${logId}`
+          `Log not found: ${logId}`,
         )
       }
 
@@ -931,14 +991,13 @@ export class WalcacheUseCases {
           logHash: logMetadata.logHash,
           chain: logMetadata.chain,
           timestamp: logMetadata.createdAt,
-          blobId: logMetadata.blobId
-        }
+          blobId: logMetadata.blobId,
+        },
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.ASSET_NOT_FOUND, {
         operation: 'getLogReference',
-        logId
+        logId,
       })
     }
   }
@@ -961,13 +1020,13 @@ export class WalcacheUseCases {
         album?: string
         duration?: number
       }
-    }
+    },
   ): Promise<{
     mediaId: string
     streamUrl: string
     chain: SupportedChain
     gating?: FileGating
-    formats: string[]
+    formats: Array<string>
   }> {
     try {
       const uploadResult = await universalStore(file, {
@@ -979,21 +1038,24 @@ export class WalcacheUseCases {
           description: options.metadata?.description,
           category: options.type,
           tags: ['media', options.type, options.chain],
-          creator: options.metadata?.artist
+          creator: options.metadata?.artist,
         },
         optimization: {
           enabled: true,
           formats: options.formats || this.getDefaultFormats(options.type),
-          compression: options.quality === 'high' ? 'light' : 'medium'
+          compression: options.quality === 'high' ? 'light' : 'medium',
         },
-        access: options.gating ? {
-          type: 'token-gated',
-          tokenRequirements: {
-            contractAddress: options.gating.contractAddress!,
-            minimumBalance: options.gating.minimumBalance || '1',
-            tokenType: options.gating.type === 'nft_ownership' ? 'ERC721' : 'ERC20'
-          }
-        } : undefined
+        access: options.gating
+          ? {
+              type: 'token-gated',
+              tokenRequirements: {
+                contractAddress: options.gating.contractAddress!,
+                minimumBalance: options.gating.minimumBalance || '1',
+                tokenType:
+                  options.gating.type === 'nft_ownership' ? 'ERC721' : 'ERC20',
+              },
+            }
+          : undefined,
       })
 
       const mediaId = `media_${options.type}_${uploadResult.blobId}`
@@ -1008,7 +1070,7 @@ export class WalcacheUseCases {
         metadata: options.metadata,
         formats: options.formats || this.getDefaultFormats(options.type),
         quality: options.quality,
-        createdAt: new Date()
+        createdAt: new Date(),
       })
 
       return {
@@ -1016,14 +1078,13 @@ export class WalcacheUseCases {
         streamUrl,
         chain: options.chain,
         gating: options.gating,
-        formats: options.formats || this.getDefaultFormats(options.type)
+        formats: options.formats || this.getDefaultFormats(options.type),
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.UPLOAD_FAILED, {
         operation: 'uploadMedia',
         chain: options.chain,
-        mediaType: options.type
+        mediaType: options.type,
       })
     }
   }
@@ -1037,7 +1098,7 @@ export class WalcacheUseCases {
     options: {
       quality?: 'low' | 'medium' | 'high'
       format?: string
-    } = {}
+    } = {},
   ): Promise<{
     streamUrl: string
     hasAccess: boolean
@@ -1054,7 +1115,7 @@ export class WalcacheUseCases {
       if (!mediaMetadata) {
         throw new WalcacheError(
           WalcacheErrorCode.ASSET_NOT_FOUND,
-          `Media not found: ${mediaId}`
+          `Media not found: ${mediaId}`,
         )
       }
 
@@ -1066,7 +1127,7 @@ export class WalcacheUseCases {
         const accessResult = await this.verifyAccess({
           fileId: mediaId,
           userAddress,
-          chain: mediaMetadata.chain
+          chain: mediaMetadata.chain,
         })
 
         hasAccess = accessResult.hasAccess
@@ -1080,7 +1141,7 @@ export class WalcacheUseCases {
           streamUrl: '',
           hasAccess: false,
           expiresAt: new Date(),
-          formats: []
+          formats: [],
         }
       }
 
@@ -1088,27 +1149,29 @@ export class WalcacheUseCases {
       const expiresAt = new Date(Date.now() + 3600 * 1000) // 1 hour
 
       // Generate format URLs
-      const formats = mediaMetadata.formats.map(format => ({
+      const formats = mediaMetadata.formats.map((format) => ({
         format,
         quality: options.quality || 'medium',
         url: `${baseStreamUrl}/${format}?token=${accessToken}&quality=${options.quality || 'medium'}`,
-        bitrate: this.getBitrateForFormat(format, options.quality || 'medium')
+        bitrate: this.getBitrateForFormat(format, options.quality || 'medium'),
       }))
 
-      const streamUrl = formats.find(f => f.format === options.format)?.url || formats[0]?.url || baseStreamUrl
+      const streamUrl =
+        formats.find((f) => f.format === options.format)?.url ||
+        formats[0]?.url ||
+        baseStreamUrl
 
       return {
         streamUrl,
         hasAccess,
         expiresAt,
-        formats
+        formats,
       }
-
     } catch (error) {
       throw ErrorHandler.createError(error, WalcacheErrorCode.ACCESS_DENIED, {
         operation: 'streamMedia',
         mediaId,
-        userAddress
+        userAddress,
       })
     }
   }
@@ -1124,27 +1187,34 @@ export class WalcacheUseCases {
     return new File([content], 'site.zip', { type: 'application/zip' })
   }
 
-  private async storeSiteMetadata(siteId: string, metadata: any): Promise<void> {
+  private async storeSiteMetadata(
+    siteId: string,
+    metadata: any,
+  ): Promise<void> {
     // Store in database or key-value store
     console.log(`Storing site metadata for ${siteId}:`, metadata)
   }
 
-  private async getSiteMetadata(siteName: string, chain: SupportedChain, environment?: string): Promise<any> {
+  private async getSiteMetadata(
+    siteName: string,
+    chain: SupportedChain,
+    environment?: string,
+  ): Promise<any> {
     // Retrieve from database
     return {
       name: siteName,
       chain,
       version: '1.0.0',
       deploymentUrl: `https://cdn.walcache.com/site/${siteName}_${chain}`,
-      environment: environment || 'production'
+      environment: environment || 'production',
     }
   }
 
-  private async getFallbackSiteUrls(siteName: string): Promise<string[]> {
+  private async getFallbackSiteUrls(siteName: string): Promise<Array<string>> {
     return [
       `https://cdn.walcache.com/site/${siteName}_ethereum`,
       `https://cdn.walcache.com/site/${siteName}_sui`,
-      `https://cdn.walcache.com/site/${siteName}_solana`
+      `https://cdn.walcache.com/site/${siteName}_solana`,
     ]
   }
 
@@ -1158,32 +1228,46 @@ export class WalcacheUseCases {
       gating: {
         type: 'nft_ownership',
         contractAddress: '0x123...',
-        chain: 'ethereum'
+        chain: 'ethereum',
       },
-      metadata: { name: 'Test File' }
+      metadata: { name: 'Test File' },
     }
   }
 
-  private async generateAccessToken(userAddress: string, fileId: string): Promise<string> {
+  private async generateAccessToken(
+    userAddress: string,
+    fileId: string,
+  ): Promise<string> {
     // Generate JWT or similar token
-    return Buffer.from(`${userAddress}:${fileId}:${Date.now()}`).toString('base64')
+    return Buffer.from(`${userAddress}:${fileId}:${Date.now()}`).toString(
+      'base64',
+    )
   }
 
-  private async verifyAccessToken(token: string, userAddress: string, fileId: string): Promise<boolean> {
+  private async verifyAccessToken(
+    token: string,
+    userAddress: string,
+    fileId: string,
+  ): Promise<boolean> {
     try {
       const decoded = Buffer.from(token, 'base64').toString()
       const [tokenAddress, tokenFileId, timestamp] = decoded.split(':')
-      
+
       // Check if token is valid and not expired (1 hour)
-      return tokenAddress === userAddress && 
-             tokenFileId === fileId && 
-             Date.now() - parseInt(timestamp) < 3600000
+      return (
+        tokenAddress === userAddress &&
+        tokenFileId === fileId &&
+        Date.now() - parseInt(timestamp) < 3600000
+      )
     } catch {
       return false
     }
   }
 
-  private async storeGameAssetMetadata(assetId: string, metadata: any): Promise<void> {
+  private async storeGameAssetMetadata(
+    assetId: string,
+    metadata: any,
+  ): Promise<void> {
     console.log(`Storing game asset metadata for ${assetId}:`, metadata)
   }
 
@@ -1197,7 +1281,7 @@ export class WalcacheUseCases {
       chain: 'sui' as SupportedChain,
       version: 1,
       documentUrl: `https://cdn.walcache.com/did/${encodeURIComponent(did)}`,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     }
   }
 
@@ -1216,7 +1300,7 @@ export class WalcacheUseCases {
       logHash: 'mock_log_hash',
       referenceHash: 'mock_reference_hash',
       chain: 'ethereum' as SupportedChain,
-      createdAt: new Date()
+      createdAt: new Date(),
     }
   }
 
@@ -1227,14 +1311,20 @@ export class WalcacheUseCases {
     const data = encoder.encode(text)
     const hashBuffer = await crypto.subtle.digest('SHA-256', data)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
   }
 
-  private async generateReferenceHash(logId: string, chain: SupportedChain): Promise<string> {
+  private async generateReferenceHash(
+    logId: string,
+    chain: SupportedChain,
+  ): Promise<string> {
     return this.calculateContentHash(`${logId}:${chain}:${Date.now()}`)
   }
 
-  private async storeMediaMetadata(mediaId: string, metadata: any): Promise<void> {
+  private async storeMediaMetadata(
+    mediaId: string,
+    metadata: any,
+  ): Promise<void> {
     console.log(`Storing media metadata for ${mediaId}:`, metadata)
   }
 
@@ -1247,13 +1337,13 @@ export class WalcacheUseCases {
       gating: {
         type: 'nft_ownership',
         contractAddress: '0x123...',
-        chain: 'ethereum' as SupportedChain
+        chain: 'ethereum' as SupportedChain,
       },
-      createdAt: new Date()
+      createdAt: new Date(),
     }
   }
 
-  private getDefaultFormats(type: string): string[] {
+  private getDefaultFormats(type: string): Array<string> {
     switch (type) {
       case 'video':
         return ['mp4', 'webm']
@@ -1268,16 +1358,17 @@ export class WalcacheUseCases {
 
   private getBitrateForFormat(format: string, quality: string): number {
     const bitrateMap: Record<string, Record<string, number>> = {
-      'mp4': { low: 500, medium: 1500, high: 5000 },
-      'webm': { low: 400, medium: 1200, high: 4000 },
-      'mp3': { low: 128, medium: 256, high: 320 }
+      mp4: { low: 500, medium: 1500, high: 5000 },
+      webm: { low: 400, medium: 1200, high: 4000 },
+      mp3: { low: 128, medium: 256, high: 320 },
     }
     return bitrateMap[format]?.[quality] || 1000
   }
 }
 
 // Export convenience functions
-export const createUseCases = (config: UseCaseConfig) => WalcacheUseCases.getInstance(config)
+export const createUseCases = (config: UseCaseConfig) =>
+  WalcacheUseCases.getInstance(config)
 
 // Export types for developers
 export type {
@@ -1286,5 +1377,5 @@ export type {
   SiteUploadOptions,
   MediaUploadOptions,
   GameAssetOptions,
-  DIDDocument
+  DIDDocument,
 }

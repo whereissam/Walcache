@@ -1,6 +1,6 @@
 /**
  * Standardized Error Handling System
- * 
+ *
  * Provides consistent error codes, messages, and handling across all chains
  * for better developer experience and debugging.
  */
@@ -16,70 +16,70 @@ export enum WalcacheErrorCode {
   CONNECTION_TIMEOUT = 'CONNECTION_TIMEOUT',
   RATE_LIMITED = 'RATE_LIMITED',
   SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
-  
+
   // Authentication/Authorization Errors
   INVALID_API_KEY = 'INVALID_API_KEY',
   INSUFFICIENT_PERMISSIONS = 'INSUFFICIENT_PERMISSIONS',
   WALLET_NOT_CONNECTED = 'WALLET_NOT_CONNECTED',
   INVALID_SIGNATURE = 'INVALID_SIGNATURE',
-  
+
   // Asset/Contract Errors
   ASSET_NOT_FOUND = 'ASSET_NOT_FOUND',
   CONTRACT_NOT_FOUND = 'CONTRACT_NOT_FOUND',
   INVALID_CONTRACT_ADDRESS = 'INVALID_CONTRACT_ADDRESS',
   INVALID_TOKEN_ID = 'INVALID_TOKEN_ID',
   ASSET_NOT_OWNED = 'ASSET_NOT_OWNED',
-  
+
   // Upload/Storage Errors
   FILE_TOO_LARGE = 'FILE_TOO_LARGE',
   INVALID_FILE_TYPE = 'INVALID_FILE_TYPE',
   UPLOAD_FAILED = 'UPLOAD_FAILED',
   STORAGE_QUOTA_EXCEEDED = 'STORAGE_QUOTA_EXCEEDED',
   METADATA_INVALID = 'METADATA_INVALID',
-  
+
   // Blockchain-Specific Errors
   INSUFFICIENT_BALANCE = 'INSUFFICIENT_BALANCE',
   GAS_ESTIMATION_FAILED = 'GAS_ESTIMATION_FAILED',
   TRANSACTION_FAILED = 'TRANSACTION_FAILED',
   BLOCK_NOT_FOUND = 'BLOCK_NOT_FOUND',
   CHAIN_NOT_SUPPORTED = 'CHAIN_NOT_SUPPORTED',
-  
+
   // Verification Errors
   VERIFICATION_FAILED = 'VERIFICATION_FAILED',
   OWNERSHIP_VERIFICATION_FAILED = 'OWNERSHIP_VERIFICATION_FAILED',
   ACCESS_DENIED = 'ACCESS_DENIED',
   TOKEN_REQUIREMENTS_NOT_MET = 'TOKEN_REQUIREMENTS_NOT_MET',
-  
+
   // Search/Query Errors
   SEARCH_FAILED = 'SEARCH_FAILED',
   INVALID_SEARCH_CRITERIA = 'INVALID_SEARCH_CRITERIA',
   SEARCH_TIMEOUT = 'SEARCH_TIMEOUT',
   TOO_MANY_RESULTS = 'TOO_MANY_RESULTS',
-  
+
   // Configuration Errors
   INVALID_CONFIGURATION = 'INVALID_CONFIGURATION',
   MISSING_REQUIRED_PARAMETER = 'MISSING_REQUIRED_PARAMETER',
   INVALID_PARAMETER_VALUE = 'INVALID_PARAMETER_VALUE',
-  
+
   // Internal Errors
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   NOT_IMPLEMENTED = 'NOT_IMPLEMENTED',
   FEATURE_NOT_AVAILABLE = 'FEATURE_NOT_AVAILABLE',
-  
+
   // Cache Errors
   CACHE_ERROR = 'CACHE_ERROR',
   CACHE_MISS = 'CACHE_MISS',
-  CACHE_EXPIRED = 'CACHE_EXPIRED'
+  CACHE_EXPIRED = 'CACHE_EXPIRED',
 }
 
 /**
  * Error severity levels
  */
 export enum ErrorSeverity {
-  LOW = 'low',        // Warnings, non-critical issues
-  MEDIUM = 'medium',  // Errors that don't prevent core functionality
-  HIGH = 'high',      // Critical errors that prevent core functionality
-  CRITICAL = 'critical' // System-level errors requiring immediate attention
+  LOW = 'low', // Warnings, non-critical issues
+  MEDIUM = 'medium', // Errors that don't prevent core functionality
+  HIGH = 'high', // Critical errors that prevent core functionality
+  CRITICAL = 'critical', // System-level errors requiring immediate attention
 }
 
 /**
@@ -105,7 +105,7 @@ export class WalcacheError extends Error {
       context?: Record<string, any>
       originalError?: Error
       suggestedAction?: string
-    } = {}
+    } = {},
   ) {
     super(message)
     this.name = 'WalcacheError'
@@ -116,7 +116,8 @@ export class WalcacheError extends Error {
     this.timestamp = new Date()
     this.context = options.context || {}
     this.originalError = options.originalError
-    this.suggestedAction = options.suggestedAction || this.getDefaultSuggestedAction(code)
+    this.suggestedAction =
+      options.suggestedAction || this.getDefaultSuggestedAction(code)
   }
 
   /**
@@ -133,12 +134,14 @@ export class WalcacheError extends Error {
       timestamp: this.timestamp.toISOString(),
       context: this.context,
       stack: this.stack,
-      originalError: this.originalError ? {
-        name: this.originalError.name,
-        message: this.originalError.message,
-        stack: this.originalError.stack
-      } : undefined,
-      suggestedAction: this.suggestedAction
+      originalError: this.originalError
+        ? {
+            name: this.originalError.name,
+            message: this.originalError.message,
+            stack: this.originalError.stack,
+          }
+        : undefined,
+      suggestedAction: this.suggestedAction,
     }
   }
 
@@ -149,25 +152,25 @@ export class WalcacheError extends Error {
     switch (this.code) {
       case WalcacheErrorCode.NETWORK_ERROR:
         return 'Network connection failed. Please check your internet connection and try again.'
-      
+
       case WalcacheErrorCode.RATE_LIMITED:
         return 'Too many requests. Please wait a moment before trying again.'
-      
+
       case WalcacheErrorCode.WALLET_NOT_CONNECTED:
         return 'Please connect your wallet to continue.'
-      
+
       case WalcacheErrorCode.INSUFFICIENT_BALANCE:
         return 'Insufficient balance to complete this transaction.'
-      
+
       case WalcacheErrorCode.ASSET_NOT_FOUND:
         return 'The requested asset could not be found.'
-      
+
       case WalcacheErrorCode.FILE_TOO_LARGE:
         return 'File size exceeds the maximum allowed limit.'
-      
+
       case WalcacheErrorCode.ACCESS_DENIED:
         return 'You do not have permission to access this resource.'
-      
+
       default:
         return this.message
     }
@@ -184,7 +187,7 @@ export class WalcacheError extends Error {
       WalcacheErrorCode.RATE_LIMITED,
       WalcacheErrorCode.GAS_ESTIMATION_FAILED,
       WalcacheErrorCode.SEARCH_TIMEOUT,
-      WalcacheErrorCode.CACHE_ERROR
+      WalcacheErrorCode.CACHE_ERROR,
     ]
     return retryableCodes.includes(code)
   }
@@ -196,22 +199,22 @@ export class WalcacheError extends Error {
     switch (code) {
       case WalcacheErrorCode.NETWORK_ERROR:
         return 'Check your internet connection and retry the request'
-      
+
       case WalcacheErrorCode.RATE_LIMITED:
         return 'Wait for the rate limit to reset and retry'
-      
+
       case WalcacheErrorCode.WALLET_NOT_CONNECTED:
         return 'Connect your wallet and try again'
-      
+
       case WalcacheErrorCode.INSUFFICIENT_BALANCE:
         return 'Add funds to your wallet and retry'
-      
+
       case WalcacheErrorCode.FILE_TOO_LARGE:
         return 'Reduce file size or use compression'
-      
+
       case WalcacheErrorCode.INVALID_API_KEY:
         return 'Check your API key configuration'
-      
+
       default:
         return 'Review the error details and contact support if the issue persists'
     }
@@ -247,7 +250,7 @@ export class ErrorHandler {
   static createError(
     error: any,
     code: WalcacheErrorCode,
-    context: ErrorContext = {}
+    context: ErrorContext = {},
   ): WalcacheError {
     if (error instanceof WalcacheError) {
       return error
@@ -275,7 +278,7 @@ export class ErrorHandler {
       context,
       originalError,
       severity: this.determineSeverity(code, error),
-      retryable: this.shouldRetry(code, error, context)
+      retryable: this.shouldRetry(code, error, context),
     })
   }
 
@@ -289,13 +292,13 @@ export class ErrorHandler {
       delay?: number
       backoffMultiplier?: number
       context?: ErrorContext
-    } = {}
+    } = {},
   ): Promise<T> {
     const {
       maxRetries = 3,
       delay = 1000,
       backoffMultiplier = 2,
-      context = {}
+      context = {},
     } = options
 
     let lastError: Error
@@ -304,16 +307,16 @@ export class ErrorHandler {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const result = await operation()
-        
+
         // Reset error counts on success
         if (context.operation) {
           this.errorCounts.delete(context.operation)
         }
-        
+
         return result
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
-        
+
         // Track error frequency
         if (context.operation) {
           const count = this.errorCounts.get(context.operation) || 0
@@ -322,12 +325,15 @@ export class ErrorHandler {
         }
 
         // Don't retry on last attempt or non-retryable errors
-        if (attempt === maxRetries || !this.shouldRetry(WalcacheErrorCode.INTERNAL_ERROR, error, context)) {
+        if (
+          attempt === maxRetries ||
+          !this.shouldRetry(WalcacheErrorCode.INTERNAL_ERROR, error, context)
+        ) {
           break
         }
 
         // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, currentDelay))
+        await new Promise((resolve) => setTimeout(resolve, currentDelay))
         currentDelay *= backoffMultiplier
       }
     }
@@ -336,7 +342,7 @@ export class ErrorHandler {
     throw this.createError(lastError, WalcacheErrorCode.INTERNAL_ERROR, {
       ...context,
       attempts: maxRetries + 1,
-      finalAttempt: true
+      finalAttempt: true,
     })
   }
 
@@ -346,12 +352,16 @@ export class ErrorHandler {
   static shouldCircuitBreak(operation: string): boolean {
     const errorCount = this.errorCounts.get(operation) || 0
     const lastError = this.lastErrors.get(operation)
-    
+
     // Circuit breaker: prevent operation if too many recent errors
-    if (errorCount >= 5 && lastError && Date.now() - lastError.getTime() < 60000) {
+    if (
+      errorCount >= 5 &&
+      lastError &&
+      Date.now() - lastError.getTime() < 60000
+    ) {
       return true
     }
-    
+
     return false
   }
 
@@ -362,24 +372,31 @@ export class ErrorHandler {
     error: any,
     chain: SupportedChain,
     operation: string,
-    context: ErrorContext = {}
+    context: ErrorContext = {},
   ): WalcacheError {
     const code = this.mapChainError(error, chain)
     return this.createError(error, code, {
       ...context,
       chain,
-      operation
+      operation,
     })
   }
 
   /**
    * Map chain-specific errors to standard error codes
    */
-  private static mapChainError(error: any, chain: SupportedChain): WalcacheErrorCode {
-    const errorMessage = error?.message?.toLowerCase() || String(error).toLowerCase()
+  private static mapChainError(
+    error: any,
+    chain: SupportedChain,
+  ): WalcacheErrorCode {
+    const errorMessage =
+      error?.message?.toLowerCase() || String(error).toLowerCase()
 
     // Network/connection errors
-    if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+    if (
+      errorMessage.includes('network') ||
+      errorMessage.includes('connection')
+    ) {
       return WalcacheErrorCode.NETWORK_ERROR
     }
 
@@ -387,7 +404,10 @@ export class ErrorHandler {
       return WalcacheErrorCode.CONNECTION_TIMEOUT
     }
 
-    if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
+    if (
+      errorMessage.includes('rate limit') ||
+      errorMessage.includes('too many requests')
+    ) {
       return WalcacheErrorCode.RATE_LIMITED
     }
 
@@ -408,7 +428,10 @@ export class ErrorHandler {
    * Map Ethereum-specific errors
    */
   private static mapEthereumError(errorMessage: string): WalcacheErrorCode {
-    if (errorMessage.includes('insufficient funds') || errorMessage.includes('insufficient balance')) {
+    if (
+      errorMessage.includes('insufficient funds') ||
+      errorMessage.includes('insufficient balance')
+    ) {
       return WalcacheErrorCode.INSUFFICIENT_BALANCE
     }
 
@@ -416,11 +439,17 @@ export class ErrorHandler {
       return WalcacheErrorCode.GAS_ESTIMATION_FAILED
     }
 
-    if (errorMessage.includes('revert') || errorMessage.includes('execution reverted')) {
+    if (
+      errorMessage.includes('revert') ||
+      errorMessage.includes('execution reverted')
+    ) {
       return WalcacheErrorCode.TRANSACTION_FAILED
     }
 
-    if (errorMessage.includes('not found') && errorMessage.includes('contract')) {
+    if (
+      errorMessage.includes('not found') &&
+      errorMessage.includes('contract')
+    ) {
       return WalcacheErrorCode.CONTRACT_NOT_FOUND
     }
 
@@ -435,7 +464,10 @@ export class ErrorHandler {
    * Map Sui-specific errors
    */
   private static mapSuiError(errorMessage: string): WalcacheErrorCode {
-    if (errorMessage.includes('object not found') || errorMessage.includes('does not exist')) {
+    if (
+      errorMessage.includes('object not found') ||
+      errorMessage.includes('does not exist')
+    ) {
       return WalcacheErrorCode.ASSET_NOT_FOUND
     }
 
@@ -458,19 +490,31 @@ export class ErrorHandler {
    * Map Solana-specific errors
    */
   private static mapSolanaError(errorMessage: string): WalcacheErrorCode {
-    if (errorMessage.includes('account not found') || errorMessage.includes('invalid account')) {
+    if (
+      errorMessage.includes('account not found') ||
+      errorMessage.includes('invalid account')
+    ) {
       return WalcacheErrorCode.ASSET_NOT_FOUND
     }
 
-    if (errorMessage.includes('insufficient funds') || errorMessage.includes('insufficient lamports')) {
+    if (
+      errorMessage.includes('insufficient funds') ||
+      errorMessage.includes('insufficient lamports')
+    ) {
       return WalcacheErrorCode.INSUFFICIENT_BALANCE
     }
 
-    if (errorMessage.includes('invalid public key') || errorMessage.includes('invalid address')) {
+    if (
+      errorMessage.includes('invalid public key') ||
+      errorMessage.includes('invalid address')
+    ) {
       return WalcacheErrorCode.INVALID_CONTRACT_ADDRESS
     }
 
-    if (errorMessage.includes('transaction failed') || errorMessage.includes('simulation failed')) {
+    if (
+      errorMessage.includes('transaction failed') ||
+      errorMessage.includes('simulation failed')
+    ) {
       return WalcacheErrorCode.TRANSACTION_FAILED
     }
 
@@ -480,23 +524,26 @@ export class ErrorHandler {
   /**
    * Determine error severity
    */
-  private static determineSeverity(code: WalcacheErrorCode, error: any): ErrorSeverity {
+  private static determineSeverity(
+    code: WalcacheErrorCode,
+    error: any,
+  ): ErrorSeverity {
     const criticalCodes = [
       WalcacheErrorCode.INTERNAL_ERROR,
       WalcacheErrorCode.INVALID_API_KEY,
-      WalcacheErrorCode.SERVICE_UNAVAILABLE
+      WalcacheErrorCode.SERVICE_UNAVAILABLE,
     ]
 
     const highSeverityCodes = [
       WalcacheErrorCode.UPLOAD_FAILED,
       WalcacheErrorCode.TRANSACTION_FAILED,
-      WalcacheErrorCode.ACCESS_DENIED
+      WalcacheErrorCode.ACCESS_DENIED,
     ]
 
     const lowSeverityCodes = [
       WalcacheErrorCode.CACHE_MISS,
       WalcacheErrorCode.ASSET_NOT_FOUND,
-      WalcacheErrorCode.RATE_LIMITED
+      WalcacheErrorCode.RATE_LIMITED,
     ]
 
     if (criticalCodes.includes(code)) {
@@ -520,7 +567,7 @@ export class ErrorHandler {
   private static shouldRetry(
     code: WalcacheErrorCode,
     error: any,
-    context: ErrorContext
+    context: ErrorContext,
   ): boolean {
     // Never retry certain errors
     const nonRetryableCodes = [
@@ -530,7 +577,7 @@ export class ErrorHandler {
       WalcacheErrorCode.INVALID_TOKEN_ID,
       WalcacheErrorCode.FILE_TOO_LARGE,
       WalcacheErrorCode.INVALID_FILE_TYPE,
-      WalcacheErrorCode.METADATA_INVALID
+      WalcacheErrorCode.METADATA_INVALID,
     ]
 
     if (nonRetryableCodes.includes(code)) {
@@ -562,16 +609,18 @@ export class ErrorHandler {
       errorsByCode[operation] = count
     }
 
-    const recentErrors = Array.from(this.errorCounts.entries()).map(([operation, count]) => ({
-      operation,
-      count,
-      lastError: this.lastErrors.get(operation) || new Date()
-    }))
+    const recentErrors = Array.from(this.errorCounts.entries()).map(
+      ([operation, count]) => ({
+        operation,
+        count,
+        lastError: this.lastErrors.get(operation) || new Date(),
+      }),
+    )
 
     return {
       totalErrors,
       errorsByCode,
-      recentErrors
+      recentErrors,
     }
   }
 

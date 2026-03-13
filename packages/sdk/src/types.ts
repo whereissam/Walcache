@@ -10,7 +10,7 @@ export interface ChainEndpointConfig {
   /** Primary aggregator endpoint */
   primary: string
   /** Fallback aggregator endpoints */
-  fallbacks?: string[]
+  fallbacks?: Array<string>
   /** Network status (for hackathon demo) */
   status: 'active' | 'mock' | 'disabled'
 }
@@ -68,7 +68,7 @@ export interface PaginatedList<T> {
   /** Always 'list' for paginated responses */
   object: 'list'
   /** Array of data objects */
-  data: T[]
+  data: Array<T>
   /** Whether there are more items available */
   has_more: boolean
   /** URL of the current endpoint */
@@ -81,7 +81,14 @@ export interface PaginatedList<T> {
 export interface ApiError {
   error: {
     /** Type of error */
-    type: 'validation_error' | 'authentication_error' | 'permission_error' | 'not_found_error' | 'rate_limit_error' | 'api_error' | 'network_error'
+    type:
+      | 'validation_error'
+      | 'authentication_error'
+      | 'permission_error'
+      | 'not_found_error'
+      | 'rate_limit_error'
+      | 'api_error'
+      | 'network_error'
     /** Human-readable error message */
     message: string
     /** Machine-readable error code */
@@ -359,7 +366,7 @@ export interface GlobalMetrics {
     }
     using: 'redis' | 'memory'
   }
-  topCIDs: CIDStats[]
+  topCIDs: Array<CIDStats>
 }
 
 /**
@@ -372,12 +379,7 @@ export class WalrusCDNError extends Error {
   public type?: string
   public param?: string
 
-  constructor(
-    message: string,
-    code?: string,
-    status?: number,
-    details?: any,
-  ) {
+  constructor(message: string, code?: string, status?: number, details?: any) {
     super(message)
     this.name = 'WalrusCDNError'
     this.code = code
@@ -393,7 +395,7 @@ export class WalrusCDNError extends Error {
       apiError.error.message,
       apiError.error.code,
       status,
-      apiError
+      apiError,
     )
     error.type = apiError.error.type
     error.param = apiError.error.param
@@ -409,8 +411,8 @@ export class WalrusCDNError extends Error {
         type: (this.type as any) || 'api_error',
         message: this.message,
         code: this.code,
-        param: this.param
-      }
+        param: this.param,
+      },
     }
   }
 }
@@ -453,7 +455,7 @@ export interface MultichainBlobStatus {
   chains: Record<SupportedChain, BlobStatus>
   /** Overall availability summary */
   summary: {
-    availableChains: SupportedChain[]
+    availableChains: Array<SupportedChain>
     totalChains: number
     bestChain?: SupportedChain // Fastest responding chain
   }
@@ -510,7 +512,7 @@ export interface ChainNodeConfig {
   /** Whether node is currently available */
   isAvailable: boolean
   /** Node capabilities */
-  capabilities?: string[]
+  capabilities?: Array<string>
   /** Geographic region for optimal routing */
   region?: 'europe' | 'north-america' | 'asia' | 'global'
 }
@@ -540,7 +542,7 @@ export interface NodeSelectionResult {
   /** Selection reason */
   reason: string
   /** Other available nodes */
-  alternatives: ChainNodeConfig[]
+  alternatives: Array<ChainNodeConfig>
 }
 
 /**
@@ -574,7 +576,7 @@ export interface AssetQueryResult {
     [key: string]: any
   }
   /** Associated blob IDs or content hashes */
-  contentHashes?: string[]
+  contentHashes?: Array<string>
   /** Query timestamp */
   queriedAt: Date
   /** Error if query failed */
@@ -588,13 +590,13 @@ export interface ChainVerifier {
   /** Chain this verifier supports */
   chain: SupportedChain
   /** Verify asset ownership */
-  verifyAsset(
+  verifyAsset: (
     options: AssetVerificationOptions,
-  ): Promise<AssetVerificationResult>
+  ) => Promise<AssetVerificationResult>
   /** Query asset information */
-  queryAsset(options: AssetQueryOptions): Promise<AssetQueryResult>
+  queryAsset: (options: AssetQueryOptions) => Promise<AssetQueryResult>
   /** Check if verifier is properly configured */
-  isConfigured(): boolean
+  isConfigured: () => boolean
 }
 
 /**

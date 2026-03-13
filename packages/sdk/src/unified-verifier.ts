@@ -1,6 +1,6 @@
 /**
  * Unified Asset Verification System
- * 
+ *
  * Provides consistent verification interface across all supported blockchains
  * for NFT ownership, token gating, and access control.
  */
@@ -67,12 +67,17 @@ export interface VerificationResult {
  */
 export interface GatingConfig {
   /** Gating type */
-  type: 'nft_ownership' | 'token_balance' | 'collection_ownership' | 'multi_requirement' | 'custom'
+  type:
+    | 'nft_ownership'
+    | 'token_balance'
+    | 'collection_ownership'
+    | 'multi_requirement'
+    | 'custom'
   /** NFT collection requirements */
   nftRequirements?: {
-    collections: string[] // Contract addresses
+    collections: Array<string> // Contract addresses
     minimumOwned?: number
-    specificTokenIds?: string[]
+    specificTokenIds?: Array<string>
   }
   /** Token balance requirements */
   tokenRequirements?: {
@@ -83,10 +88,13 @@ export interface GatingConfig {
   /** Multiple requirements (AND/OR logic) */
   multiRequirements?: {
     logic: 'AND' | 'OR'
-    requirements: GatingConfig[]
+    requirements: Array<GatingConfig>
   }
   /** Custom verification function */
-  customVerifier?: (userAddress: string, chain: SupportedChain) => Promise<boolean>
+  customVerifier?: (
+    userAddress: string,
+    chain: SupportedChain,
+  ) => Promise<boolean>
 }
 
 /**
@@ -96,19 +104,19 @@ abstract class ChainVerifier {
   abstract verifyNFTOwnership(
     userAddress: string,
     contractAddress: string,
-    tokenId?: string
+    tokenId?: string,
   ): Promise<VerificationResult>
 
   abstract verifyTokenBalance(
     userAddress: string,
     contractAddress: string,
-    minimumBalance: string
+    minimumBalance: string,
   ): Promise<VerificationResult>
 
   abstract verifyCollectionOwnership(
     userAddress: string,
     contractAddress: string,
-    minimumOwned?: number
+    minimumOwned?: number,
   ): Promise<VerificationResult>
 
   abstract getChainName(): SupportedChain
@@ -125,15 +133,15 @@ class EthereumVerifier extends ChainVerifier {
   async verifyNFTOwnership(
     userAddress: string,
     contractAddress: string,
-    tokenId?: string
+    tokenId?: string,
   ): Promise<VerificationResult> {
     try {
       // Simulate Ethereum verification
       // In real implementation: use web3.js/ethers.js to call ownerOf()
-      await new Promise(resolve => setTimeout(resolve, 300)) // Simulate network call
+      await new Promise((resolve) => setTimeout(resolve, 300)) // Simulate network call
 
       const hasOwnership = Math.random() > 0.3 // 70% success rate for demo
-      
+
       return {
         hasAccess: hasOwnership,
         chain: 'ethereum',
@@ -144,9 +152,9 @@ class EthereumVerifier extends ChainVerifier {
           contractData: {
             contractAddress,
             tokenId,
-            standard: 'ERC-721'
-          }
-        }
+            standard: 'ERC-721',
+          },
+        },
       }
     } catch (error) {
       return {
@@ -158,8 +166,8 @@ class EthereumVerifier extends ChainVerifier {
         error: {
           code: 'ETHEREUM_VERIFICATION_FAILED',
           message: error instanceof Error ? error.message : 'Unknown error',
-          retryable: true
-        }
+          retryable: true,
+        },
       }
     }
   }
@@ -167,11 +175,11 @@ class EthereumVerifier extends ChainVerifier {
   async verifyTokenBalance(
     userAddress: string,
     contractAddress: string,
-    minimumBalance: string
+    minimumBalance: string,
   ): Promise<VerificationResult> {
     try {
       // Simulate ERC-20 balance check
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await new Promise((resolve) => setTimeout(resolve, 200))
 
       const balance = (Math.random() * 1000).toFixed(2)
       const hasBalance = parseFloat(balance) >= parseFloat(minimumBalance)
@@ -183,15 +191,15 @@ class EthereumVerifier extends ChainVerifier {
         balance: {
           amount: balance,
           decimals: 18,
-          symbol: 'TOKEN'
+          symbol: 'TOKEN',
         },
         verifiedAt: new Date(),
         chainSpecific: {
           contractData: {
             contractAddress,
-            standard: 'ERC-20'
-          }
-        }
+            standard: 'ERC-20',
+          },
+        },
       }
     } catch (error) {
       return {
@@ -203,8 +211,8 @@ class EthereumVerifier extends ChainVerifier {
         error: {
           code: 'ETHEREUM_BALANCE_CHECK_FAILED',
           message: error instanceof Error ? error.message : 'Unknown error',
-          retryable: true
-        }
+          retryable: true,
+        },
       }
     }
   }
@@ -212,11 +220,11 @@ class EthereumVerifier extends ChainVerifier {
   async verifyCollectionOwnership(
     userAddress: string,
     contractAddress: string,
-    minimumOwned: number = 1
+    minimumOwned: number = 1,
   ): Promise<VerificationResult> {
     try {
       // Simulate collection ownership check
-      await new Promise(resolve => setTimeout(resolve, 400))
+      await new Promise((resolve) => setTimeout(resolve, 400))
 
       const ownedCount = Math.floor(Math.random() * 5)
       const hasOwnership = ownedCount >= minimumOwned
@@ -230,9 +238,9 @@ class EthereumVerifier extends ChainVerifier {
           contractData: {
             contractAddress,
             ownedCount,
-            minimumRequired: minimumOwned
-          }
-        }
+            minimumRequired: minimumOwned,
+          },
+        },
       }
     } catch (error) {
       return {
@@ -244,8 +252,8 @@ class EthereumVerifier extends ChainVerifier {
         error: {
           code: 'ETHEREUM_COLLECTION_CHECK_FAILED',
           message: error instanceof Error ? error.message : 'Unknown error',
-          retryable: true
-        }
+          retryable: true,
+        },
       }
     }
   }
@@ -261,14 +269,14 @@ class SuiVerifier extends ChainVerifier {
 
   async verifyNFTOwnership(
     userAddress: string,
-    objectId: string
+    objectId: string,
   ): Promise<VerificationResult> {
     try {
       // Simulate Sui object ownership check
-      await new Promise(resolve => setTimeout(resolve, 150))
+      await new Promise((resolve) => setTimeout(resolve, 150))
 
       const hasOwnership = Math.random() > 0.2 // 80% success rate for demo
-      
+
       return {
         hasAccess: hasOwnership,
         chain: 'sui',
@@ -277,9 +285,9 @@ class SuiVerifier extends ChainVerifier {
         chainSpecific: {
           contractData: {
             objectId,
-            objectType: 'sui::nft::NFT'
-          }
-        }
+            objectType: 'sui::nft::NFT',
+          },
+        },
       }
     } catch (error) {
       return {
@@ -291,8 +299,8 @@ class SuiVerifier extends ChainVerifier {
         error: {
           code: 'SUI_VERIFICATION_FAILED',
           message: error instanceof Error ? error.message : 'Unknown error',
-          retryable: true
-        }
+          retryable: true,
+        },
       }
     }
   }
@@ -300,11 +308,11 @@ class SuiVerifier extends ChainVerifier {
   async verifyTokenBalance(
     userAddress: string,
     coinType: string,
-    minimumBalance: string
+    minimumBalance: string,
   ): Promise<VerificationResult> {
     try {
       // Simulate Sui coin balance check
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 100))
 
       const balance = (Math.random() * 500).toFixed(6)
       const hasBalance = parseFloat(balance) >= parseFloat(minimumBalance)
@@ -316,14 +324,14 @@ class SuiVerifier extends ChainVerifier {
         balance: {
           amount: balance,
           decimals: 6,
-          symbol: coinType.split('::').pop() || 'SUI'
+          symbol: coinType.split('::').pop() || 'SUI',
         },
         verifiedAt: new Date(),
         chainSpecific: {
           contractData: {
-            coinType
-          }
-        }
+            coinType,
+          },
+        },
       }
     } catch (error) {
       return {
@@ -335,8 +343,8 @@ class SuiVerifier extends ChainVerifier {
         error: {
           code: 'SUI_BALANCE_CHECK_FAILED',
           message: error instanceof Error ? error.message : 'Unknown error',
-          retryable: true
-        }
+          retryable: true,
+        },
       }
     }
   }
@@ -344,11 +352,11 @@ class SuiVerifier extends ChainVerifier {
   async verifyCollectionOwnership(
     userAddress: string,
     collectionId: string,
-    minimumOwned: number = 1
+    minimumOwned: number = 1,
   ): Promise<VerificationResult> {
     try {
       // Simulate Sui collection ownership check
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await new Promise((resolve) => setTimeout(resolve, 200))
 
       const ownedCount = Math.floor(Math.random() * 3)
       const hasOwnership = ownedCount >= minimumOwned
@@ -362,9 +370,9 @@ class SuiVerifier extends ChainVerifier {
           contractData: {
             collectionId,
             ownedCount,
-            minimumRequired: minimumOwned
-          }
-        }
+            minimumRequired: minimumOwned,
+          },
+        },
       }
     } catch (error) {
       return {
@@ -376,8 +384,8 @@ class SuiVerifier extends ChainVerifier {
         error: {
           code: 'SUI_COLLECTION_CHECK_FAILED',
           message: error instanceof Error ? error.message : 'Unknown error',
-          retryable: true
-        }
+          retryable: true,
+        },
       }
     }
   }
@@ -393,14 +401,14 @@ class SolanaVerifier extends ChainVerifier {
 
   async verifyNFTOwnership(
     userAddress: string,
-    mintAddress: string
+    mintAddress: string,
   ): Promise<VerificationResult> {
     try {
       // Simulate Solana NFT ownership check
-      await new Promise(resolve => setTimeout(resolve, 120))
+      await new Promise((resolve) => setTimeout(resolve, 120))
 
       const hasOwnership = Math.random() > 0.25 // 75% success rate for demo
-      
+
       return {
         hasAccess: hasOwnership,
         chain: 'solana',
@@ -409,9 +417,9 @@ class SolanaVerifier extends ChainVerifier {
         chainSpecific: {
           contractData: {
             mintAddress,
-            standard: 'Metaplex'
-          }
-        }
+            standard: 'Metaplex',
+          },
+        },
       }
     } catch (error) {
       return {
@@ -423,8 +431,8 @@ class SolanaVerifier extends ChainVerifier {
         error: {
           code: 'SOLANA_VERIFICATION_FAILED',
           message: error instanceof Error ? error.message : 'Unknown error',
-          retryable: true
-        }
+          retryable: true,
+        },
       }
     }
   }
@@ -432,11 +440,11 @@ class SolanaVerifier extends ChainVerifier {
   async verifyTokenBalance(
     userAddress: string,
     mintAddress: string,
-    minimumBalance: string
+    minimumBalance: string,
   ): Promise<VerificationResult> {
     try {
       // Simulate Solana token balance check
-      await new Promise(resolve => setTimeout(resolve, 80))
+      await new Promise((resolve) => setTimeout(resolve, 80))
 
       const balance = (Math.random() * 2000).toFixed(2)
       const hasBalance = parseFloat(balance) >= parseFloat(minimumBalance)
@@ -448,14 +456,14 @@ class SolanaVerifier extends ChainVerifier {
         balance: {
           amount: balance,
           decimals: 9,
-          symbol: 'SPL'
+          symbol: 'SPL',
         },
         verifiedAt: new Date(),
         chainSpecific: {
           contractData: {
-            mintAddress
-          }
-        }
+            mintAddress,
+          },
+        },
       }
     } catch (error) {
       return {
@@ -467,8 +475,8 @@ class SolanaVerifier extends ChainVerifier {
         error: {
           code: 'SOLANA_BALANCE_CHECK_FAILED',
           message: error instanceof Error ? error.message : 'Unknown error',
-          retryable: true
-        }
+          retryable: true,
+        },
       }
     }
   }
@@ -476,11 +484,11 @@ class SolanaVerifier extends ChainVerifier {
   async verifyCollectionOwnership(
     userAddress: string,
     collectionAddress: string,
-    minimumOwned: number = 1
+    minimumOwned: number = 1,
   ): Promise<VerificationResult> {
     try {
       // Simulate Solana collection ownership check
-      await new Promise(resolve => setTimeout(resolve, 180))
+      await new Promise((resolve) => setTimeout(resolve, 180))
 
       const ownedCount = Math.floor(Math.random() * 4)
       const hasOwnership = ownedCount >= minimumOwned
@@ -494,9 +502,9 @@ class SolanaVerifier extends ChainVerifier {
           contractData: {
             collectionAddress,
             ownedCount,
-            minimumRequired: minimumOwned
-          }
-        }
+            minimumRequired: minimumOwned,
+          },
+        },
       }
     } catch (error) {
       return {
@@ -508,8 +516,8 @@ class SolanaVerifier extends ChainVerifier {
         error: {
           code: 'SOLANA_COLLECTION_CHECK_FAILED',
           message: error instanceof Error ? error.message : 'Unknown error',
-          retryable: true
-        }
+          retryable: true,
+        },
       }
     }
   }
@@ -522,7 +530,7 @@ export class UnifiedVerifier {
   private static verifiers: Map<SupportedChain, ChainVerifier> = new Map([
     ['ethereum', new EthereumVerifier()],
     ['sui', new SuiVerifier()],
-    ['solana', new SolanaVerifier()]
+    ['solana', new SolanaVerifier()],
   ])
 
   private static verificationCache: Map<string, VerificationResult> = new Map()
@@ -534,12 +542,12 @@ export class UnifiedVerifier {
     userAddress: string,
     assetId: string,
     chain: SupportedChain,
-    options: VerificationOptions = { type: 'nft_ownership' }
+    options: VerificationOptions = { type: 'nft_ownership' },
   ): Promise<VerificationResult> {
     // Check cache first
     const cacheKey = `${chain}:${userAddress}:${assetId}:${options.type}`
     const cached = this.verificationCache.get(cacheKey)
-    
+
     if (cached && cached.expiresAt && cached.expiresAt > new Date()) {
       return cached
     }
@@ -557,7 +565,7 @@ export class UnifiedVerifier {
           result = await verifier.verifyNFTOwnership(
             userAddress,
             options.contractAddress || assetId,
-            options.tokenId
+            options.tokenId,
           )
           break
 
@@ -565,7 +573,7 @@ export class UnifiedVerifier {
           result = await verifier.verifyTokenBalance(
             userAddress,
             options.contractAddress || assetId,
-            options.minimumBalance || '1'
+            options.minimumBalance || '1',
           )
           break
 
@@ -573,7 +581,7 @@ export class UnifiedVerifier {
           result = await verifier.verifyCollectionOwnership(
             userAddress,
             options.contractAddress || assetId,
-            parseInt(options.minimumBalance || '1')
+            parseInt(options.minimumBalance || '1'),
           )
           break
 
@@ -588,7 +596,6 @@ export class UnifiedVerifier {
       }
 
       return result
-
     } catch (error) {
       return {
         hasAccess: false,
@@ -599,8 +606,8 @@ export class UnifiedVerifier {
         error: {
           code: 'VERIFICATION_ERROR',
           message: error instanceof Error ? error.message : 'Unknown error',
-          retryable: true
-        }
+          retryable: true,
+        },
       }
     }
   }
@@ -611,25 +618,30 @@ export class UnifiedVerifier {
   static async verifyAccess(
     userAddress: string,
     chain: SupportedChain,
-    gating: GatingConfig
+    gating: GatingConfig,
   ): Promise<VerificationResult> {
     switch (gating.type) {
       case 'nft_ownership':
         if (!gating.nftRequirements?.collections.length) {
           throw new Error('NFT requirements not specified')
         }
-        
+
         // Check if user owns NFT from any of the specified collections
         for (const collection of gating.nftRequirements.collections) {
-          const result = await this.verifyOwnership(userAddress, collection, chain, {
-            type: 'collection_ownership',
-            contractAddress: collection
-          })
+          const result = await this.verifyOwnership(
+            userAddress,
+            collection,
+            chain,
+            {
+              type: 'collection_ownership',
+              contractAddress: collection,
+            },
+          )
           if (result.hasAccess) {
             return result
           }
         }
-        
+
         return {
           hasAccess: false,
           chain,
@@ -639,51 +651,57 @@ export class UnifiedVerifier {
           error: {
             code: 'NFT_OWNERSHIP_REQUIRED',
             message: 'User does not own required NFT',
-            retryable: false
-          }
+            retryable: false,
+          },
         }
 
       case 'token_balance':
         if (!gating.tokenRequirements) {
           throw new Error('Token requirements not specified')
         }
-        
-        return this.verifyOwnership(userAddress, gating.tokenRequirements.contractAddress, chain, {
-          type: 'token_balance',
-          contractAddress: gating.tokenRequirements.contractAddress,
-          minimumBalance: gating.tokenRequirements.minimumBalance
-        })
+
+        return this.verifyOwnership(
+          userAddress,
+          gating.tokenRequirements.contractAddress,
+          chain,
+          {
+            type: 'token_balance',
+            contractAddress: gating.tokenRequirements.contractAddress,
+            minimumBalance: gating.tokenRequirements.minimumBalance,
+          },
+        )
 
       case 'multi_requirement':
         if (!gating.multiRequirements) {
           throw new Error('Multi requirements not specified')
         }
-        
+
         const results = await Promise.all(
-          gating.multiRequirements.requirements.map(req => 
-            this.verifyAccess(userAddress, chain, req)
-          )
+          gating.multiRequirements.requirements.map((req) =>
+            this.verifyAccess(userAddress, chain, req),
+          ),
         )
-        
-        const hasAccess = gating.multiRequirements.logic === 'AND'
-          ? results.every(r => r.hasAccess)
-          : results.some(r => r.hasAccess)
-        
+
+        const hasAccess =
+          gating.multiRequirements.logic === 'AND'
+            ? results.every((r) => r.hasAccess)
+            : results.some((r) => r.hasAccess)
+
         return {
           hasAccess,
           chain,
           userAddress,
           verifiedAt: new Date(),
           chainSpecific: {
-            multiResults: results
-          }
+            multiResults: results,
+          },
         }
 
       case 'custom':
         if (!gating.customVerifier) {
           throw new Error('Custom verifier not provided')
         }
-        
+
         const customResult = await gating.customVerifier(userAddress, chain)
         return {
           hasAccess: customResult,
@@ -691,8 +709,8 @@ export class UnifiedVerifier {
           userAddress,
           verifiedAt: new Date(),
           chainSpecific: {
-            customVerification: true
-          }
+            customVerification: true,
+          },
         }
 
       default:
@@ -709,12 +727,12 @@ export class UnifiedVerifier {
       assetId: string
       chain: SupportedChain
       options?: VerificationOptions
-    }>
-  ): Promise<VerificationResult[]> {
+    }>,
+  ): Promise<Array<VerificationResult>> {
     return Promise.all(
       verifications.map(({ assetId, chain, options }) =>
-        this.verifyOwnership(userAddress, assetId, chain, options)
-      )
+        this.verifyOwnership(userAddress, assetId, chain, options),
+      ),
     )
   }
 
@@ -727,7 +745,7 @@ export class UnifiedVerifier {
       return
     }
 
-    const keysToDelete: string[] = []
+    const keysToDelete: Array<string> = []
     for (const [key] of this.verificationCache) {
       const [keyChain, keyAddress] = key.split(':')
       if (
@@ -738,7 +756,7 @@ export class UnifiedVerifier {
       }
     }
 
-    keysToDelete.forEach(key => this.verificationCache.delete(key))
+    keysToDelete.forEach((key) => this.verificationCache.delete(key))
   }
 
   /**
@@ -752,9 +770,12 @@ export class UnifiedVerifier {
   } {
     const stats = {
       totalEntries: this.verificationCache.size,
-      entriesByChain: { ethereum: 0, sui: 0, solana: 0 } as Record<SupportedChain, number>,
+      entriesByChain: { ethereum: 0, sui: 0, solana: 0 } as Record<
+        SupportedChain,
+        number
+      >,
       oldestEntry: undefined as Date | undefined,
-      newestEntry: undefined as Date | undefined
+      newestEntry: undefined as Date | undefined,
     }
 
     for (const [key, result] of this.verificationCache) {

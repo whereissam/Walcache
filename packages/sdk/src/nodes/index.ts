@@ -1,7 +1,7 @@
 import type {
-  SupportedChain,
   ChainNodeConfig,
   NodeSelectionResult,
+  SupportedChain,
 } from '../types.js'
 
 /**
@@ -17,7 +17,10 @@ export type NodeSelectionStrategy =
 /**
  * Default node configurations for each supported chain
  */
-export const DEFAULT_CHAIN_NODES: Record<SupportedChain, ChainNodeConfig[]> = {
+export const DEFAULT_CHAIN_NODES: Record<
+  SupportedChain,
+  Array<ChainNodeConfig>
+> = {
   sui: [
     {
       url: 'https://fullnode.mainnet.sui.io:443',
@@ -127,13 +130,13 @@ export const DEFAULT_CHAIN_NODES: Record<SupportedChain, ChainNodeConfig[]> = {
  * Node selection and optimization manager
  */
 export class NodeManager {
-  private nodes: Map<SupportedChain, ChainNodeConfig[]> = new Map()
+  private nodes: Map<SupportedChain, Array<ChainNodeConfig>> = new Map()
   private latencyCache: Map<string, { latency: number; timestamp: number }> =
     new Map()
   private readonly LATENCY_CACHE_TTL = 300000 // 5 minutes
 
   constructor(
-    customNodes?: Partial<Record<SupportedChain, ChainNodeConfig[]>>,
+    customNodes?: Partial<Record<SupportedChain, Array<ChainNodeConfig>>>,
   ) {
     // Initialize with default nodes
     for (const [chain, nodes] of Object.entries(DEFAULT_CHAIN_NODES)) {
@@ -271,7 +274,7 @@ export class NodeManager {
   private getAvailableNodes(
     chain: SupportedChain,
     network: 'mainnet' | 'testnet' | 'devnet',
-  ): ChainNodeConfig[] {
+  ): Array<ChainNodeConfig> {
     const chainNodes = this.nodes.get(chain) || []
     return chainNodes.filter(
       (node) => node.network === network && node.isAvailable,
@@ -282,7 +285,7 @@ export class NodeManager {
    * Select fastest node based on latency
    */
   private async selectFastestNode(
-    nodes: ChainNodeConfig[],
+    nodes: Array<ChainNodeConfig>,
   ): Promise<ChainNodeConfig> {
     // Measure latency for all nodes
     await Promise.all(nodes.map((node) => this.measureLatency(node)))
@@ -302,7 +305,7 @@ export class NodeManager {
   /**
    * Select node by priority (lowest priority number = highest priority)
    */
-  private selectByPriority(nodes: ChainNodeConfig[]): ChainNodeConfig {
+  private selectByPriority(nodes: Array<ChainNodeConfig>): ChainNodeConfig {
     const sortedNodes = nodes.sort((a, b) => a.priority - b.priority)
     return sortedNodes[0]
   }
@@ -310,7 +313,7 @@ export class NodeManager {
   /**
    * Select random node for load balancing
    */
-  private selectRandomNode(nodes: ChainNodeConfig[]): ChainNodeConfig {
+  private selectRandomNode(nodes: Array<ChainNodeConfig>): ChainNodeConfig {
     const randomIndex = Math.floor(Math.random() * nodes.length)
     return nodes[randomIndex]
   }
@@ -319,7 +322,7 @@ export class NodeManager {
    * Select closest node (simplified geographic selection)
    */
   private async selectClosestNode(
-    nodes: ChainNodeConfig[],
+    nodes: Array<ChainNodeConfig>,
   ): Promise<ChainNodeConfig> {
     // Prefer European nodes for French users
     const europeanNodes = nodes.filter((node) => node.region === 'europe')
@@ -340,7 +343,7 @@ export class NodeManager {
   /**
    * Select cheapest node (mock implementation)
    */
-  private selectCheapestNode(nodes: ChainNodeConfig[]): ChainNodeConfig {
+  private selectCheapestNode(nodes: Array<ChainNodeConfig>): ChainNodeConfig {
     // Mock implementation - in production, this would consider actual costs
     // For now, prefer public/free nodes over paid services
     const freeNodes = nodes.filter(
@@ -374,7 +377,7 @@ export class NodeManager {
   /**
    * Get all nodes for a specific chain
    */
-  getChainNodes(chain: SupportedChain): ChainNodeConfig[] {
+  getChainNodes(chain: SupportedChain): Array<ChainNodeConfig> {
     return this.nodes.get(chain) || []
   }
 

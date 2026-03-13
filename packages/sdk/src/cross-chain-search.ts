@@ -1,26 +1,28 @@
 /**
  * Cross-Chain Asset Search and Discovery System
- * 
+ *
  * Provides unified search interface across multiple blockchains
  * for finding assets by owner, collection, attributes, and more.
  */
 
+import { MetadataNormalizer } from './metadata-normalizer.js'
 import type { SupportedChain } from './types.js'
 import type { UnifiedNFTMetadata } from './metadata-normalizer.js'
-import { MetadataNormalizer } from './metadata-normalizer.js'
 
 /**
  * Search criteria for cross-chain asset discovery
  */
 export interface SearchCriteria {
   /** Chains to search (empty array = all chains) */
-  chains?: SupportedChain[]
+  chains?: Array<SupportedChain>
   /** Owner wallet address */
   ownerAddress?: string
   /** Collection contract addresses */
-  collections?: string[]
+  collections?: Array<string>
   /** Asset types to include */
-  assetTypes?: ('nft' | 'token' | 'collectible' | 'art' | 'gaming' | 'utility')[]
+  assetTypes?: Array<
+    'nft' | 'token' | 'collectible' | 'art' | 'gaming' | 'utility'
+  >
   /** Attribute filters */
   attributes?: Array<{
     trait_type: string
@@ -65,7 +67,7 @@ export interface UnifiedAsset {
   /** Ownership information */
   ownership: {
     currentOwner: string
-    previousOwners?: string[]
+    previousOwners?: Array<string>
     transferCount?: number
   }
   /** Collection information */
@@ -117,7 +119,7 @@ export interface UnifiedAsset {
  */
 export interface SearchResult {
   /** Found assets */
-  assets: UnifiedAsset[]
+  assets: Array<UnifiedAsset>
   /** Total count across all pages */
   totalCount: number
   /** Current page info */
@@ -144,23 +146,23 @@ export interface SearchResult {
 abstract class ChainSearchAdapter {
   abstract searchByOwner(
     ownerAddress: string,
-    criteria: SearchCriteria
-  ): Promise<UnifiedAsset[]>
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>>
 
   abstract searchByCollection(
     collectionAddress: string,
-    criteria: SearchCriteria
-  ): Promise<UnifiedAsset[]>
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>>
 
   abstract searchByAttributes(
     attributes: SearchCriteria['attributes'],
-    criteria: SearchCriteria
-  ): Promise<UnifiedAsset[]>
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>>
 
   abstract textSearch(
     query: string,
-    criteria: SearchCriteria
-  ): Promise<UnifiedAsset[]>
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>>
 
   abstract getChain(): SupportedChain
 }
@@ -175,12 +177,12 @@ class EthereumSearchAdapter extends ChainSearchAdapter {
 
   async searchByOwner(
     ownerAddress: string,
-    criteria: SearchCriteria
-  ): Promise<UnifiedAsset[]> {
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
     // Simulate Ethereum NFT search
-    await new Promise(resolve => setTimeout(resolve, 400))
+    await new Promise((resolve) => setTimeout(resolve, 400))
 
-    const mockAssets: UnifiedAsset[] = []
+    const mockAssets: Array<UnifiedAsset> = []
     const assetCount = Math.floor(Math.random() * 5) + 1
 
     for (let i = 0; i < assetCount; i++) {
@@ -192,15 +194,21 @@ class EthereumSearchAdapter extends ChainSearchAdapter {
 
   async searchByCollection(
     collectionAddress: string,
-    criteria: SearchCriteria
-  ): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 300))
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 300))
 
-    const mockAssets: UnifiedAsset[] = []
+    const mockAssets: Array<UnifiedAsset> = []
     const assetCount = Math.floor(Math.random() * 10) + 3
 
     for (let i = 0; i < assetCount; i++) {
-      mockAssets.push(await this.createMockEthereumAsset(`0x${Math.random().toString(16).substr(2, 40)}`, i, collectionAddress))
+      mockAssets.push(
+        await this.createMockEthereumAsset(
+          `0x${Math.random().toString(16).substr(2, 40)}`,
+          i,
+          collectionAddress,
+        ),
+      )
     }
 
     return this.applyFilters(mockAssets, criteria)
@@ -208,35 +216,49 @@ class EthereumSearchAdapter extends ChainSearchAdapter {
 
   async searchByAttributes(
     attributes: SearchCriteria['attributes'],
-    criteria: SearchCriteria
-  ): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 350))
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 350))
     // Simulate attribute-based search
     return this.applyFilters([], criteria)
   }
 
   async textSearch(
     query: string,
-    criteria: SearchCriteria
-  ): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 250))
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 250))
     // Simulate text search
     return this.applyFilters([], criteria)
   }
 
-  private async createMockEthereumAsset(owner: string, index: number, collectionAddress?: string): Promise<UnifiedAsset> {
+  private async createMockEthereumAsset(
+    owner: string,
+    index: number,
+    collectionAddress?: string,
+  ): Promise<UnifiedAsset> {
     const tokenId = Math.floor(Math.random() * 10000).toString()
-    const contractAddress = collectionAddress || `0x${Math.random().toString(16).substr(2, 40)}`
+    const contractAddress =
+      collectionAddress || `0x${Math.random().toString(16).substr(2, 40)}`
 
-    const metadata = await MetadataNormalizer.normalizeMetadata({
-      name: `Ethereum NFT #${tokenId}`,
-      description: `A unique Ethereum NFT from collection ${contractAddress}`,
-      image: `https://api.walcache.com/ethereum/nft/${contractAddress}/${tokenId}/image`,
-      attributes: [
-        { trait_type: 'Rarity', value: ['Common', 'Rare', 'Epic', 'Legendary'][Math.floor(Math.random() * 4)] },
-        { trait_type: 'Level', value: Math.floor(Math.random() * 100) + 1 }
-      ]
-    }, 'ethereum', { contractAddress, tokenId })
+    const metadata = await MetadataNormalizer.normalizeMetadata(
+      {
+        name: `Ethereum NFT #${tokenId}`,
+        description: `A unique Ethereum NFT from collection ${contractAddress}`,
+        image: `https://api.walcache.com/ethereum/nft/${contractAddress}/${tokenId}/image`,
+        attributes: [
+          {
+            trait_type: 'Rarity',
+            value: ['Common', 'Rare', 'Epic', 'Legendary'][
+              Math.floor(Math.random() * 4)
+            ],
+          },
+          { trait_type: 'Level', value: Math.floor(Math.random() * 100) + 1 },
+        ],
+      },
+      'ethereum',
+      { contractAddress, tokenId },
+    )
 
     return {
       id: `ethereum:${contractAddress}:${tokenId}`,
@@ -245,7 +267,7 @@ class EthereumSearchAdapter extends ChainSearchAdapter {
       metadata,
       ownership: {
         currentOwner: owner,
-        transferCount: Math.floor(Math.random() * 5)
+        transferCount: Math.floor(Math.random() * 5),
       },
       collection: {
         name: `Collection ${contractAddress.slice(-6)}`,
@@ -253,47 +275,60 @@ class EthereumSearchAdapter extends ChainSearchAdapter {
         verified: Math.random() > 0.5,
         floorPrice: {
           amount: Math.random() * 10,
-          currency: 'ETH'
-        }
+          currency: 'ETH',
+        },
       },
       technical: {
         contractAddress,
         tokenId,
         tokenStandard: 'ERC-721',
-        createdAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
-        lastActivity: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        transactionHash: `0x${Math.random().toString(16).substr(2, 64)}`
-      }
+        createdAt: new Date(
+          Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000,
+        ),
+        lastActivity: new Date(
+          Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+        ),
+        transactionHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+      },
     }
   }
 
-  private applyFilters(assets: UnifiedAsset[], criteria: SearchCriteria): UnifiedAsset[] {
+  private applyFilters(
+    assets: Array<UnifiedAsset>,
+    criteria: SearchCriteria,
+  ): Array<UnifiedAsset> {
     let filtered = [...assets]
 
     // Apply text search filter
     if (criteria.textSearch) {
       const query = criteria.textSearch.toLowerCase()
-      filtered = filtered.filter(asset =>
-        asset.metadata.name.toLowerCase().includes(query) ||
-        asset.metadata.description.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (asset) =>
+          asset.metadata.name.toLowerCase().includes(query) ||
+          asset.metadata.description.toLowerCase().includes(query),
       )
     }
 
     // Apply attribute filters
     if (criteria.attributes?.length) {
-      filtered = filtered.filter(asset =>
-        criteria.attributes!.some(filter =>
-          asset.metadata.attributes.some(attr =>
-            attr.trait_type === filter.trait_type &&
-            this.matchesAttributeFilter(attr.value, filter.value, filter.operator || 'equals')
-          )
-        )
+      filtered = filtered.filter((asset) =>
+        criteria.attributes!.some((filter) =>
+          asset.metadata.attributes.some(
+            (attr) =>
+              attr.trait_type === filter.trait_type &&
+              this.matchesAttributeFilter(
+                attr.value,
+                filter.value,
+                filter.operator || 'equals',
+              ),
+          ),
+        ),
       )
     }
 
     // Apply verified only filter
     if (criteria.verifiedOnly) {
-      filtered = filtered.filter(asset => asset.collection?.verified)
+      filtered = filtered.filter((asset) => asset.collection?.verified)
     }
 
     return filtered
@@ -302,7 +337,7 @@ class EthereumSearchAdapter extends ChainSearchAdapter {
   private matchesAttributeFilter(
     value: string | number,
     filterValue: string | number,
-    operator: string
+    operator: string,
   ): boolean {
     switch (operator) {
       case 'equals':
@@ -312,7 +347,9 @@ class EthereumSearchAdapter extends ChainSearchAdapter {
       case 'less_than':
         return Number(value) < Number(filterValue)
       case 'contains':
-        return String(value).toLowerCase().includes(String(filterValue).toLowerCase())
+        return String(value)
+          .toLowerCase()
+          .includes(String(filterValue).toLowerCase())
       default:
         return value === filterValue
     }
@@ -327,10 +364,13 @@ class SuiSearchAdapter extends ChainSearchAdapter {
     return 'sui'
   }
 
-  async searchByOwner(ownerAddress: string, criteria: SearchCriteria): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 200))
+  async searchByOwner(
+    ownerAddress: string,
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 200))
     // Simulate Sui object search
-    const mockAssets: UnifiedAsset[] = []
+    const mockAssets: Array<UnifiedAsset> = []
     const assetCount = Math.floor(Math.random() * 3) + 1
 
     for (let i = 0; i < assetCount; i++) {
@@ -340,33 +380,49 @@ class SuiSearchAdapter extends ChainSearchAdapter {
     return mockAssets
   }
 
-  async searchByCollection(collectionAddress: string, criteria: SearchCriteria): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 150))
+  async searchByCollection(
+    collectionAddress: string,
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 150))
     return []
   }
 
-  async searchByAttributes(attributes: SearchCriteria['attributes'], criteria: SearchCriteria): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 180))
+  async searchByAttributes(
+    attributes: SearchCriteria['attributes'],
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 180))
     return []
   }
 
-  async textSearch(query: string, criteria: SearchCriteria): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 120))
+  async textSearch(
+    query: string,
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 120))
     return []
   }
 
-  private async createMockSuiAsset(owner: string, index: number): Promise<UnifiedAsset> {
+  private async createMockSuiAsset(
+    owner: string,
+    index: number,
+  ): Promise<UnifiedAsset> {
     const objectId = `0x${Math.random().toString(16).substr(2, 64)}`
 
-    const metadata = await MetadataNormalizer.normalizeMetadata({
-      name: `Sui Object #${index + 1}`,
-      description: `A unique Sui object`,
-      url: `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${objectId}`,
-      properties: {
-        'Type': 'Gaming Asset',
-        'Power': Math.floor(Math.random() * 100) + 1
-      }
-    }, 'sui', { creator: owner })
+    const metadata = await MetadataNormalizer.normalizeMetadata(
+      {
+        name: `Sui Object #${index + 1}`,
+        description: `A unique Sui object`,
+        url: `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${objectId}`,
+        properties: {
+          Type: 'Gaming Asset',
+          Power: Math.floor(Math.random() * 100) + 1,
+        },
+      },
+      'sui',
+      { creator: owner },
+    )
 
     return {
       id: `sui:${objectId}`,
@@ -374,15 +430,19 @@ class SuiSearchAdapter extends ChainSearchAdapter {
       type: 'nft',
       metadata,
       ownership: {
-        currentOwner: owner
+        currentOwner: owner,
       },
       technical: {
         contractAddress: objectId,
         tokenStandard: 'Sui Object',
-        createdAt: new Date(Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000),
-        lastActivity: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-        transactionHash: `0x${Math.random().toString(16).substr(2, 64)}`
-      }
+        createdAt: new Date(
+          Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000,
+        ),
+        lastActivity: new Date(
+          Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000,
+        ),
+        transactionHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+      },
     }
   }
 }
@@ -395,10 +455,13 @@ class SolanaSearchAdapter extends ChainSearchAdapter {
     return 'solana'
   }
 
-  async searchByOwner(ownerAddress: string, criteria: SearchCriteria): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 150))
+  async searchByOwner(
+    ownerAddress: string,
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 150))
     // Simulate Solana NFT search
-    const mockAssets: UnifiedAsset[] = []
+    const mockAssets: Array<UnifiedAsset> = []
     const assetCount = Math.floor(Math.random() * 4) + 1
 
     for (let i = 0; i < assetCount; i++) {
@@ -408,38 +471,58 @@ class SolanaSearchAdapter extends ChainSearchAdapter {
     return mockAssets
   }
 
-  async searchByCollection(collectionAddress: string, criteria: SearchCriteria): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 100))
+  async searchByCollection(
+    collectionAddress: string,
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 100))
     return []
   }
 
-  async searchByAttributes(attributes: SearchCriteria['attributes'], criteria: SearchCriteria): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 120))
+  async searchByAttributes(
+    attributes: SearchCriteria['attributes'],
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 120))
     return []
   }
 
-  async textSearch(query: string, criteria: SearchCriteria): Promise<UnifiedAsset[]> {
-    await new Promise(resolve => setTimeout(resolve, 90))
+  async textSearch(
+    query: string,
+    criteria: SearchCriteria,
+  ): Promise<Array<UnifiedAsset>> {
+    await new Promise((resolve) => setTimeout(resolve, 90))
     return []
   }
 
-  private async createMockSolanaAsset(owner: string, index: number): Promise<UnifiedAsset> {
+  private async createMockSolanaAsset(
+    owner: string,
+    index: number,
+  ): Promise<UnifiedAsset> {
     const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
     let mintAddress = ''
     for (let i = 0; i < 44; i++) {
       mintAddress += chars.charAt(Math.floor(Math.random() * chars.length))
     }
 
-    const metadata = await MetadataNormalizer.normalizeMetadata({
-      name: `Solana NFT #${index + 1}`,
-      symbol: 'SOL_NFT',
-      description: `A unique Solana NFT`,
-      image: `https://cdn.walcache.com/solana/nft/${mintAddress}/image`,
-      attributes: [
-        { trait_type: 'Element', value: ['Fire', 'Water', 'Earth', 'Air'][Math.floor(Math.random() * 4)] },
-        { trait_type: 'Strength', value: Math.floor(Math.random() * 50) + 1 }
-      ]
-    }, 'solana')
+    const metadata = await MetadataNormalizer.normalizeMetadata(
+      {
+        name: `Solana NFT #${index + 1}`,
+        symbol: 'SOL_NFT',
+        description: `A unique Solana NFT`,
+        image: `https://cdn.walcache.com/solana/nft/${mintAddress}/image`,
+        attributes: [
+          {
+            trait_type: 'Element',
+            value: ['Fire', 'Water', 'Earth', 'Air'][
+              Math.floor(Math.random() * 4)
+            ],
+          },
+          { trait_type: 'Strength', value: Math.floor(Math.random() * 50) + 1 },
+        ],
+      },
+      'solana',
+    )
 
     return {
       id: `solana:${mintAddress}`,
@@ -447,15 +530,19 @@ class SolanaSearchAdapter extends ChainSearchAdapter {
       type: 'nft',
       metadata,
       ownership: {
-        currentOwner: owner
+        currentOwner: owner,
       },
       technical: {
         contractAddress: mintAddress,
         tokenStandard: 'Metaplex',
-        createdAt: new Date(Date.now() - Math.random() * 120 * 24 * 60 * 60 * 1000),
-        lastActivity: new Date(Date.now() - Math.random() * 14 * 24 * 60 * 60 * 1000),
-        transactionHash: mintAddress
-      }
+        createdAt: new Date(
+          Date.now() - Math.random() * 120 * 24 * 60 * 60 * 1000,
+        ),
+        lastActivity: new Date(
+          Date.now() - Math.random() * 14 * 24 * 60 * 60 * 1000,
+        ),
+        transactionHash: mintAddress,
+      },
     }
   }
 }
@@ -467,7 +554,7 @@ export class CrossChainSearchEngine {
   private static adapters: Map<SupportedChain, ChainSearchAdapter> = new Map([
     ['ethereum', new EthereumSearchAdapter()],
     ['sui', new SuiSearchAdapter()],
-    ['solana', new SolanaSearchAdapter()]
+    ['solana', new SolanaSearchAdapter()],
   ])
 
   /**
@@ -475,16 +562,18 @@ export class CrossChainSearchEngine {
    */
   static async findAssetsByOwner(
     ownerAddress: string,
-    criteria: SearchCriteria = {}
+    criteria: SearchCriteria = {},
   ): Promise<SearchResult> {
     const startTime = Date.now()
-    const chains = criteria.chains?.length ? criteria.chains : ['ethereum', 'sui', 'solana']
-    
+    const chains = criteria.chains?.length
+      ? criteria.chains
+      : ['ethereum', 'sui', 'solana']
+
     // Search across all specified chains
     const searchPromises = chains.map(async (chain) => {
       const adapter = this.adapters.get(chain)
       if (!adapter) return []
-      
+
       try {
         return await adapter.searchByOwner(ownerAddress, criteria)
       } catch (error) {
@@ -506,7 +595,10 @@ export class CrossChainSearchEngine {
     const paginatedAssets = sortedAssets.slice(offset, offset + limit)
 
     // Calculate statistics
-    const statistics = this.calculateStatistics(allAssets, Date.now() - startTime)
+    const statistics = this.calculateStatistics(
+      allAssets,
+      Date.now() - startTime,
+    )
 
     return {
       assets: paginatedAssets,
@@ -515,10 +607,10 @@ export class CrossChainSearchEngine {
         limit,
         offset,
         hasNext: offset + limit < filteredAssets.length,
-        hasPrevious: offset > 0
+        hasPrevious: offset > 0,
       },
       statistics,
-      appliedFilters: criteria
+      appliedFilters: criteria,
     }
   }
 
@@ -528,11 +620,11 @@ export class CrossChainSearchEngine {
   static async findAssetsByCollection(
     collectionAddress: string,
     chain: SupportedChain,
-    criteria: SearchCriteria = {}
+    criteria: SearchCriteria = {},
   ): Promise<SearchResult> {
     const startTime = Date.now()
     const adapter = this.adapters.get(chain)
-    
+
     if (!adapter) {
       throw new Error(`Unsupported chain: ${chain}`)
     }
@@ -552,10 +644,10 @@ export class CrossChainSearchEngine {
         limit,
         offset,
         hasNext: offset + limit < filteredAssets.length,
-        hasPrevious: offset > 0
+        hasPrevious: offset > 0,
       },
       statistics: this.calculateStatistics(assets, Date.now() - startTime),
-      appliedFilters: criteria
+      appliedFilters: criteria,
     }
   }
 
@@ -564,17 +656,22 @@ export class CrossChainSearchEngine {
    */
   static async textSearch(
     query: string,
-    criteria: SearchCriteria = {}
+    criteria: SearchCriteria = {},
   ): Promise<SearchResult> {
     const startTime = Date.now()
-    const chains = criteria.chains?.length ? criteria.chains : ['ethereum', 'sui', 'solana']
-    
+    const chains = criteria.chains?.length
+      ? criteria.chains
+      : ['ethereum', 'sui', 'solana']
+
     const searchPromises = chains.map(async (chain) => {
       const adapter = this.adapters.get(chain)
       if (!adapter) return []
-      
+
       try {
-        return await adapter.textSearch(query, { ...criteria, textSearch: query })
+        return await adapter.textSearch(query, {
+          ...criteria,
+          textSearch: query,
+        })
       } catch (error) {
         console.warn(`Text search failed for chain ${chain}:`, error)
         return []
@@ -585,13 +682,19 @@ export class CrossChainSearchEngine {
     const allAssets = chainResults.flat()
 
     // Calculate relevance scores for text search
-    const assetsWithRelevance = allAssets.map(asset => ({
+    const assetsWithRelevance = allAssets.map((asset) => ({
       ...asset,
-      relevanceScore: this.calculateRelevanceScore(asset, query)
+      relevanceScore: this.calculateRelevanceScore(asset, query),
     }))
 
-    const filteredAssets = this.applyGlobalFilters(assetsWithRelevance, criteria)
-    const sortedAssets = this.sortAssets(filteredAssets, { ...criteria, sortBy: 'rarity' })
+    const filteredAssets = this.applyGlobalFilters(
+      assetsWithRelevance,
+      criteria,
+    )
+    const sortedAssets = this.sortAssets(filteredAssets, {
+      ...criteria,
+      sortBy: 'rarity',
+    })
 
     const offset = criteria.offset || 0
     const limit = criteria.limit || 50
@@ -604,10 +707,13 @@ export class CrossChainSearchEngine {
         limit,
         offset,
         hasNext: offset + limit < filteredAssets.length,
-        hasPrevious: offset > 0
+        hasPrevious: offset > 0,
       },
-      statistics: this.calculateStatistics(assetsWithRelevance, Date.now() - startTime),
-      appliedFilters: { ...criteria, textSearch: query }
+      statistics: this.calculateStatistics(
+        assetsWithRelevance,
+        Date.now() - startTime,
+      ),
+      appliedFilters: { ...criteria, textSearch: query },
     }
   }
 
@@ -616,45 +722,60 @@ export class CrossChainSearchEngine {
    */
   static async advancedSearch(criteria: SearchCriteria): Promise<SearchResult> {
     const startTime = Date.now()
-    const chains = criteria.chains?.length ? criteria.chains : ['ethereum', 'sui', 'solana']
-    
+    const chains = criteria.chains?.length
+      ? criteria.chains
+      : ['ethereum', 'sui', 'solana']
+
     // Combine different search strategies
     const searchPromises = chains.map(async (chain) => {
       const adapter = this.adapters.get(chain)
       if (!adapter) return []
-      
-      const results: UnifiedAsset[] = []
-      
+
+      const results: Array<UnifiedAsset> = []
+
       try {
         // Owner-based search
         if (criteria.ownerAddress) {
-          const ownerAssets = await adapter.searchByOwner(criteria.ownerAddress, criteria)
+          const ownerAssets = await adapter.searchByOwner(
+            criteria.ownerAddress,
+            criteria,
+          )
           results.push(...ownerAssets)
         }
 
         // Collection-based search
         if (criteria.collections?.length) {
           for (const collection of criteria.collections) {
-            const collectionAssets = await adapter.searchByCollection(collection, criteria)
+            const collectionAssets = await adapter.searchByCollection(
+              collection,
+              criteria,
+            )
             results.push(...collectionAssets)
           }
         }
 
         // Attribute-based search
         if (criteria.attributes?.length) {
-          const attributeAssets = await adapter.searchByAttributes(criteria.attributes, criteria)
+          const attributeAssets = await adapter.searchByAttributes(
+            criteria.attributes,
+            criteria,
+          )
           results.push(...attributeAssets)
         }
 
         // Text search
         if (criteria.textSearch) {
-          const textAssets = await adapter.textSearch(criteria.textSearch, criteria)
+          const textAssets = await adapter.textSearch(
+            criteria.textSearch,
+            criteria,
+          )
           results.push(...textAssets)
         }
 
         // Remove duplicates
-        const uniqueAssets = results.filter((asset, index, self) =>
-          index === self.findIndex(a => a.id === asset.id)
+        const uniqueAssets = results.filter(
+          (asset, index, self) =>
+            index === self.findIndex((a) => a.id === asset.id),
         )
 
         return uniqueAssets
@@ -681,44 +802,50 @@ export class CrossChainSearchEngine {
         limit,
         offset,
         hasNext: offset + limit < filteredAssets.length,
-        hasPrevious: offset > 0
+        hasPrevious: offset > 0,
       },
       statistics: this.calculateStatistics(allAssets, Date.now() - startTime),
-      appliedFilters: criteria
+      appliedFilters: criteria,
     }
   }
 
   /**
    * Apply global filters to assets
    */
-  private static applyGlobalFilters(assets: UnifiedAsset[], criteria: SearchCriteria): UnifiedAsset[] {
+  private static applyGlobalFilters(
+    assets: Array<UnifiedAsset>,
+    criteria: SearchCriteria,
+  ): Array<UnifiedAsset> {
     let filtered = [...assets]
 
     // Price range filter
     if (criteria.priceRange) {
-      filtered = filtered.filter(asset => {
-        const price = asset.market?.lastSale?.price || asset.market?.estimatedValue?.amount
-        return price !== undefined &&
-               price >= criteria.priceRange!.min &&
-               price <= criteria.priceRange!.max
+      filtered = filtered.filter((asset) => {
+        const price =
+          asset.market?.lastSale?.price || asset.market?.estimatedValue?.amount
+        return (
+          price !== undefined &&
+          price >= criteria.priceRange!.min &&
+          price <= criteria.priceRange!.max
+        )
       })
     }
 
     // Time range filter
     if (criteria.timeRange) {
-      filtered = filtered.filter(asset => {
+      filtered = filtered.filter((asset) => {
         const date = asset.technical.createdAt
         const from = criteria.timeRange!.from
         const to = criteria.timeRange!.to
-        
+
         return (!from || date >= from) && (!to || date <= to)
       })
     }
 
     // Asset type filter
     if (criteria.assetTypes?.length) {
-      filtered = filtered.filter(asset =>
-        criteria.assetTypes!.includes(asset.type as any)
+      filtered = filtered.filter((asset) =>
+        criteria.assetTypes!.includes(asset.type as any),
       )
     }
 
@@ -728,7 +855,10 @@ export class CrossChainSearchEngine {
   /**
    * Sort assets based on criteria
    */
-  private static sortAssets(assets: UnifiedAsset[], criteria: SearchCriteria): UnifiedAsset[] {
+  private static sortAssets(
+    assets: Array<UnifiedAsset>,
+    criteria: SearchCriteria,
+  ): Array<UnifiedAsset> {
     const sortBy = criteria.sortBy || 'created_date'
     const sortOrder = criteria.sortOrder || 'desc'
 
@@ -737,10 +867,13 @@ export class CrossChainSearchEngine {
 
       switch (sortBy) {
         case 'created_date':
-          comparison = a.technical.createdAt.getTime() - b.technical.createdAt.getTime()
+          comparison =
+            a.technical.createdAt.getTime() - b.technical.createdAt.getTime()
           break
         case 'last_activity':
-          comparison = a.technical.lastActivity.getTime() - b.technical.lastActivity.getTime()
+          comparison =
+            a.technical.lastActivity.getTime() -
+            b.technical.lastActivity.getTime()
           break
         case 'price':
           const priceA = a.market?.lastSale?.price || 0
@@ -762,7 +895,10 @@ export class CrossChainSearchEngine {
   /**
    * Calculate relevance score for text search
    */
-  private static calculateRelevanceScore(asset: UnifiedAsset, query: string): number {
+  private static calculateRelevanceScore(
+    asset: UnifiedAsset,
+    query: string,
+  ): number {
     const lowerQuery = query.toLowerCase()
     let score = 0
 
@@ -778,9 +914,11 @@ export class CrossChainSearchEngine {
     }
 
     // Attribute match
-    asset.metadata.attributes.forEach(attr => {
-      if (attr.trait_type.toLowerCase().includes(lowerQuery) ||
-          String(attr.value).toLowerCase().includes(lowerQuery)) {
+    asset.metadata.attributes.forEach((attr) => {
+      if (
+        attr.trait_type.toLowerCase().includes(lowerQuery) ||
+        String(attr.value).toLowerCase().includes(lowerQuery)
+      ) {
         score += 20
       }
     })
@@ -796,17 +934,20 @@ export class CrossChainSearchEngine {
   /**
    * Calculate search statistics
    */
-  private static calculateStatistics(assets: UnifiedAsset[], duration: number): SearchResult['statistics'] {
+  private static calculateStatistics(
+    assets: Array<UnifiedAsset>,
+    duration: number,
+  ): SearchResult['statistics'] {
     const chainDistribution: Record<SupportedChain, number> = {
       ethereum: 0,
       sui: 0,
-      solana: 0
+      solana: 0,
     }
 
     const typeDistribution: Record<string, number> = {}
     let totalRelevanceScore = 0
 
-    assets.forEach(asset => {
+    assets.forEach((asset) => {
       chainDistribution[asset.chain]++
       typeDistribution[asset.type] = (typeDistribution[asset.type] || 0) + 1
       totalRelevanceScore += asset.relevanceScore || 0
@@ -815,8 +956,9 @@ export class CrossChainSearchEngine {
     return {
       chainDistribution,
       typeDistribution,
-      averageRelevanceScore: assets.length > 0 ? totalRelevanceScore / assets.length : 0,
-      searchDuration: duration
+      averageRelevanceScore:
+        assets.length > 0 ? totalRelevanceScore / assets.length : 0,
+      searchDuration: duration,
     }
   }
 }
