@@ -1,6 +1,6 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { metricsService } from '../services/metrics.js'
 import { appConfig } from '../config/index.js'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 export interface ConnectionStats {
   activeConnections: number
@@ -51,8 +51,8 @@ export class ConnectionManager {
     connectionsByUserAgent: new Map(),
   }
 
-  private recentConnections: number[] = []
-  private connectionDurations: number[] = []
+  private recentConnections: Array<number> = []
+  private connectionDurations: Array<number> = []
   private connectionPool: Set<string> = new Set()
 
   constructor(private limits: ConnectionLimits) {

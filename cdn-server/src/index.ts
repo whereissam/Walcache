@@ -2,7 +2,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
 import helmet from '@fastify/helmet'
-import { config, appConfig } from './config/index.js'
+import { appConfig, config } from './config/index.js'
 import { cdnRoutes } from './routes/cdn.js'
 import { apiRoutes } from './routes/api.js'
 import { uploadRoutes } from './routes/upload.js'
@@ -94,7 +94,7 @@ async function buildServer() {
   await fastify.register(apiRoutes, { prefix: '/api' })
   await fastify.register(uploadRoutes, { prefix: '/upload' })
   await fastify.register(userRoutes, { prefix: '/users' })
-  
+
   // Seal encryption routes
   await fastify.register(sealRoutes, { prefix: '/seal' })
 
@@ -130,8 +130,10 @@ async function start() {
 
     // Initialize individual services
     const cacheService = await serviceContainer.get<CacheService>('cache')
-    const analyticsService = await serviceContainer.get<AnalyticsService>('analytics')
-    const endpointHealthService = await serviceContainer.get<EndpointHealthService>('endpointHealth')
+    const analyticsService =
+      await serviceContainer.get<AnalyticsService>('analytics')
+    const endpointHealthService =
+      await serviceContainer.get<EndpointHealthService>('endpointHealth')
     const walrusService = await serviceContainer.get<WalrusService>('walrus')
 
     await cacheService.initialize()

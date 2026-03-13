@@ -1,5 +1,10 @@
-import type { FastifyRequest, FastifyReply } from 'fastify'
-import type { ApiError, ErrorType, PaginationParams, PaginatedResponse } from '../types/api.js'
+import type { FastifyReply, FastifyRequest } from 'fastify'
+import type {
+  ApiError,
+  ErrorType,
+  PaginatedResponse,
+  PaginationParams,
+} from '../types/api.js'
 
 export abstract class BaseController {
   protected sendError(
@@ -8,39 +13,46 @@ export abstract class BaseController {
     type: ErrorType,
     message: string,
     code?: string,
-    param?: string
+    param?: string,
   ): void {
     const error: ApiError = {
       error: {
         type,
         message,
         ...(code && { code }),
-        ...(param && { param })
-      }
+        ...(param && { param }),
+      },
     }
-    
+
     reply.status(statusCode).send(error)
   }
 
   protected sendValidationError(
     reply: FastifyReply,
     message: string,
-    param?: string
+    param?: string,
   ): void {
-    this.sendError(reply, 400, 'validation_error', message, 'VALIDATION_FAILED', param)
+    this.sendError(
+      reply,
+      400,
+      'validation_error',
+      message,
+      'VALIDATION_FAILED',
+      param,
+    )
   }
 
   protected sendNotFoundError(
     reply: FastifyReply,
     resource: string,
-    id: string
+    id: string,
   ): void {
     this.sendError(
       reply,
       404,
       'not_found_error',
       `${resource} with id '${id}' not found`,
-      'RESOURCE_NOT_FOUND'
+      'RESOURCE_NOT_FOUND',
     )
   }
 
@@ -50,7 +62,7 @@ export abstract class BaseController {
       401,
       'authentication_error',
       'Authentication required',
-      'AUTHENTICATION_REQUIRED'
+      'AUTHENTICATION_REQUIRED',
     )
   }
 
@@ -60,7 +72,7 @@ export abstract class BaseController {
       403,
       'permission_error',
       'Insufficient permissions',
-      'PERMISSION_DENIED'
+      'PERMISSION_DENIED',
     )
   }
 
@@ -70,21 +82,27 @@ export abstract class BaseController {
       429,
       'rate_limit_error',
       'Too many requests',
-      'RATE_LIMIT_EXCEEDED'
+      'RATE_LIMIT_EXCEEDED',
     )
   }
 
-  protected sendInternalError(reply: FastifyReply, message = 'Internal server error'): void {
+  protected sendInternalError(
+    reply: FastifyReply,
+    message = 'Internal server error',
+  ): void {
     this.sendError(reply, 500, 'api_error', message, 'INTERNAL_ERROR')
   }
 
-  protected sendNetworkError(reply: FastifyReply, message = 'Network error'): void {
+  protected sendNetworkError(
+    reply: FastifyReply,
+    message = 'Network error',
+  ): void {
     this.sendError(reply, 502, 'network_error', message, 'NETWORK_ERROR')
   }
 
   protected parsePaginationParams(query: any): PaginationParams {
     const params: PaginationParams = {}
-    
+
     if (query.limit) {
       const limit = parseInt(query.limit, 10)
       if (isNaN(limit) || limit < 1 || limit > 100) {
@@ -94,28 +112,28 @@ export abstract class BaseController {
     } else {
       params.limit = 10 // Default limit
     }
-    
+
     if (query.starting_after) {
       params.starting_after = query.starting_after
     }
-    
+
     if (query.ending_before) {
       params.ending_before = query.ending_before
     }
-    
+
     return params
   }
 
   protected createPaginatedResponse<T>(
-    data: T[],
+    data: Array<T>,
     url: string,
-    hasMore: boolean
+    hasMore: boolean,
   ): PaginatedResponse<T> {
     return {
       object: 'list',
       data,
       has_more: hasMore,
-      url
+      url,
     }
   }
 
@@ -132,7 +150,7 @@ export abstract class BaseController {
   protected async handleAsync<T>(
     operation: () => Promise<T>,
     reply: FastifyReply,
-    errorMessage = 'Operation failed'
+    errorMessage = 'Operation failed',
   ): Promise<T | void> {
     try {
       return await operation()

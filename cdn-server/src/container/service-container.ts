@@ -50,7 +50,7 @@ export class ServiceContainer {
   }
 
   async initialize(): Promise<void> {
-    const initPromises: Promise<any>[] = []
+    const initPromises: Array<Promise<any>> = []
 
     for (const [name] of this.services) {
       initPromises.push(this.get(name as keyof ServiceDependencies))

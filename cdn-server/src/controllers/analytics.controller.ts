@@ -1,8 +1,8 @@
-import type { FastifyRequest, FastifyReply } from 'fastify'
-import { BaseController } from './base.controller.js'
 import { analyticsService } from '../services/analytics.js'
 import { cacheService } from '../services/cache.js'
 import { metricsService } from '../services/metrics.js'
+import { BaseController } from './base.controller.js'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { AnalyticsResource, PaginationParams } from '../types/api.js'
 
 interface AnalyticsParams {
@@ -17,14 +17,14 @@ interface AnalyticsQueryParams extends PaginationParams {
 export class AnalyticsController extends BaseController {
   async retrieve(
     request: FastifyRequest<{ Params: AnalyticsParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     const { id } = request.params
 
     await this.handleAsync(async () => {
       // In this case, id is the blob_id for analytics
       const stats = analyticsService.getCIDStats(id)
-      
+
       if (!stats || stats.totalRequests === 0) {
         this.sendNotFoundError(reply, 'Analytics', id)
         return
@@ -40,7 +40,7 @@ export class AnalyticsController extends BaseController {
         cache_misses: stats.cacheMisses,
         total_bytes_served: stats.totalBytesServed,
         last_accessed: this.getUnixTimestamp(stats.lastAccessed),
-        geographic_stats: stats.geographic || {}
+        geographic_stats: stats.geographic || {},
       }
 
       reply.send(analytics)
@@ -49,13 +49,13 @@ export class AnalyticsController extends BaseController {
 
   async list(
     request: FastifyRequest<{ Querystring: AnalyticsQueryParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     await this.handleAsync(async () => {
       const params = this.parsePaginationParams(request.query)
       const { blob_id, period } = request.query
 
-      let analyticsData: AnalyticsResource[] = []
+      let analyticsData: Array<AnalyticsResource> = []
 
       if (blob_id) {
         // Get analytics for specific blob
@@ -71,13 +71,13 @@ export class AnalyticsController extends BaseController {
             cache_misses: stats.cacheMisses,
             total_bytes_served: stats.totalBytesServed,
             last_accessed: this.getUnixTimestamp(stats.lastAccessed),
-            geographic_stats: stats.geographic || {}
+            geographic_stats: stats.geographic || {},
           })
         }
       } else {
         // Get analytics for top CIDs
         const topCIDs = analyticsService.getTopCIDs(params.limit || 10)
-        
+
         for (const cidStat of topCIDs) {
           const stats = analyticsService.getCIDStats(cidStat.cid)
           if (stats) {
@@ -91,7 +91,7 @@ export class AnalyticsController extends BaseController {
               cache_misses: stats.cacheMisses,
               total_bytes_served: stats.totalBytesServed,
               last_accessed: this.getUnixTimestamp(stats.lastAccessed),
-              geographic_stats: stats.geographic || {}
+              geographic_stats: stats.geographic || {},
             })
           }
         }
@@ -99,14 +99,18 @@ export class AnalyticsController extends BaseController {
 
       // Apply pagination
       if (params.starting_after) {
-        const index = analyticsData.findIndex(a => a.id === params.starting_after)
+        const index = analyticsData.findIndex(
+          (a) => a.id === params.starting_after,
+        )
         if (index >= 0) {
           analyticsData = analyticsData.slice(index + 1)
         }
       }
 
       if (params.ending_before) {
-        const index = analyticsData.findIndex(a => a.id === params.ending_before)
+        const index = analyticsData.findIndex(
+          (a) => a.id === params.ending_before,
+        )
         if (index >= 0) {
           analyticsData = analyticsData.slice(0, index)
         }
@@ -119,17 +123,14 @@ export class AnalyticsController extends BaseController {
       const response = this.createPaginatedResponse(
         data,
         '/v1/analytics',
-        hasMore
+        hasMore,
       )
 
       reply.send(response)
     }, reply)
   }
 
-  async getGlobal(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ): Promise<void> {
+  async getGlobal(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     await this.handleAsync(async () => {
       const globalStats = analyticsService.getGlobalStats()
       const cacheStats = await cacheService.getStats()
@@ -145,27 +146,27 @@ export class AnalyticsController extends BaseController {
           cache_misses: globalStats.totalMisses,
           hit_rate: globalStats.globalHitRate,
           avg_latency: globalStats.avgLatency,
-          unique_cids: globalStats.uniqueCIDs
+          unique_cids: globalStats.uniqueCIDs,
         },
         cache: {
           total_entries: cacheStats.totalEntries,
           total_size: cacheStats.totalSizeBytes,
           pinned_entries: cacheStats.pinnedEntries,
           memory_usage: cacheStats.memoryUsage,
-          redis_connected: cacheStats.redisConnected
+          redis_connected: cacheStats.redisConnected,
         },
         geographic: analyticsService.getGeographicStats(),
         top_blobs: analyticsService.getTopCIDs(10),
         system: {
           memory_usage: systemMetrics.memoryUsage,
           cpu_usage: systemMetrics.cpuUsage,
-          uptime: systemMetrics.uptime
+          uptime: systemMetrics.uptime,
         },
         application: {
           active_connections: appMetrics.activeConnections,
           requests_per_second: appMetrics.requestsPerSecond,
-          error_rate: appMetrics.errorRate
-        }
+          error_rate: appMetrics.errorRate,
+        },
       }
 
       reply.send(response)
@@ -174,7 +175,7 @@ export class AnalyticsController extends BaseController {
 
   async getPrometheus(
     request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     await this.handleAsync(async () => {
       const prometheusMetrics = metricsService.getPrometheusMetrics()

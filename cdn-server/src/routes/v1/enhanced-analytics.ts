@@ -2,12 +2,11 @@
  * Enhanced Analytics API with Webhook Integration (v1)
  */
 
-import { FastifyInstance } from 'fastify';
-import { webhookService } from '../webhooks.js';
+import { webhookService } from '../webhooks.js'
+import type { FastifyInstance } from 'fastify'
 
 // Enhanced analytics with real-time monitoring and alerting
 export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
-  
   // =============================================================================
   // REAL-TIME ANALYTICS
   // =============================================================================
@@ -17,9 +16,9 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
       'Access-Control-Allow-Origin': '*',
-    });
+    })
 
     // Send initial data
     const initialData = {
@@ -28,9 +27,9 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
       requestsPerSecond: 0,
       cacheHitRate: 0.85,
       errorRate: 0.02,
-    };
+    }
 
-    reply.raw.write(`data: ${JSON.stringify(initialData)}\n\n`);
+    reply.raw.write(`data: ${JSON.stringify(initialData)}\n\n`)
 
     // Send updates every 5 seconds
     const interval = setInterval(() => {
@@ -45,16 +44,16 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
           { blobId: 'blob_2', requests: 120 },
           { blobId: 'blob_3', requests: 90 },
         ],
-      };
+      }
 
-      reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
-    }, 5000);
+      reply.raw.write(`data: ${JSON.stringify(data)}\n\n`)
+    }, 5000)
 
     // Cleanup on client disconnect
     request.raw.on('close', () => {
-      clearInterval(interval);
-    });
-  });
+      clearInterval(interval)
+    })
+  })
 
   // =============================================================================
   // ANALYTICS ALERTS AND THRESHOLDS
@@ -63,16 +62,17 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
   // Configure analytics alerts
   fastify.post<{
     Body: {
-      metric: string;
-      threshold: number;
-      operator: 'gt' | 'lt' | 'eq';
-      severity: 'warning' | 'critical';
-      enabled: boolean;
-      webhookIds?: string[];
+      metric: string
+      threshold: number
+      operator: 'gt' | 'lt' | 'eq'
+      severity: 'warning' | 'critical'
+      enabled: boolean
+      webhookIds?: Array<string>
     }
   }>('/analytics/alerts', async (request, reply) => {
     try {
-      const { metric, threshold, operator, severity, enabled, webhookIds } = request.body;
+      const { metric, threshold, operator, severity, enabled, webhookIds } =
+        request.body
 
       const alert = {
         id: crypto.randomUUID(),
@@ -85,25 +85,25 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
         createdAt: new Date().toISOString(),
         triggeredCount: 0,
         lastTriggered: null,
-      };
+      }
 
       // Store alert configuration (in real app, would use database)
       // For demo, just return the configuration
-      
+
       return reply.status(201).send({
         object: 'analytics_alert',
         created: Math.floor(Date.now() / 1000),
         data: alert,
-      });
+      })
     } catch (error) {
       return reply.status(400).send({
         error: {
           type: 'validation_error',
           message: error.message,
         },
-      });
+      })
     }
-  });
+  })
 
   // List analytics alerts
   fastify.get('/analytics/alerts', async (request, reply) => {
@@ -129,15 +129,15 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
         triggeredCount: 0,
         lastTriggered: null,
       },
-    ];
+    ]
 
     return reply.send({
       object: 'list',
       data: alerts,
       has_more: false,
       url: '/v1/analytics/alerts',
-    });
-  });
+    })
+  })
 
   // =============================================================================
   // CUSTOM ANALYTICS QUERIES
@@ -146,21 +146,21 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
   // Execute custom analytics query
   fastify.post<{
     Body: {
-      metrics: string[];
+      metrics: Array<string>
       filters?: {
-        blobId?: string;
+        blobId?: string
         timeRange?: {
-          start: string;
-          end: string;
-        };
-        chains?: string[];
-      };
-      groupBy?: string[];
-      aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min';
+          start: string
+          end: string
+        }
+        chains?: Array<string>
+      }
+      groupBy?: Array<string>
+      aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min'
     }
   }>('/analytics/query', async (request, reply) => {
     try {
-      const { metrics, filters, groupBy, aggregation = 'sum' } = request.body;
+      const { metrics, filters, groupBy, aggregation = 'sum' } = request.body
 
       // Mock query execution
       const results = {
@@ -186,22 +186,22 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
         ],
         execution_time_ms: 45,
         rows_returned: 2,
-      };
+      }
 
       return reply.send({
         object: 'analytics_query_result',
         created: Math.floor(Date.now() / 1000),
         data: results,
-      });
+      })
     } catch (error) {
       return reply.status(400).send({
         error: {
           type: 'validation_error',
           message: error.message,
         },
-      });
+      })
     }
-  });
+  })
 
   // =============================================================================
   // ANALYTICS EXPORTS
@@ -210,17 +210,17 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
   // Export analytics data
   fastify.post<{
     Body: {
-      format: 'csv' | 'json' | 'parquet';
+      format: 'csv' | 'json' | 'parquet'
       timeRange: {
-        start: string;
-        end: string;
-      };
-      metrics?: string[];
-      filters?: Record<string, any>;
+        start: string
+        end: string
+      }
+      metrics?: Array<string>
+      filters?: Record<string, any>
     }
   }>('/analytics/export', async (request, reply) => {
     try {
-      const { format, timeRange, metrics, filters } = request.body;
+      const { format, timeRange, metrics, filters } = request.body
 
       // Mock export process
       const exportJob = {
@@ -232,7 +232,7 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
         filters,
         createdAt: new Date().toISOString(),
         estimatedCompletionTime: new Date(Date.now() + 60000).toISOString(),
-      };
+      }
 
       // In real implementation, would start background job
       // and send webhook notification when complete
@@ -241,22 +241,22 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
         object: 'export_job',
         created: Math.floor(Date.now() / 1000),
         data: exportJob,
-      });
+      })
     } catch (error) {
       return reply.status(400).send({
         error: {
           type: 'validation_error',
           message: error.message,
         },
-      });
+      })
     }
-  });
+  })
 
   // Get export job status
   fastify.get<{ Params: { jobId: string } }>(
-    '/analytics/export/:jobId', 
+    '/analytics/export/:jobId',
     async (request, reply) => {
-      const { jobId } = request.params;
+      const { jobId } = request.params
 
       // Mock job status
       const job = {
@@ -269,14 +269,14 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
         expiresAt: new Date(Date.now() + 86400000).toISOString(),
         fileSize: 1024000,
         rowCount: 10000,
-      };
+      }
 
       return reply.send({
         object: 'export_job',
         data: job,
-      });
-    }
-  );
+      })
+    },
+  )
 
   // =============================================================================
   // ANALYTICS DASHBOARDS
@@ -334,21 +334,21 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
           },
         ],
       },
-    ];
+    ]
 
     return reply.send({
       object: 'dashboard_list',
       data: dashboards,
-    });
-  });
+    })
+  })
 
   // Get dashboard data
-  fastify.get<{ 
-    Params: { dashboardId: string };
+  fastify.get<{
+    Params: { dashboardId: string }
     Querystring: { timeRange?: string }
   }>('/analytics/dashboards/:dashboardId/data', async (request, reply) => {
-    const { dashboardId } = request.params;
-    const { timeRange = '24h' } = request.query;
+    const { dashboardId } = request.params
+    const { timeRange = '24h' } = request.query
 
     // Mock dashboard data
     const data = {
@@ -375,13 +375,13 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
           ],
         },
       },
-    };
+    }
 
     return reply.send({
       object: 'dashboard_data',
       data,
-    });
-  });
+    })
+  })
 
   // =============================================================================
   // PERFORMANCE MONITORING
@@ -427,14 +427,14 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
           overall: 0.96,
         },
       },
-    };
+    }
 
     return reply.send({
       object: 'performance_metrics',
       created: Math.floor(Date.now() / 1000),
       data: metrics,
-    });
-  });
+    })
+  })
 
   // =============================================================================
   // WEBHOOK INTEGRATION FOR ANALYTICS
@@ -443,14 +443,14 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
   // Trigger analytics webhook (for testing/demo)
   fastify.post<{
     Body: {
-      metric: string;
-      value: number;
-      threshold: number;
-      severity: 'warning' | 'critical';
+      metric: string
+      value: number
+      threshold: number
+      severity: 'warning' | 'critical'
     }
   }>('/analytics/trigger-webhook', async (request, reply) => {
     try {
-      const { metric, value, threshold, severity } = request.body;
+      const { metric, value, threshold, severity } = request.body
 
       // Send webhook notification
       await webhookService.sendWebhook('analytics.threshold', {
@@ -460,19 +460,19 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
         severity,
         timestamp: new Date().toISOString(),
         message: `${metric} (${value}) ${value > threshold ? 'exceeded' : 'fell below'} threshold (${threshold})`,
-      });
+      })
 
       return reply.send({
         success: true,
         message: 'Analytics webhook triggered',
-      });
+      })
     } catch (error) {
       return reply.status(500).send({
         error: {
           type: 'api_error',
           message: error.message,
         },
-      });
+      })
     }
-  });
+  })
 }

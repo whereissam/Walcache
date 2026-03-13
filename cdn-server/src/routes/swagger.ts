@@ -1,10 +1,9 @@
-import type { FastifyInstance } from 'fastify'
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import fastifySwagger from '@fastify/swagger'
-import { readFileSync } from 'fs'
-import { join } from 'path'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
 import yaml from 'js-yaml'
+import type { FastifyInstance } from 'fastify'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -12,7 +11,7 @@ const __dirname = dirname(__filename)
 export async function registerSwagger(fastify: FastifyInstance) {
   // Get the path to swagger.yaml in the cdn-server directory
   const swaggerPath = join(__dirname, '../../swagger.yaml')
-  
+
   // Read and parse the swagger.yaml file
   const swaggerYaml = readFileSync(swaggerPath, 'utf8')
   const swaggerDoc = yaml.load(swaggerYaml) as any
@@ -21,9 +20,9 @@ export async function registerSwagger(fastify: FastifyInstance) {
   await fastify.register(fastifySwagger, {
     mode: 'static',
     specification: {
-      document: swaggerDoc
+      document: swaggerDoc,
     },
-    exposeRoute: true
+    exposeRoute: true,
   })
 
   // Simple Swagger UI using CDN

@@ -3,7 +3,7 @@ info:
   title: WCDN API
   description: |
     The WCDN (Walrus Content Delivery Network) API provides access to decentralized storage and CDN services.
-    
+
     This API follows Stripe-style REST principles with:
     - Consistent resource structures
     - Standardized error handling  
@@ -33,7 +33,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: "API key obtained from the WCDN dashboard"
+      description: 'API key obtained from the WCDN dashboard'
 
   parameters:
     LimitParam:
@@ -46,7 +46,7 @@ components:
         minimum: 1
         maximum: 100
         default: 10
-    
+
     StartingAfterParam:
       name: starting_after
       in: query
@@ -54,7 +54,7 @@ components:
       required: false
       schema:
         type: string
-    
+
     EndingBeforeParam:
       name: ending_before
       in: query
@@ -419,7 +419,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    
+
     delete:
       summary: Delete blob from cache
       description: Remove a blob from the cache
@@ -482,7 +482,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    
+
     delete:
       summary: Unpin a blob
       description: Remove pin from a blob, allowing cache eviction
@@ -563,7 +563,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    
+
     get:
       summary: List uploads
       description: Retrieve a list of uploads
@@ -625,7 +625,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    
+
     delete:
       summary: Delete an upload
       description: Delete an upload record
@@ -851,7 +851,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    
+
     delete:
       summary: Delete cache entry
       description: Remove a specific cache entry

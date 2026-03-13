@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify'
+import { webhookRoutes } from '../webhooks.js'
 import { blobRoutes } from './blobs.js'
 import { uploadRoutes } from './uploads.js'
 import { cacheRoutes } from './cache.js'
@@ -6,7 +6,7 @@ import { analyticsRoutes } from './analytics.js'
 // TODO: Fix ethers dependency before enabling
 // import { verificationRoutes } from './verification.js'
 import { enhancedAnalyticsRoutes } from './enhanced-analytics.js'
-import { webhookRoutes } from '../webhooks.js'
+import type { FastifyInstance } from 'fastify'
 
 export async function v1Routes(fastify: FastifyInstance) {
   await fastify.register(blobRoutes, { prefix: '/blobs' })

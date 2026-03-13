@@ -14,7 +14,7 @@ export interface EnvironmentConfig {
     host: string
     logLevel: 'error' | 'warn' | 'info' | 'debug'
     cors: {
-      origins: string[]
+      origins: Array<string>
       credentials: boolean
     }
   }

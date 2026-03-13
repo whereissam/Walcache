@@ -1,8 +1,8 @@
-import type { FastifyRequest, FastifyReply } from 'fastify'
-import { BaseController } from './base.controller.js'
 import { walrusService } from '../services/walrus.js'
 import { cacheService } from '../services/cache.js'
 import { analyticsService } from '../services/analytics.js'
+import { BaseController } from './base.controller.js'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { BlobResource, PaginationParams } from '../types/api.js'
 
 interface BlobParams {
@@ -17,7 +17,7 @@ interface BlobQueryParams extends PaginationParams {
 export class BlobsController extends BaseController {
   async retrieve(
     request: FastifyRequest<{ Params: BlobParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     const { id } = request.params
 
@@ -42,7 +42,7 @@ export class BlobsController extends BaseController {
         pinned,
         cache_date: cached ? this.getUnixTimestamp(cached.cached) : undefined,
         ttl: cached?.ttl,
-        source: cached ? 'cache' : 'walrus'
+        source: cached ? 'cache' : 'walrus',
       }
 
       reply.send(blob)
@@ -51,7 +51,7 @@ export class BlobsController extends BaseController {
 
   async list(
     request: FastifyRequest<{ Querystring: BlobQueryParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     await this.handleAsync(async () => {
       const params = this.parsePaginationParams(request.query)
@@ -62,7 +62,7 @@ export class BlobsController extends BaseController {
       const topCIDs = analyticsService.getTopCIDs(params.limit || 10)
 
       // Filter and transform to BlobResource format
-      let blobs: BlobResource[] = []
+      let blobs: Array<BlobResource> = []
 
       for (const cidStat of topCIDs) {
         const cachedBlob = await cacheService.get(cidStat.cid)
@@ -81,8 +81,10 @@ export class BlobsController extends BaseController {
           content_type: cachedBlob?.contentType || 'application/octet-stream',
           cached: !!cachedBlob,
           pinned: isPinned,
-          cache_date: cachedBlob ? this.getUnixTimestamp(cachedBlob.cached) : undefined,
-          ttl: cachedBlob?.ttl
+          cache_date: cachedBlob
+            ? this.getUnixTimestamp(cachedBlob.cached)
+            : undefined,
+          ttl: cachedBlob?.ttl,
         }
 
         blobs.push(blob)
@@ -90,14 +92,14 @@ export class BlobsController extends BaseController {
 
       // Apply pagination
       if (params.starting_after) {
-        const index = blobs.findIndex(b => b.id === params.starting_after)
+        const index = blobs.findIndex((b) => b.id === params.starting_after)
         if (index >= 0) {
           blobs = blobs.slice(index + 1)
         }
       }
 
       if (params.ending_before) {
-        const index = blobs.findIndex(b => b.id === params.ending_before)
+        const index = blobs.findIndex((b) => b.id === params.ending_before)
         if (index >= 0) {
           blobs = blobs.slice(0, index)
         }
@@ -107,11 +109,7 @@ export class BlobsController extends BaseController {
       const hasMore = blobs.length > limit
       const data = blobs.slice(0, limit)
 
-      const response = this.createPaginatedResponse(
-        data,
-        '/v1/blobs',
-        hasMore
-      )
+      const response = this.createPaginatedResponse(data, '/v1/blobs', hasMore)
 
       reply.send(response)
     }, reply)
@@ -119,7 +117,7 @@ export class BlobsController extends BaseController {
 
   async pin(
     request: FastifyRequest<{ Params: BlobParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     const { id } = request.params
 
@@ -170,7 +168,7 @@ export class BlobsController extends BaseController {
         cached: true,
         pinned: true,
         cache_date: this.getUnixTimestamp(cached.cached),
-        ttl: 0
+        ttl: 0,
       }
 
       reply.send(blob)
@@ -179,7 +177,7 @@ export class BlobsController extends BaseController {
 
   async unpin(
     request: FastifyRequest<{ Params: BlobParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     const { id } = request.params
 
@@ -208,7 +206,7 @@ export class BlobsController extends BaseController {
         cached: true,
         pinned: false,
         cache_date: this.getUnixTimestamp(cached.cached),
-        ttl: cached.ttl
+        ttl: cached.ttl,
       }
 
       reply.send(blob)
@@ -217,7 +215,7 @@ export class BlobsController extends BaseController {
 
   async delete(
     request: FastifyRequest<{ Params: BlobParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     const { id } = request.params
 
@@ -243,7 +241,7 @@ export class BlobsController extends BaseController {
         size: cached.size,
         content_type: cached.contentType,
         cached: false,
-        pinned: false
+        pinned: false,
       }
 
       reply.send(blob)

@@ -1,13 +1,13 @@
-import type { FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
-import { BaseController } from './base.controller.js'
 import { tuskyService } from '../services/tusky.js'
 import { cacheService } from '../services/cache.js'
 import { analyticsService } from '../services/analytics.js'
 import { walrusService } from '../services/walrus.js'
-import type { UploadResource, PaginationParams } from '../types/api.js'
 import { config } from '../config/index.js'
 import { WALRUS_ENDPOINTS } from '../config/walrus-endpoints.js'
+import { BaseController } from './base.controller.js'
+import type { PaginationParams, UploadResource } from '../types/api.js'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { WalrusUploadResponse } from '../types/walrus.js'
 
 const createUploadSchema = z.object({
@@ -27,7 +27,7 @@ interface UploadQueryParams extends PaginationParams {
 export class UploadsController extends BaseController {
   async create(
     request: FastifyRequest<{ Querystring: UploadQueryParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     await this.handleAsync(async () => {
       const data = await request.file()
@@ -60,7 +60,7 @@ export class UploadsController extends BaseController {
         blob_id: '',
         status: 'processing',
         vault_id: request.query.vault_id,
-        parent_id: request.query.parent_id
+        parent_id: request.query.parent_id,
       }
 
       // Return immediate response
@@ -76,7 +76,7 @@ export class UploadsController extends BaseController {
     buffer: Buffer,
     fileName: string,
     contentType: string,
-    options: UploadQueryParams
+    options: UploadQueryParams,
   ): Promise<void> {
     try {
       let blobId: string
@@ -88,13 +88,13 @@ export class UploadsController extends BaseController {
           buffer,
           fileName,
           contentType,
-          options.vault_id
+          options.vault_id,
         )
         blobId = tuskyFile.blobId
         suiRef = tuskyFile.id
       } else {
         // Direct Walrus upload
-        const network = config.WALRUS_NETWORK as 'testnet' | 'mainnet'
+        const network = config.WALRUS_NETWORK
         const publishers = WALRUS_ENDPOINTS[network].publishers
 
         let uploadSuccess = false
@@ -111,8 +111,9 @@ export class UploadsController extends BaseController {
             })
 
             if (response.ok) {
-              const walrusResponse = await response.json() as WalrusUploadResponse
-              
+              const walrusResponse =
+                (await response.json()) as WalrusUploadResponse
+
               if ('newlyCreated' in walrusResponse) {
                 blobId = walrusResponse.newlyCreated.blobObject.blobId
                 suiRef = walrusResponse.newlyCreated.blobObject.id
@@ -127,7 +128,8 @@ export class UploadsController extends BaseController {
               break
             }
           } catch (error) {
-            lastError = error instanceof Error ? error : new Error(String(error))
+            lastError =
+              error instanceof Error ? error : new Error(String(error))
             continue
           }
         }
@@ -153,8 +155,9 @@ export class UploadsController extends BaseController {
       analyticsService.recordFetch(blobId!, false, 0, buffer.length)
 
       // Update upload record status (in a real implementation, you'd store this in a database)
-      console.log(`Upload ${uploadId} completed successfully with blob ID: ${blobId}`)
-
+      console.log(
+        `Upload ${uploadId} completed successfully with blob ID: ${blobId}`,
+      )
     } catch (error) {
       console.error(`Upload ${uploadId} failed:`, error)
       // Update upload record status to failed (in a real implementation)
@@ -163,7 +166,7 @@ export class UploadsController extends BaseController {
 
   async retrieve(
     request: FastifyRequest<{ Params: UploadParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     const { id } = request.params
 
@@ -178,7 +181,7 @@ export class UploadsController extends BaseController {
         size: 1024,
         content_type: 'text/plain',
         blob_id: 'example_blob_id',
-        status: 'completed'
+        status: 'completed',
       }
 
       reply.send(upload)
@@ -187,7 +190,7 @@ export class UploadsController extends BaseController {
 
   async list(
     request: FastifyRequest<{ Querystring: UploadQueryParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     await this.handleAsync(async () => {
       const params = this.parsePaginationParams(request.query)
@@ -195,7 +198,7 @@ export class UploadsController extends BaseController {
 
       // In a real implementation, query database with filters and pagination
       // For demo, return mock data
-      const uploads: UploadResource[] = [
+      const uploads: Array<UploadResource> = [
         {
           id: 'upload_1',
           object: 'upload',
@@ -205,14 +208,14 @@ export class UploadsController extends BaseController {
           content_type: 'application/pdf',
           blob_id: 'blob_123',
           status: 'completed',
-          vault_id: vault_id || undefined
-        }
+          vault_id: vault_id || undefined,
+        },
       ]
 
       const response = this.createPaginatedResponse(
         uploads,
         '/v1/uploads',
-        false
+        false,
       )
 
       reply.send(response)
@@ -221,7 +224,7 @@ export class UploadsController extends BaseController {
 
   async delete(
     request: FastifyRequest<{ Params: UploadParams }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> {
     const { id } = request.params
 
@@ -237,7 +240,7 @@ export class UploadsController extends BaseController {
         size: 0,
         content_type: 'text/plain',
         blob_id: '',
-        status: 'failed'
+        status: 'failed',
       }
 
       reply.send(upload)
