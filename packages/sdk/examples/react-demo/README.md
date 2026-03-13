@@ -5,6 +5,7 @@ A comprehensive React demo showcasing the Walcache SDK's multi-chain storage cap
 ## ✨ Features
 
 ### 📤 **Upload Assets**
+
 - Interactive file upload with drag & drop
 - Chain selection (Ethereum, Sui, Solana)
 - NFT creation with metadata
@@ -12,24 +13,28 @@ A comprehensive React demo showcasing the Walcache SDK's multi-chain storage cap
 - Real-time upload progress
 
 ### 🔍 **Asset Information**
+
 - Real-time asset lookup and status
 - Performance metrics and analytics
 - Multi-chain availability checking
 - Cache and pin status monitoring
 
 ### 🌐 **Multi-Chain URLs**
+
 - Generate optimized CDN URLs
 - Image processing (resize, quality, format conversion)
 - Performance optimization settings
 - Global CDN distribution
 
 ### 🔐 **Asset Verification**
+
 - Cross-chain ownership verification
 - NFT/token gating functionality
 - Real-time verification results
 - Metadata enrichment
 
 ### 📊 **Service Metrics**
+
 - Live performance dashboard
 - Multi-chain statistics
 - Cache hit rates and latency
@@ -37,6 +42,7 @@ A comprehensive React demo showcasing the Walcache SDK's multi-chain storage cap
 - Auto-refresh capabilities
 
 ### 🎯 **Use Case Examples**
+
 - dApp Frontend Hosting
 - Data Marketplaces
 - Gaming Assets
@@ -45,6 +51,7 @@ A comprehensive React demo showcasing the Walcache SDK's multi-chain storage cap
 - Media Streaming
 
 ### 💻 **Integration Guide**
+
 - Complete developer documentation
 - Code examples for multiple frameworks
 - Environment configuration
@@ -120,24 +127,28 @@ WALCACHE_DEFAULT_CHAIN=sui
 ## 🎯 Demo Scenarios
 
 ### 1. **File Upload Flow**
+
 1. Select a blockchain (Sui, Ethereum, Solana)
 2. Drag & drop files or click to browse
 3. Configure metadata and NFT options
 4. Upload and receive CDN URLs + transaction details
 
 ### 2. **Asset Verification Flow**
+
 1. Enter a wallet address and asset ID
 2. Select the blockchain network
 3. Verify ownership and view results
 4. See metadata and access permissions
 
 ### 3. **URL Generation Flow**
+
 1. Enter a blob ID
 2. Configure image optimization settings
 3. Generate optimized CDN URLs
 4. Preview results and copy URLs
 
 ### 4. **Metrics Monitoring**
+
 1. View real-time performance metrics
 2. Monitor cache hit rates and latency
 3. Check multi-chain availability
@@ -164,14 +175,14 @@ import { WalcacheUseCases } from '@walcache/sdk'
 
 const walcache = new WalcacheUseCases({
   baseUrl: process.env.WALCACHE_BASE_URL,
-  apiKey: process.env.WALCACHE_API_KEY
+  apiKey: process.env.WALCACHE_API_KEY,
 })
 
 // Upload endpoint
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   const result = await walcache.uploadAsset(req.file, {
     chain: req.body.chain,
-    createNFT: req.body.createNFT === 'true'
+    createNFT: req.body.createNFT === 'true',
   })
   res.json({ success: true, data: result })
 })

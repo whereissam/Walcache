@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Code, Download, GitBranch, Terminal, Zap, Shield } from 'lucide-react'
+import { Code, Download, GitBranch, Shield, Terminal, Zap } from 'lucide-react'
 
 const codeExamples = {
   installation: `# Install the SDK
@@ -201,11 +201,15 @@ def verify_ownership():
     return jsonify(verification)
 
 if __name__ == '__main__':
-    app.run(debug=True)`
+    app.run(debug=True)`,
 }
 
 const frameworks = [
-  { name: 'Express.js', icon: '🟢', description: 'Node.js with Express framework' },
+  {
+    name: 'Express.js',
+    icon: '🟢',
+    description: 'Node.js with Express framework',
+  },
   { name: 'Next.js', icon: '⚡', description: 'React with API routes' },
   { name: 'Python Flask', icon: '🐍', description: 'Python web framework' },
   { name: 'Fastify', icon: '🚀', description: 'Fast Node.js framework' },
@@ -232,8 +236,8 @@ export default function DeveloperIntegration() {
           Developer Integration Guide
         </h2>
         <p className="text-xl text-white opacity-90 mb-6 max-w-3xl mx-auto">
-          Get started with Walcache SDK in minutes. Follow our step-by-step guide 
-          to integrate multi-chain storage into your application.
+          Get started with Walcache SDK in minutes. Follow our step-by-step
+          guide to integrate multi-chain storage into your application.
         </p>
       </div>
 
@@ -243,7 +247,9 @@ export default function DeveloperIntegration() {
           <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <Download className="w-6 h-6 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">1. Install SDK</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            1. Install SDK
+          </h3>
           <p className="text-gray-600 text-sm">
             Add Walcache SDK to your backend project with npm, yarn, or bun
           </p>
@@ -253,7 +259,9 @@ export default function DeveloperIntegration() {
           <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <Terminal className="w-6 h-6 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">2. Setup Backend</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            2. Setup Backend
+          </h3>
           <p className="text-gray-600 text-sm">
             Initialize the SDK and create API endpoints for your frontend
           </p>
@@ -263,7 +271,9 @@ export default function DeveloperIntegration() {
           <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <Code className="w-6 h-6 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">3. Connect Frontend</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            3. Connect Frontend
+          </h3>
           <p className="text-gray-600 text-sm">
             Call your backend APIs from React, Vue, or any frontend framework
           </p>
@@ -273,8 +283,10 @@ export default function DeveloperIntegration() {
       {/* Code Examples */}
       <div className="card p-6">
         <div className="mb-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Code Examples</h3>
-          
+          <h3 className="text-xl font-bold text-gray-800 mb-4">
+            Code Examples
+          </h3>
+
           {/* Tab Navigation */}
           <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200">
             {tabs.map((tab) => {
@@ -299,7 +311,9 @@ export default function DeveloperIntegration() {
           {/* Code Display */}
           <div className="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto">
             <pre className="text-sm">
-              <code>{codeExamples[activeTab as keyof typeof codeExamples]}</code>
+              <code>
+                {codeExamples[activeTab as keyof typeof codeExamples]}
+              </code>
             </pre>
           </div>
         </div>
@@ -307,31 +321,43 @@ export default function DeveloperIntegration() {
 
       {/* Framework Support */}
       <div className="card p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-6">Supported Frameworks</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-6">
+          Supported Frameworks
+        </h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {frameworks.map((framework, index) => (
-            <div key={index} className="p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
+            <div
+              key={index}
+              className="p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
+            >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{framework.icon}</span>
                 <div>
-                  <h4 className="font-medium text-gray-800">{framework.name}</h4>
-                  <p className="text-sm text-gray-600">{framework.description}</p>
+                  <h4 className="font-medium text-gray-800">
+                    {framework.name}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {framework.description}
+                  </p>
                 </div>
               </div>
             </div>
           ))}
         </div>
         <p className="text-sm text-gray-600 mt-4">
-          Don't see your framework? Walcache SDK works with any backend that can make HTTP requests.
+          Don't see your framework? Walcache SDK works with any backend that can
+          make HTTP requests.
         </p>
       </div>
 
       {/* Environment Variables */}
       <div className="card p-6 bg-yellow-50 border-yellow-200">
-        <h3 className="text-lg font-semibold text-yellow-800 mb-4">🔐 Environment Configuration</h3>
+        <h3 className="text-lg font-semibold text-yellow-800 mb-4">
+          🔐 Environment Configuration
+        </h3>
         <div className="bg-gray-900 text-gray-100 p-4 rounded-lg mb-4">
           <pre className="text-sm">
-{`# .env file
+            {`# .env file
 WALCACHE_BASE_URL=https://your-cdn-domain.com
 WALCACHE_API_KEY=your-api-key-here
 WALCACHE_DEFAULT_CHAIN=sui
@@ -343,14 +369,26 @@ SOLANA_RPC_URL=https://api.mainnet-beta.solana.com`}
           </pre>
         </div>
         <div className="text-sm text-yellow-700 space-y-2">
-          <p><strong>Required:</strong></p>
+          <p>
+            <strong>Required:</strong>
+          </p>
           <ul className="list-disc list-inside ml-4">
-            <li><code>WALCACHE_BASE_URL</code> - Your CDN service endpoint</li>
-            <li><code>WALCACHE_API_KEY</code> - Authentication key for your service</li>
+            <li>
+              <code>WALCACHE_BASE_URL</code> - Your CDN service endpoint
+            </li>
+            <li>
+              <code>WALCACHE_API_KEY</code> - Authentication key for your
+              service
+            </li>
           </ul>
-          <p><strong>Optional:</strong></p>
+          <p>
+            <strong>Optional:</strong>
+          </p>
           <ul className="list-disc list-inside ml-4">
-            <li><code>WALCACHE_DEFAULT_CHAIN</code> - Default blockchain (sui, ethereum, solana)</li>
+            <li>
+              <code>WALCACHE_DEFAULT_CHAIN</code> - Default blockchain (sui,
+              ethereum, solana)
+            </li>
             <li>Chain-specific RPC URLs for direct blockchain interactions</li>
           </ul>
         </div>
@@ -358,55 +396,92 @@ SOLANA_RPC_URL=https://api.mainnet-beta.solana.com`}
 
       {/* API Reference */}
       <div className="card p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-6">🚀 Key SDK Methods</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-6">
+          🚀 Key SDK Methods
+        </h3>
         <div className="space-y-6">
           <div>
-            <h4 className="font-semibold text-gray-800 mb-2">Core Upload Functions</h4>
+            <h4 className="font-semibold text-gray-800 mb-2">
+              Core Upload Functions
+            </h4>
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="space-y-3 text-sm">
                 <div>
-                  <code className="bg-white px-2 py-1 rounded">uploadAsset(file, options)</code>
-                  <p className="text-gray-600 mt-1">Upload any file to any blockchain with automatic optimization</p>
+                  <code className="bg-white px-2 py-1 rounded">
+                    uploadAsset(file, options)
+                  </code>
+                  <p className="text-gray-600 mt-1">
+                    Upload any file to any blockchain with automatic
+                    optimization
+                  </p>
                 </div>
                 <div>
-                  <code className="bg-white px-2 py-1 rounded">uploadSite(path, options)</code>
-                  <p className="text-gray-600 mt-1">Deploy frontend applications with chain-specific routing</p>
+                  <code className="bg-white px-2 py-1 rounded">
+                    uploadSite(path, options)
+                  </code>
+                  <p className="text-gray-600 mt-1">
+                    Deploy frontend applications with chain-specific routing
+                  </p>
                 </div>
                 <div>
-                  <code className="bg-white px-2 py-1 rounded">uploadGatedFile(file, gating)</code>
-                  <p className="text-gray-600 mt-1">Upload files with NFT/token access control</p>
+                  <code className="bg-white px-2 py-1 rounded">
+                    uploadGatedFile(file, gating)
+                  </code>
+                  <p className="text-gray-600 mt-1">
+                    Upload files with NFT/token access control
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
           <div>
-            <h4 className="font-semibold text-gray-800 mb-2">Verification & Access</h4>
+            <h4 className="font-semibold text-gray-800 mb-2">
+              Verification & Access
+            </h4>
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="space-y-3 text-sm">
                 <div>
-                  <code className="bg-white px-2 py-1 rounded">verifyOwnership(userAddress, assetId, chain)</code>
-                  <p className="text-gray-600 mt-1">Verify NFT/token ownership across any blockchain</p>
+                  <code className="bg-white px-2 py-1 rounded">
+                    verifyOwnership(userAddress, assetId, chain)
+                  </code>
+                  <p className="text-gray-600 mt-1">
+                    Verify NFT/token ownership across any blockchain
+                  </p>
                 </div>
                 <div>
-                  <code className="bg-white px-2 py-1 rounded">downloadGatedFile(fileId, user, token)</code>
-                  <p className="text-gray-600 mt-1">Download files with access verification</p>
+                  <code className="bg-white px-2 py-1 rounded">
+                    downloadGatedFile(fileId, user, token)
+                  </code>
+                  <p className="text-gray-600 mt-1">
+                    Download files with access verification
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
           <div>
-            <h4 className="font-semibold text-gray-800 mb-2">Discovery & Management</h4>
+            <h4 className="font-semibold text-gray-800 mb-2">
+              Discovery & Management
+            </h4>
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="space-y-3 text-sm">
                 <div>
-                  <code className="bg-white px-2 py-1 rounded">listAssets(criteria)</code>
-                  <p className="text-gray-600 mt-1">Find and list assets across multiple chains</p>
+                  <code className="bg-white px-2 py-1 rounded">
+                    listAssets(criteria)
+                  </code>
+                  <p className="text-gray-600 mt-1">
+                    Find and list assets across multiple chains
+                  </p>
                 </div>
                 <div>
-                  <code className="bg-white px-2 py-1 rounded">resolveDID(did)</code>
-                  <p className="text-gray-600 mt-1">Resolve decentralized identity documents</p>
+                  <code className="bg-white px-2 py-1 rounded">
+                    resolveDID(did)
+                  </code>
+                  <p className="text-gray-600 mt-1">
+                    Resolve decentralized identity documents
+                  </p>
                 </div>
               </div>
             </div>
@@ -420,8 +495,8 @@ SOLANA_RPC_URL=https://api.mainnet-beta.solana.com`}
           Ready to Start Building?
         </h3>
         <p className="text-primary-700 mb-6 max-w-2xl mx-auto">
-          You're all set! Start with a simple file upload and gradually add more features 
-          like verification, gating, and cross-chain functionality.
+          You're all set! Start with a simple file upload and gradually add more
+          features like verification, gating, and cross-chain functionality.
         </p>
         <div className="flex justify-center gap-4">
           <button className="btn-primary">

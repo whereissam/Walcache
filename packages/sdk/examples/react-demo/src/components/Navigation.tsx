@@ -1,14 +1,14 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { 
-  Home, 
-  Upload, 
-  Info, 
-  Globe, 
-  Shield, 
-  BarChart3, 
+import {
+  BarChart3,
+  Code,
+  Globe,
+  Home,
+  Info,
   Layers,
-  Code
+  Shield,
+  Upload,
 } from 'lucide-react'
 
 const navigation = [

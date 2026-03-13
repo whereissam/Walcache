@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { WalcacheProvider } from './contexts/WalcacheContext'
 import Header from './components/Header'
 import Navigation from './components/Navigation'
@@ -20,7 +20,7 @@ function App() {
         <div className="container mx-auto px-4 py-6">
           <Header />
           <Navigation />
-          
+
           <main className="mt-8">
             <Routes>
               <Route path="/" element={<Dashboard />} />

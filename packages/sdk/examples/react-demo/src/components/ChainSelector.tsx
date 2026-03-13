@@ -1,7 +1,8 @@
 import React from 'react'
-import { useWalcache, SupportedChain } from '../contexts/WalcacheContext'
+import { useWalcache } from '../contexts/WalcacheContext'
+import type { SupportedChain } from '../contexts/WalcacheContext'
 
-const chains: { value: SupportedChain; label: string; emoji: string }[] = [
+const chains: Array<{ value: SupportedChain; label: string; emoji: string }> = [
   { value: 'sui', label: 'Sui', emoji: '🌊' },
   { value: 'ethereum', label: 'Ethereum', emoji: '⟠' },
   { value: 'solana', label: 'Solana', emoji: '☀️' },

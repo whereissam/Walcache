@@ -1,14 +1,14 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { 
-  Upload, 
-  Info, 
-  Globe, 
-  Shield, 
-  BarChart3, 
-  Layers,
+import {
+  ArrowRight,
+  BarChart3,
   Code,
-  ArrowRight
+  Globe,
+  Info,
+  Layers,
+  Shield,
+  Upload,
 } from 'lucide-react'
 
 const features = [
@@ -72,9 +72,10 @@ export default function Dashboard() {
           Welcome to Walcache SDK Demo
         </h2>
         <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">
-          Experience the power of unified multi-chain storage. This React demo showcases 
-          how developers can integrate Walcache SDK into their backend services to provide 
-          seamless blockchain storage across Ethereum, Sui, and Solana.
+          Experience the power of unified multi-chain storage. This React demo
+          showcases how developers can integrate Walcache SDK into their backend
+          services to provide seamless blockchain storage across Ethereum, Sui,
+          and Solana.
         </p>
         <div className="flex justify-center gap-4">
           <Link to="/upload" className="btn-primary">
@@ -93,7 +94,9 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Globe className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">One API</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              One API
+            </h3>
             <p className="text-gray-600">
               Single interface works across Ethereum, Sui, and Solana
             </p>
@@ -105,7 +108,9 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Shield className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Zero Complexity</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              Zero Complexity
+            </h3>
             <p className="text-gray-600">
               SDK handles all blockchain-specific implementations
             </p>
@@ -117,7 +122,9 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <BarChart3 className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Production Ready</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              Production Ready
+            </h3>
             <p className="text-gray-600">
               Built-in optimization, caching, and error handling
             </p>
@@ -135,18 +142,18 @@ export default function Dashboard() {
               to={feature.path}
               className="card p-6 group hover:scale-105 transition-transform duration-300"
             >
-              <div className={`w-12 h-12 bg-gradient-to-r ${feature.color} rounded-lg flex items-center justify-center mb-4`}>
+              <div
+                className={`w-12 h-12 bg-gradient-to-r ${feature.color} rounded-lg flex items-center justify-center mb-4`}
+              >
                 <Icon className="w-6 h-6 text-white" />
               </div>
-              
+
               <h3 className="text-xl font-semibold text-gray-800 mb-2 group-hover:text-primary-600 transition-colors">
                 {feature.title}
               </h3>
-              
-              <p className="text-gray-600 mb-4">
-                {feature.description}
-              </p>
-              
+
+              <p className="text-gray-600 mb-4">{feature.description}</p>
+
               <div className="flex items-center text-primary-600 font-medium">
                 Try it out
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

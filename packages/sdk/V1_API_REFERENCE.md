@@ -10,7 +10,7 @@ import { WalrusCDNClient } from '@walcache/sdk'
 // Initialize client (Stripe-style)
 const client = new WalrusCDNClient({
   baseUrl: 'https://your-cdn.com',
-  apiKey: process.env.WCDN_API_KEY
+  apiKey: process.env.WCDN_API_KEY,
 })
 ```
 
@@ -120,7 +120,7 @@ const blobs = await client.listBlobs({
   limit: 10,
   starting_after: 'blob_123',
   cached: true,
-  pinned: false
+  pinned: false,
 })
 
 // Pin/unpin blobs
@@ -134,7 +134,7 @@ const unpinnedBlob = await client.unpinBlob('blob_1234567890')
 // Upload file
 const upload = await client.createUpload(file, {
   vault_id: 'vault_123',
-  parent_id: 'folder_456'
+  parent_id: 'folder_456',
 })
 
 // Get upload status
@@ -144,7 +144,7 @@ const upload = await client.getUpload('upload_1234567890')
 const uploads = await client.listUploads({
   limit: 10,
   vault_id: 'vault_123',
-  status: 'completed'
+  status: 'completed',
 })
 ```
 
@@ -152,9 +152,7 @@ const uploads = await client.listUploads({
 
 ```javascript
 // Preload blobs into cache
-const result = await client.preloadBlobs([
-  'blob_123', 'blob_456', 'blob_789'
-])
+const result = await client.preloadBlobs(['blob_123', 'blob_456', 'blob_789'])
 
 // Get cache entry
 const entry = await client.getCacheEntry('blob_1234567890')
@@ -162,7 +160,7 @@ const entry = await client.getCacheEntry('blob_1234567890')
 // List cache entries
 const entries = await client.listCacheEntries({
   limit: 10,
-  pinned: true
+  pinned: true,
 })
 
 // Get cache statistics
@@ -183,7 +181,7 @@ const analytics = await client.getBlobAnalytics('blob_1234567890')
 const analytics = await client.listAnalytics({
   limit: 10,
   blob_id: 'blob_123',
-  period: '24h'
+  period: '24h',
 })
 
 // Get global analytics
@@ -202,7 +200,7 @@ const url = client.getCDNUrl('blob_1234567890')
 // Multi-chain URL
 const url = client.getMultiChainCDNUrl('blob_1234567890', {
   chain: 'ethereum',
-  params: { optimize: 'true' }
+  params: { optimize: 'true' },
 })
 
 // Advanced URL with verification
@@ -212,8 +210,8 @@ const result = await client.getAdvancedCDNUrl('blob_1234567890', {
   nodeSelectionStrategy: 'fastest',
   verification: {
     userAddress: '0x123...',
-    assetId: 'nft_456'
-  }
+    assetId: 'nft_456',
+  },
 })
 ```
 
@@ -228,13 +226,13 @@ const firstPage = await client.listBlobs({ limit: 10 })
 // Next page
 const nextPage = await client.listBlobs({
   limit: 10,
-  starting_after: firstPage.data[firstPage.data.length - 1].id
+  starting_after: firstPage.data[firstPage.data.length - 1].id,
 })
 
 // Previous page
 const prevPage = await client.listBlobs({
   limit: 10,
-  ending_before: firstPage.data[0].id
+  ending_before: firstPage.data[0].id,
 })
 
 // Check if more pages exist
@@ -252,12 +250,12 @@ try {
   await client.getBlob('invalid-id')
 } catch (error) {
   if (error instanceof WalrusCDNError) {
-    console.log('Error Type:', error.type)       // 'not_found_error'
-    console.log('Error Code:', error.code)       // 'BLOB_NOT_FOUND'
+    console.log('Error Type:', error.type) // 'not_found_error'
+    console.log('Error Code:', error.code) // 'BLOB_NOT_FOUND'
     console.log('Error Message:', error.message) // 'Blob not found'
-    console.log('HTTP Status:', error.status)    // 404
-    console.log('Parameter:', error.param)       // 'blobId'
-    
+    console.log('HTTP Status:', error.status) // 404
+    console.log('Parameter:', error.param) // 'blobId'
+
     // Convert to API error format
     const apiError = error.toApiError()
     /*
@@ -291,18 +289,20 @@ try {
 const verification = await client.verifyAsset('ethereum', {
   userAddress: '0x123...',
   assetId: 'nft_456',
-  contractAddress: '0xabc...'
+  contractAddress: '0xabc...',
 })
 
 // Multi-chain verification
 const multiResult = await client.verifyMultiChain(['ethereum', 'sui'], {
   userAddress: '0x123...',
-  assetId: 'nft_456'
+  assetId: 'nft_456',
 })
 
 // Check blob status across chains
 const status = await client.getMultiChainBlobStatus('blob_123', [
-  'ethereum', 'sui', 'solana'
+  'ethereum',
+  'sui',
+  'solana',
 ])
 
 // Select optimal node
@@ -316,11 +316,12 @@ Include your API key in the client configuration:
 ```javascript
 const client = new WalrusCDNClient({
   baseUrl: 'https://your-cdn.com',
-  apiKey: 'your-api-key-here'
+  apiKey: 'your-api-key-here',
 })
 ```
 
 The SDK automatically includes the API key in the Authorization header:
+
 ```
 Authorization: Bearer your-api-key-here
 ```
@@ -354,19 +355,19 @@ console.log('Service health:', isHealthy)
 Full TypeScript support with all resource types:
 
 ```typescript
-import { 
+import {
   WalrusCDNClient,
   BlobResource,
   UploadResource,
   CacheResource,
   AnalyticsResource,
   PaginatedList,
-  WalrusCDNError
+  WalrusCDNError,
 } from '@walcache/sdk'
 
 const client = new WalrusCDNClient({
   baseUrl: 'https://your-cdn.com',
-  apiKey: process.env.WCDN_API_KEY!
+  apiKey: process.env.WCDN_API_KEY!,
 })
 
 const blobs: PaginatedList<BlobResource> = await client.listBlobs()
@@ -375,6 +376,7 @@ const blobs: PaginatedList<BlobResource> = await client.listBlobs()
 ## Migration from Legacy API
 
 ### Before (Legacy API)
+
 ```javascript
 // Legacy API
 const response = await fetch('/api/stats/blob_123')
@@ -382,14 +384,16 @@ const data = await response.json()
 ```
 
 ### After (v1 API)
+
 ```javascript
 // v1 API
 const analytics = await client.getBlobAnalytics('blob_123')
 ```
 
 The v1 API provides:
+
 - ✅ Consistent resource structures
-- ✅ Standardized error handling  
+- ✅ Standardized error handling
 - ✅ Built-in pagination
 - ✅ Type safety
 - ✅ Better documentation
@@ -402,35 +406,34 @@ import { WalrusCDNClient } from '@walcache/sdk'
 
 const client = new WalrusCDNClient({
   baseUrl: 'https://your-cdn.com',
-  apiKey: process.env.WCDN_API_KEY
+  apiKey: process.env.WCDN_API_KEY,
 })
 
 async function example() {
   try {
     // Upload a file
     const upload = await client.createUpload(file, {
-      vault_id: 'vault_123'
+      vault_id: 'vault_123',
     })
-    
+
     // Get blob information
     const blob = await client.getBlob(upload.blob_id)
-    
+
     // Generate CDN URL
     const url = client.getCDNUrl(blob.cid)
-    
+
     // Pin blob to prevent eviction
     await client.pinBlob(blob.id)
-    
+
     // Get analytics
     const analytics = await client.getBlobAnalytics(blob.id)
-    
+
     console.log('Upload successful:', {
       blobId: blob.id,
       url,
       size: blob.size,
-      requests: analytics.total_requests
+      requests: analytics.total_requests,
     })
-    
   } catch (error) {
     console.error('Operation failed:', error.message)
   }

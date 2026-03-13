@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Production Backend Integration Example
- * 
+ *
  * This demonstrates how to use the Walcache SDK in a real backend service
  * that serves frontend applications.
  */
@@ -16,7 +16,7 @@ import {
   getMetrics,
   getBlobStatus,
   verifyAsset,
-  selectOptimalNode
+  selectOptimalNode,
 } from '../src/index.js'
 
 import { universalStore } from '../src/enhanced-uploader.js'
@@ -29,24 +29,33 @@ class WalcacheBackendService {
     // Production configuration
     this.config = {
       // Your deployed CDN server
-      baseUrl: config.baseUrl || process.env.WALCACHE_CDN_URL || 'https://your-cdn-domain.com',
+      baseUrl:
+        config.baseUrl ||
+        process.env.WALCACHE_CDN_URL ||
+        'https://your-cdn-domain.com',
       apiKey: config.apiKey || process.env.WALCACHE_API_KEY,
-      
+
       // Default chain for new uploads
       defaultChain: config.defaultChain || 'sui',
-      
+
       // Cache settings
       enableCaching: config.enableCaching !== false,
       cacheTTL: config.cacheTTL || 3600, // 1 hour
-      
+
       // Security settings
       maxFileSize: config.maxFileSize || 100 * 1024 * 1024, // 100MB
       allowedMimeTypes: config.allowedMimeTypes || [
-        'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-        'video/mp4', 'video/webm',
-        'audio/mp3', 'audio/wav',
-        'application/pdf', 'application/json'
-      ]
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+        'video/mp4',
+        'video/webm',
+        'audio/mp3',
+        'audio/wav',
+        'application/pdf',
+        'application/json',
+      ],
     }
 
     // Initialize SDK
@@ -54,12 +63,12 @@ class WalcacheBackendService {
       baseUrl: this.config.baseUrl,
       apiKey: this.config.apiKey,
       timeout: 30000,
-      secure: true
+      secure: true,
     })
 
     this.client = new WalrusCDNClient({
       baseUrl: this.config.baseUrl,
-      apiKey: this.config.apiKey
+      apiKey: this.config.apiKey,
     })
 
     console.log('🚀 Walcache Backend Service initialized')
@@ -69,7 +78,7 @@ class WalcacheBackendService {
 
   /**
    * Upload file from frontend (multipart form data)
-   * 
+   *
    * @param {File|Buffer} file - File data from frontend
    * @param {Object} options - Upload options
    * @returns {Promise<Object>} Upload result with CDN URLs
@@ -87,13 +96,13 @@ class WalcacheBackendService {
           tags: options.tags || [],
           category: this.detectFileCategory(file),
           creator: options.userId,
-          uploadedAt: new Date().toISOString()
+          uploadedAt: new Date().toISOString(),
         },
         optimization: {
           enabled: options.optimize !== false,
           imageQuality: options.imageQuality || 85,
-          compression: options.compression || 'medium'
-        }
+          compression: options.compression || 'medium',
+        },
       }
 
       // If it's an NFT upload, set up contract options
@@ -101,7 +110,7 @@ class WalcacheBackendService {
         uploadOptions.contract = {
           autoDeploy: true,
           contractType: this.getContractType(uploadOptions.targetChain),
-          collection: options.collection
+          collection: options.collection,
         }
       }
 
@@ -109,7 +118,7 @@ class WalcacheBackendService {
       const result = await universalStore(file, {
         ...uploadOptions,
         baseUrl: this.config.baseUrl,
-        apiKey: this.config.apiKey
+        apiKey: this.config.apiKey,
       })
 
       // Generate multiple CDN URLs for different chains
@@ -135,10 +144,9 @@ class WalcacheBackendService {
           contractAddress: result.contractAddress,
           tokenId: result.tokenId,
           permanent: !!options.permanent,
-          uploadedAt: new Date()
-        }
+          uploadedAt: new Date(),
+        },
       }
-
     } catch (error) {
       console.error('Upload failed:', error)
       return {
@@ -146,8 +154,8 @@ class WalcacheBackendService {
         error: {
           code: error.code || 'UPLOAD_FAILED',
           message: error.message,
-          details: error.details
-        }
+          details: error.details,
+        },
       }
     }
   }
@@ -159,7 +167,7 @@ class WalcacheBackendService {
     try {
       // Get basic CID info
       const cidInfo = await getCIDInfo(blobId)
-      
+
       // Get multi-chain status if requested
       let multiChainStatus = null
       if (options.includeMultiChain) {
@@ -179,17 +187,16 @@ class WalcacheBackendService {
           pinned: cidInfo.pinned,
           stats: cidInfo.stats,
           multiChain: multiChainStatus,
-          lastAccessed: cidInfo.stats?.lastAccess
-        }
+          lastAccessed: cidInfo.stats?.lastAccess,
+        },
       }
-
     } catch (error) {
       return {
         success: false,
         error: {
           code: 'ASSET_NOT_FOUND',
-          message: error.message
-        }
+          message: error.message,
+        },
       }
     }
   }
@@ -202,7 +209,7 @@ class WalcacheBackendService {
       const verification = await verifyAsset(chain, {
         userAddress,
         assetId,
-        contractAddress: process.env[`${chain.toUpperCase()}_CONTRACT_ADDRESS`]
+        contractAddress: process.env[`${chain.toUpperCase()}_CONTRACT_ADDRESS`],
       })
 
       return {
@@ -211,17 +218,16 @@ class WalcacheBackendService {
           hasAccess: verification.hasAccess,
           chain: verification.chain,
           assetMetadata: verification.assetMetadata,
-          verifiedAt: verification.verifiedAt
-        }
+          verifiedAt: verification.verifiedAt,
+        },
       }
-
     } catch (error) {
       return {
         success: false,
         error: {
           code: 'VERIFICATION_FAILED',
-          message: error.message
-        }
+          message: error.message,
+        },
       }
     }
   }
@@ -241,7 +247,7 @@ class WalcacheBackendService {
 
     return getWalrusCDNUrl(blobId, {
       chain,
-      params: Object.keys(params).length > 0 ? params : undefined
+      params: Object.keys(params).length > 0 ? params : undefined,
     })
   }
 
@@ -260,7 +266,7 @@ class WalcacheBackendService {
         ...options,
         batchId,
         batchIndex: i,
-        batchTotal: files.length
+        batchTotal: files.length,
       }
 
       try {
@@ -272,12 +278,12 @@ class WalcacheBackendService {
         results.push({
           success: false,
           error: error.message,
-          filename: file.name
+          filename: file.name,
         })
       }
     }
 
-    const successful = results.filter(r => r.success).length
+    const successful = results.filter((r) => r.success).length
     const failed = results.length - successful
 
     return {
@@ -285,7 +291,7 @@ class WalcacheBackendService {
       total: files.length,
       successful,
       failed,
-      results
+      results,
     }
   }
 
@@ -304,19 +310,19 @@ class WalcacheBackendService {
           service: {
             uptime: process.uptime(),
             memory: process.memoryUsage(),
-            version: '1.0.0'
+            version: '1.0.0',
           },
           network: {
             optimalNode: optimal.node.url,
             strategy: optimal.strategy,
-            reason: optimal.reason
-          }
-        }
+            reason: optimal.reason,
+          },
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error.message,
       }
     }
   }
@@ -330,24 +336,28 @@ class WalcacheBackendService {
     }
 
     if (file.size > this.config.maxFileSize) {
-      throw new Error(`File size exceeds limit of ${this.config.maxFileSize} bytes`)
+      throw new Error(
+        `File size exceeds limit of ${this.config.maxFileSize} bytes`,
+      )
     }
 
-    if (this.config.allowedMimeTypes.length > 0 && 
-        !this.config.allowedMimeTypes.includes(file.type)) {
+    if (
+      this.config.allowedMimeTypes.length > 0 &&
+      !this.config.allowedMimeTypes.includes(file.type)
+    ) {
       throw new Error(`File type ${file.type} not allowed`)
     }
   }
 
   detectFileCategory(file) {
     const mimeType = file.type.toLowerCase()
-    
+
     if (mimeType.startsWith('image/')) return 'image'
     if (mimeType.startsWith('video/')) return 'video'
     if (mimeType.startsWith('audio/')) return 'audio'
     if (mimeType === 'application/pdf') return 'document'
     if (mimeType === 'application/json') return 'metadata'
-    
+
     return 'other'
   }
 
@@ -355,7 +365,7 @@ class WalcacheBackendService {
     return {
       sui: getWalrusCDNUrl(blobId, { chain: 'sui' }),
       ethereum: getWalrusCDNUrl(blobId, { chain: 'ethereum' }),
-      solana: getWalrusCDNUrl(blobId, { chain: 'solana' })
+      solana: getWalrusCDNUrl(blobId, { chain: 'solana' }),
     }
   }
 
@@ -363,7 +373,7 @@ class WalcacheBackendService {
     const contractTypes = {
       ethereum: 'erc721',
       sui: 'sui-object',
-      solana: 'solana-token'
+      solana: 'solana-token',
     }
     return contractTypes[chain] || 'erc721'
   }
@@ -395,16 +405,15 @@ export function createExpressRoutes(walcacheService) {
         userId: req.user?.id,
         createNFT: req.body.createNFT === 'true',
         permanent: req.body.permanent === 'true',
-        optimize: req.body.optimize !== 'false'
+        optimize: req.body.optimize !== 'false',
       }
 
       const result = await walcacheService.uploadAsset(req.file, options)
       res.json(result)
-
     } catch (error) {
       res.status(500).json({
         success: false,
-        error: error.message
+        error: error.message,
       })
     }
   })
@@ -412,7 +421,7 @@ export function createExpressRoutes(walcacheService) {
   // Get asset info
   router.get('/asset/:blobId', async (req, res) => {
     const result = await walcacheService.getAssetInfo(req.params.blobId, {
-      includeMultiChain: req.query.multichain === 'true'
+      includeMultiChain: req.query.multichain === 'true',
     })
     res.json(result)
   })
@@ -426,7 +435,11 @@ export function createExpressRoutes(walcacheService) {
   // Verify asset ownership
   router.post('/verify', async (req, res) => {
     const { userAddress, assetId, chain } = req.body
-    const result = await walcacheService.verifyAssetOwnership(userAddress, assetId, chain)
+    const result = await walcacheService.verifyAssetOwnership(
+      userAddress,
+      assetId,
+      chain,
+    )
     res.json(result)
   })
 
@@ -451,30 +464,34 @@ export function createExpressRoutes(walcacheService) {
  */
 export function createFastifyRoutes(fastify, walcacheService) {
   // Upload endpoint
-  fastify.post('/upload', {
-    schema: {
-      consumes: ['multipart/form-data'],
-      body: {
-        type: 'object',
-        properties: {
-          file: { isFile: true },
-          chain: { type: 'string' },
-          name: { type: 'string' },
-          description: { type: 'string' }
-        }
+  fastify.post(
+    '/upload',
+    {
+      schema: {
+        consumes: ['multipart/form-data'],
+        body: {
+          type: 'object',
+          properties: {
+            file: { isFile: true },
+            chain: { type: 'string' },
+            name: { type: 'string' },
+            description: { type: 'string' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const data = await request.file()
+      const options = {
+        chain: data.fields.chain?.value,
+        name: data.fields.name?.value,
+        description: data.fields.description?.value,
       }
-    }
-  }, async (request, reply) => {
-    const data = await request.file()
-    const options = {
-      chain: data.fields.chain?.value,
-      name: data.fields.name?.value,
-      description: data.fields.description?.value
-    }
 
-    const result = await walcacheService.uploadAsset(data, options)
-    return result
-  })
+      const result = await walcacheService.uploadAsset(data, options)
+      return result
+    },
+  )
 
   // Other routes...
   fastify.get('/asset/:blobId', async (request, reply) => {
@@ -493,16 +510,21 @@ async function main() {
     defaultChain: 'sui',
     maxFileSize: 50 * 1024 * 1024, // 50MB
     allowedMimeTypes: [
-      'image/jpeg', 'image/png', 'image/webp',
-      'video/mp4', 'application/pdf'
-    ]
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'video/mp4',
+      'application/pdf',
+    ],
   })
 
   // Test upload with enhanced features
   console.log('\n🧪 Testing enhanced backend service...')
-  
-  const mockFile = new File(['test NFT content for demo'], 'demo-nft.jpg', { type: 'image/jpeg' })
-  
+
+  const mockFile = new File(['test NFT content for demo'], 'demo-nft.jpg', {
+    type: 'image/jpeg',
+  })
+
   // Test 1: Basic upload with NFT creation
   console.log('\n📤 Test 1: Basic NFT Upload')
   const basicUpload = await walcacheService.uploadAsset(mockFile, {
@@ -511,7 +533,7 @@ async function main() {
     description: 'A demonstration NFT created via Walcache SDK',
     createNFT: true,
     permanent: true,
-    tags: ['demo', 'nft', 'test']
+    tags: ['demo', 'nft', 'test'],
   })
   console.log('Basic upload result:', JSON.stringify(basicUpload, null, 2))
 
@@ -528,27 +550,30 @@ async function main() {
     crossChain: {
       targetChains: ['sui', 'solana'],
       strategy: 'immediate',
-      syncMetadata: true
-    }
+      syncMetadata: true,
+    },
   })
-  console.log('Advanced upload result:', JSON.stringify(advancedUpload, null, 2))
+  console.log(
+    'Advanced upload result:',
+    JSON.stringify(advancedUpload, null, 2),
+  )
 
   // Test 3: Batch upload
   console.log('\n📦 Test 3: Batch Upload')
   const mockFiles = [
     new File(['file 1 content'], 'batch-1.jpg', { type: 'image/jpeg' }),
     new File(['file 2 content'], 'batch-2.png', { type: 'image/png' }),
-    new File(['file 3 content'], 'batch-3.pdf', { type: 'application/pdf' })
+    new File(['file 3 content'], 'batch-3.pdf', { type: 'application/pdf' }),
   ]
-  
+
   const batchResult = await walcacheService.uploadBatch(mockFiles, {
     chain: 'sui',
     createNFT: true,
     permanent: false,
     collection: {
       name: 'Demo Batch Collection',
-      symbol: 'BATCH'
-    }
+      symbol: 'BATCH',
+    },
   })
   console.log('Batch upload result:', JSON.stringify(batchResult, null, 2))
 
@@ -558,14 +583,14 @@ async function main() {
     const verification = await walcacheService.verifyAssetOwnership(
       '0x1234567890123456789012345678901234567890',
       basicUpload.data.tokenId || '1',
-      'sui'
+      'sui',
     )
     console.log('Verification result:', JSON.stringify(verification, null, 2))
 
     // Test 5: Asset info with multi-chain status
     console.log('\n🔍 Test 5: Multi-Chain Asset Info')
     const assetInfo = await walcacheService.getAssetInfo(basicUpload.data.id, {
-      includeMultiChain: true
+      includeMultiChain: true,
     })
     console.log('Asset info:', JSON.stringify(assetInfo, null, 2))
   }
@@ -574,7 +599,7 @@ async function main() {
   console.log('\n📊 Test 6: Service Metrics')
   const metrics = await walcacheService.getServiceMetrics()
   console.log('Service metrics:', JSON.stringify(metrics, null, 2))
-  
+
   console.log('\n✅ All tests completed successfully!')
   console.log('🚀 Your Walcache SDK is ready for production use!')
 }

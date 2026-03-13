@@ -1,12 +1,15 @@
 import React, { useState } from 'react'
-import { Shield, CheckCircle, XCircle, Key } from 'lucide-react'
-import { useWalcache, SupportedChain } from '../contexts/WalcacheContext'
+import { CheckCircle, Key, Shield, XCircle } from 'lucide-react'
+import { useWalcache } from '../contexts/WalcacheContext'
 import ResultCard from '../components/ResultCard'
 import LoadingSpinner from '../components/LoadingSpinner'
+import type { SupportedChain } from '../contexts/WalcacheContext'
 
 export default function AssetVerification() {
   const { verifyOwnership, loading } = useWalcache()
-  const [userAddress, setUserAddress] = useState('0x1234567890123456789012345678901234567890')
+  const [userAddress, setUserAddress] = useState(
+    '0x1234567890123456789012345678901234567890',
+  )
   const [assetId, setAssetId] = useState('123')
   const [chain, setChain] = useState<SupportedChain>('ethereum')
   const [result, setResult] = useState<any>(null)
@@ -114,7 +117,9 @@ export default function AssetVerification() {
               </h3>
               <ul className="text-sm text-blue-700 space-y-1">
                 <li>1. SDK queries the blockchain for asset ownership</li>
-                <li>2. Checks if the wallet address owns the specified asset</li>
+                <li>
+                  2. Checks if the wallet address owns the specified asset
+                </li>
                 <li>3. Returns verification result with metadata</li>
                 <li>4. Can be used for gated content access</li>
               </ul>
@@ -145,21 +150,29 @@ export default function AssetVerification() {
         {result && (
           <div className="space-y-4">
             {result.success ? (
-              <ResultCard 
-                type={result.data.hasAccess ? "success" : "error"} 
-                title={result.data.hasAccess ? "✅ Ownership Verified" : "❌ Ownership Not Verified"}
+              <ResultCard
+                type={result.data.hasAccess ? 'success' : 'error'}
+                title={
+                  result.data.hasAccess
+                    ? '✅ Ownership Verified'
+                    : '❌ Ownership Not Verified'
+                }
               >
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-3">
-                    <h4 className="font-semibold text-gray-800">Verification Details</h4>
+                    <h4 className="font-semibold text-gray-800">
+                      Verification Details
+                    </h4>
                     <div className="space-y-2 text-sm">
                       <p>
                         <strong>Status:</strong>{' '}
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                          result.data.hasAccess 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                            result.data.hasAccess
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
                           {result.data.hasAccess ? (
                             <>
                               <CheckCircle className="w-3 h-3" />
@@ -175,8 +188,11 @@ export default function AssetVerification() {
                       </p>
                       <p>
                         <strong>Chain:</strong>{' '}
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getChainColor(result.data.chain)}`}>
-                          {result.data.chain.charAt(0).toUpperCase() + result.data.chain.slice(1)}
+                        <span
+                          className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getChainColor(result.data.chain)}`}
+                        >
+                          {result.data.chain.charAt(0).toUpperCase() +
+                            result.data.chain.slice(1)}
                         </span>
                       </p>
                       <p>
@@ -202,16 +218,20 @@ export default function AssetVerification() {
 
                   {result.data.assetMetadata && (
                     <div className="space-y-3">
-                      <h4 className="font-semibold text-gray-800">Asset Metadata</h4>
+                      <h4 className="font-semibold text-gray-800">
+                        Asset Metadata
+                      </h4>
                       <div className="space-y-2 text-sm">
                         {result.data.assetMetadata.name && (
                           <p>
-                            <strong>Name:</strong> {result.data.assetMetadata.name}
+                            <strong>Name:</strong>{' '}
+                            {result.data.assetMetadata.name}
                           </p>
                         )}
                         {result.data.assetMetadata.description && (
                           <p>
-                            <strong>Description:</strong> {result.data.assetMetadata.description}
+                            <strong>Description:</strong>{' '}
+                            {result.data.assetMetadata.description}
                           </p>
                         )}
                       </div>
@@ -221,9 +241,12 @@ export default function AssetVerification() {
 
                 {result.data.hasAccess && (
                   <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                    <h4 className="font-medium text-green-800 mb-2">🎉 Access Granted!</h4>
+                    <h4 className="font-medium text-green-800 mb-2">
+                      🎉 Access Granted!
+                    </h4>
                     <p className="text-sm text-green-700">
-                      This user has verified ownership and can access gated content or features.
+                      This user has verified ownership and can access gated
+                      content or features.
                     </p>
                   </div>
                 )}
@@ -236,10 +259,19 @@ export default function AssetVerification() {
                     <strong>💡 Troubleshooting:</strong>
                   </p>
                   <ul className="list-disc list-inside text-sm text-yellow-700 mt-2 space-y-1">
-                    <li>Verify the wallet address format is correct for the selected chain</li>
-                    <li>Make sure the asset/token ID exists on the blockchain</li>
-                    <li>Check if your backend server is running and accessible</li>
-                    <li>Ensure the blockchain network is properly configured</li>
+                    <li>
+                      Verify the wallet address format is correct for the
+                      selected chain
+                    </li>
+                    <li>
+                      Make sure the asset/token ID exists on the blockchain
+                    </li>
+                    <li>
+                      Check if your backend server is running and accessible
+                    </li>
+                    <li>
+                      Ensure the blockchain network is properly configured
+                    </li>
                   </ul>
                 </div>
               </ResultCard>
@@ -250,7 +282,9 @@ export default function AssetVerification() {
 
       {/* Sample Data */}
       <div className="card p-6 bg-gray-50">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">📋 Test with Sample Data</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          📋 Test with Sample Data
+        </h3>
         <div className="grid md:grid-cols-2 gap-4">
           <button
             onClick={() => {
@@ -261,9 +295,11 @@ export default function AssetVerification() {
             className="p-4 bg-white rounded-lg border hover:bg-gray-50 transition-colors text-left"
           >
             <h4 className="font-medium text-gray-800">Ethereum NFT Owner</h4>
-            <p className="text-sm text-gray-600 mt-1">Sample Ethereum address with token ID 123</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Sample Ethereum address with token ID 123
+            </p>
           </button>
-          
+
           <button
             onClick={() => {
               setUserAddress('0x9999999999999999999999999999999999999999')
@@ -273,17 +309,21 @@ export default function AssetVerification() {
             className="p-4 bg-white rounded-lg border hover:bg-gray-50 transition-colors text-left"
           >
             <h4 className="font-medium text-gray-800">Sui Asset Owner</h4>
-            <p className="text-sm text-gray-600 mt-1">Sample Sui address with asset ID 456</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Sample Sui address with asset ID 456
+            </p>
           </button>
         </div>
       </div>
 
       {/* Integration Example */}
       <div className="card p-6 bg-indigo-50 border-indigo-200">
-        <h3 className="text-lg font-semibold text-indigo-800 mb-4">💻 Integration Example</h3>
+        <h3 className="text-lg font-semibold text-indigo-800 mb-4">
+          💻 Integration Example
+        </h3>
         <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
           <pre className="text-sm">
-{`// Backend integration example
+            {`// Backend integration example
 app.post('/verify-access', async (req, res) => {
   const { userAddress, assetId, chain } = req.body
   

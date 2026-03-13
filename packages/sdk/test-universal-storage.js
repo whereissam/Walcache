@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Universal Asset Storage Test Suite
- * 
+ *
  * Test the current SDK capabilities and demonstrate the vision for
  * universal asset storage across multiple blockchains.
  */
@@ -45,12 +45,19 @@ class UniversalStorageTest {
     this.results = {
       passed: 0,
       failed: 0,
-      tests: []
+      tests: [],
     }
   }
 
   log(message, type = 'info') {
-    const emoji = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'
+    const emoji =
+      type === 'success'
+        ? '✅'
+        : type === 'error'
+          ? '❌'
+          : type === 'warning'
+            ? '⚠️'
+            : 'ℹ️'
     console.log(`${emoji} ${message}`)
   }
 
@@ -81,7 +88,7 @@ class UniversalStorageTest {
     // Test 1: Basic multi-chain URL generation
     await this.test('Multi-chain URL Generation', async () => {
       const blobId = 'test-blob-id-123'
-      
+
       const suiUrl = getWalrusCDNUrl(blobId, { chain: 'sui' })
       const ethUrl = getWalrusCDNUrl(blobId, { chain: 'ethereum' })
       const solUrl = getWalrusCDNUrl(blobId, { chain: 'solana' })
@@ -90,7 +97,11 @@ class UniversalStorageTest {
       console.log('  Ethereum URL:', ethUrl)
       console.log('  Solana URL:', solUrl)
 
-      if (!suiUrl.includes('sui') && !ethUrl.includes('eth') && !solUrl.includes('sol')) {
+      if (
+        !suiUrl.includes('sui') &&
+        !ethUrl.includes('eth') &&
+        !solUrl.includes('sol')
+      ) {
         throw new Error('URLs should contain chain indicators')
       }
     })
@@ -99,7 +110,7 @@ class UniversalStorageTest {
     await this.test('Chain Availability Check', async () => {
       const chains = getAvailableChains()
       console.log('  Available chains:', Object.keys(chains))
-      
+
       if (!chains.sui || !chains.ethereum || !chains.solana) {
         throw new Error('All chains should be available')
       }
@@ -110,7 +121,7 @@ class UniversalStorageTest {
       const suiNode = await selectOptimalNode('sui', 'fastest', 'testnet')
       console.log('  Selected Sui node:', suiNode.node.url)
       console.log('  Selection reason:', suiNode.reason)
-      
+
       if (!suiNode.node.url) {
         throw new Error('Should select a valid node')
       }
@@ -120,8 +131,12 @@ class UniversalStorageTest {
     await this.test('Multi-chain Blob Status', async () => {
       const status = await getBlobStatus('test-blob-id')
       console.log('  Chains checked:', Object.keys(status.chains))
-      console.log('  Available on:', status.summary.availableChains.length, 'chains')
-      
+      console.log(
+        '  Available on:',
+        status.summary.availableChains.length,
+        'chains',
+      )
+
       if (!status.blobId) {
         throw new Error('Should return blob status')
       }
@@ -130,10 +145,12 @@ class UniversalStorageTest {
     // Test 5: Asset type detection simulation
     await this.test('Asset Type Detection (Simulation)', async () => {
       const assets = Object.entries(TEST_ASSETS)
-      
+
       for (const [type, file] of assets) {
-        console.log(`  Detected ${type}: ${file.name} (${file.type}) - ${file.size} bytes`)
-        
+        console.log(
+          `  Detected ${type}: ${file.name} (${file.type}) - ${file.size} bytes`,
+        )
+
         // Simulate storage strategy selection
         const strategy = this.getStorageStrategy(file.type, type)
         console.log(`    Recommended strategy: ${strategy}`)
@@ -144,17 +161,20 @@ class UniversalStorageTest {
     await this.test('Enhanced Upload Simulation', async () => {
       try {
         // This would be the actual upload in a real implementation
-        const mockResult = await this.simulateUniversalUpload(TEST_ASSETS.image, {
-          targetChain: 'ethereum',
-          metadata: {
-            name: 'Test Image',
-            description: 'A test image for universal storage',
-            category: 'image'
-          }
-        })
-        
+        const mockResult = await this.simulateUniversalUpload(
+          TEST_ASSETS.image,
+          {
+            targetChain: 'ethereum',
+            metadata: {
+              name: 'Test Image',
+              description: 'A test image for universal storage',
+              category: 'image',
+            },
+          },
+        )
+
         console.log('  Upload result:', mockResult)
-        
+
         if (!mockResult.blobId || !mockResult.cdnUrl) {
           throw new Error('Upload should return blobId and cdnUrl')
         }
@@ -167,14 +187,25 @@ class UniversalStorageTest {
     // Test 7: Cross-chain verification simulation
     await this.test('Cross-chain Verification Simulation', async () => {
       const mockVerification = {
-        ethereum: { hasAccess: true, chain: 'ethereum', verifiedAt: new Date() },
+        ethereum: {
+          hasAccess: true,
+          chain: 'ethereum',
+          verifiedAt: new Date(),
+        },
         sui: { hasAccess: true, chain: 'sui', verifiedAt: new Date() },
-        solana: { hasAccess: false, chain: 'solana', verifiedAt: new Date(), error: 'Asset not found' }
+        solana: {
+          hasAccess: false,
+          chain: 'solana',
+          verifiedAt: new Date(),
+          error: 'Asset not found',
+        },
       }
-      
+
       console.log('  Verification results:')
       Object.entries(mockVerification).forEach(([chain, result]) => {
-        const status = result.hasAccess ? '✅ Verified' : `❌ ${result.error || 'Failed'}`
+        const status = result.hasAccess
+          ? '✅ Verified'
+          : `❌ ${result.error || 'Failed'}`
         console.log(`    ${chain}: ${status}`)
       })
     })
@@ -183,17 +214,19 @@ class UniversalStorageTest {
     await this.test('Performance Benchmarks', async () => {
       const iterations = 10
       const times = []
-      
+
       for (let i = 0; i < iterations; i++) {
         const start = Date.now()
         getWalrusCDNUrl(`test-blob-${i}`, { chain: 'sui' })
         times.push(Date.now() - start)
       }
-      
+
       const avgTime = times.reduce((a, b) => a + b, 0) / times.length
       console.log(`  Average URL generation time: ${avgTime.toFixed(2)}ms`)
-      console.log(`  Min: ${Math.min(...times)}ms, Max: ${Math.max(...times)}ms`)
-      
+      console.log(
+        `  Min: ${Math.min(...times)}ms, Max: ${Math.max(...times)}ms`,
+      )
+
       if (avgTime > 100) {
         throw new Error('URL generation should be under 100ms')
       }
@@ -209,9 +242,9 @@ class UniversalStorageTest {
       'image/png': 'Walrus + CDN with compression',
       'video/mp4': 'Walrus + multi-quality encoding',
       'application/pdf': 'Walrus + text indexing',
-      'application/json': 'Walrus + metadata parsing'
+      'application/json': 'Walrus + metadata parsing',
     }
-    
+
     return strategies[mimeType] || 'Standard Walrus storage'
   }
 
@@ -228,7 +261,7 @@ class UniversalStorageTest {
       verified: true,
       uploadTime: Math.floor(Math.random() * 5000) + 1000, // 1-6 seconds
     }
-    
+
     return mockUpload
   }
 
@@ -239,16 +272,18 @@ class UniversalStorageTest {
     console.log(`Total Tests: ${this.results.passed + this.results.failed}`)
     console.log(`Passed: ${this.results.passed}`)
     console.log(`Failed: ${this.results.failed}`)
-    console.log(`Success Rate: ${((this.results.passed / (this.results.passed + this.results.failed)) * 100).toFixed(1)}%`)
-    
+    console.log(
+      `Success Rate: ${((this.results.passed / (this.results.passed + this.results.failed)) * 100).toFixed(1)}%`,
+    )
+
     if (this.results.failed > 0) {
       console.log()
       console.log('❌ Failed Tests:')
       this.results.tests
-        .filter(t => t.status === 'failed')
-        .forEach(test => console.log(`  - ${test.name}: ${test.error}`))
+        .filter((t) => t.status === 'failed')
+        .forEach((test) => console.log(`  - ${test.name}: ${test.error}`))
     }
-    
+
     console.log()
     console.log('🎯 Next Steps for Universal Storage:')
     console.log('1. Implement enhanced upload interface')
@@ -265,7 +300,7 @@ class FutureFeatureDemo {
     console.log()
     console.log('🔮 Future Universal API Demonstration')
     console.log('='.repeat(40))
-    
+
     // This is what the API will look like when fully implemented
     const exampleCode = `
 // Future Universal Storage API
@@ -325,7 +360,7 @@ const updated = await walcache.updateAsset(blobId, newFile, {
 `
 
     console.log(exampleCode)
-    
+
     console.log('Key Features:')
     console.log('✨ One function call stores to any supported blockchain')
     console.log('✨ Automatic file optimization and CDN distribution')

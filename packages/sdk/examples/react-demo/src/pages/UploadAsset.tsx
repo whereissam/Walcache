@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, File, X, CheckCircle } from 'lucide-react'
+import { CheckCircle, File, Upload, X } from 'lucide-react'
 import { useWalcache } from '../contexts/WalcacheContext'
 import ChainSelector from '../components/ChainSelector'
 import ResultCard from '../components/ResultCard'
@@ -8,15 +8,15 @@ import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function UploadAsset() {
   const { selectedChain, uploadAsset, loading } = useWalcache()
-  const [files, setFiles] = useState<File[]>([])
+  const [files, setFiles] = useState<Array<File>>([])
   const [assetName, setAssetName] = useState('')
   const [description, setDescription] = useState('')
   const [createNFT, setCreateNFT] = useState(false)
   const [permanent, setPermanent] = useState(true)
-  const [uploadResults, setUploadResults] = useState<any[]>([])
+  const [uploadResults, setUploadResults] = useState<Array<any>>([])
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFiles(prev => [...prev, ...acceptedFiles])
+  const onDrop = useCallback((acceptedFiles: Array<File>) => {
+    setFiles((prev) => [...prev, ...acceptedFiles])
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -25,7 +25,7 @@ export default function UploadAsset() {
   })
 
   const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index))
+    setFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleUpload = async () => {
@@ -45,10 +45,10 @@ export default function UploadAsset() {
         })
         results.push({ file: file.name, ...result })
       } catch (error: any) {
-        results.push({ 
-          file: file.name, 
-          success: false, 
-          error: error.message 
+        results.push({
+          file: file.name,
+          success: false,
+          error: error.message,
         })
       }
     }
@@ -111,12 +111,19 @@ export default function UploadAsset() {
             </h3>
             <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin">
               {files.map((file, index) => (
-                <div key={`${file.name}-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={`${file.name}-${index}`}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <File className="w-4 h-4 text-gray-400" />
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{file.name}</p>
-                      <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                      <p className="text-sm font-medium text-gray-800">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatFileSize(file.size)}
+                      </p>
                     </div>
                   </div>
                   <button
@@ -191,7 +198,8 @@ export default function UploadAsset() {
           ) : (
             <>
               <Upload className="w-4 h-4 mr-2" />
-              Upload to {selectedChain.charAt(0).toUpperCase() + selectedChain.slice(1)}
+              Upload to{' '}
+              {selectedChain.charAt(0).toUpperCase() + selectedChain.slice(1)}
             </>
           )}
         </button>
@@ -203,28 +211,63 @@ export default function UploadAsset() {
           {uploadResults.map((result, index) => (
             <div key={index}>
               {result.success ? (
-                <ResultCard type="success" title={`✅ ${result.file} - Upload Successful`}>
+                <ResultCard
+                  type="success"
+                  title={`✅ ${result.file} - Upload Successful`}
+                >
                   <div className="grid md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p><strong>Asset ID:</strong> <code className="bg-white px-2 py-1 rounded">{result.data?.id}</code></p>
-                      <p><strong>Chain:</strong> {result.data?.chain}</p>
+                      <p>
+                        <strong>Asset ID:</strong>{' '}
+                        <code className="bg-white px-2 py-1 rounded">
+                          {result.data?.id}
+                        </code>
+                      </p>
+                      <p>
+                        <strong>Chain:</strong> {result.data?.chain}
+                      </p>
                       {result.data?.transactionHash && (
-                        <p><strong>Transaction:</strong> <code className="bg-white px-2 py-1 rounded">{result.data.transactionHash}</code></p>
+                        <p>
+                          <strong>Transaction:</strong>{' '}
+                          <code className="bg-white px-2 py-1 rounded">
+                            {result.data.transactionHash}
+                          </code>
+                        </p>
                       )}
                     </div>
                     <div>
                       {result.data?.contractAddress && (
-                        <p><strong>NFT Contract:</strong> <code className="bg-white px-2 py-1 rounded">{result.data.contractAddress}</code></p>
+                        <p>
+                          <strong>NFT Contract:</strong>{' '}
+                          <code className="bg-white px-2 py-1 rounded">
+                            {result.data.contractAddress}
+                          </code>
+                        </p>
                       )}
                       {result.data?.tokenId && (
-                        <p><strong>Token ID:</strong> {result.data.tokenId}</p>
+                        <p>
+                          <strong>Token ID:</strong> {result.data.tokenId}
+                        </p>
                       )}
-                      <p><strong>CDN URL:</strong> <a href={result.data?.cdnUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Asset</a></p>
+                      <p>
+                        <strong>CDN URL:</strong>{' '}
+                        <a
+                          href={result.data?.cdnUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          View Asset
+                        </a>
+                      </p>
                     </div>
                   </div>
                 </ResultCard>
               ) : (
-                <ResultCard type="error" title={`❌ ${result.file} - Upload Failed`}>
+                <ResultCard
+                  type="error"
+                  title={`❌ ${result.file} - Upload Failed`}
+                >
                   <p>{result.error}</p>
                 </ResultCard>
               )}
@@ -235,13 +278,30 @@ export default function UploadAsset() {
 
       {/* Instructions */}
       <div className="card p-6 bg-blue-50 border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-800 mb-2">💡 How It Works</h3>
+        <h3 className="text-lg font-semibold text-blue-800 mb-2">
+          💡 How It Works
+        </h3>
         <div className="text-sm text-blue-700 space-y-2">
-          <p>1. <strong>Select Blockchain:</strong> Choose Ethereum, Sui, or Solana</p>
-          <p>2. <strong>Upload Files:</strong> Drag & drop or click to select multiple files</p>
-          <p>3. <strong>Configure Options:</strong> Set metadata and NFT creation preferences</p>
-          <p>4. <strong>Submit:</strong> Files are uploaded to your selected blockchain via Walrus storage</p>
-          <p className="mt-3 font-medium">🔄 <strong>Behind the scenes:</strong> Your React app → Your Backend API → Walcache SDK → Blockchain</p>
+          <p>
+            1. <strong>Select Blockchain:</strong> Choose Ethereum, Sui, or
+            Solana
+          </p>
+          <p>
+            2. <strong>Upload Files:</strong> Drag & drop or click to select
+            multiple files
+          </p>
+          <p>
+            3. <strong>Configure Options:</strong> Set metadata and NFT creation
+            preferences
+          </p>
+          <p>
+            4. <strong>Submit:</strong> Files are uploaded to your selected
+            blockchain via Walrus storage
+          </p>
+          <p className="mt-3 font-medium">
+            🔄 <strong>Behind the scenes:</strong> Your React app → Your Backend
+            API → Walcache SDK → Blockchain
+          </p>
         </div>
       </div>
     </div>

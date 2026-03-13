@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Enhanced SDK Demo
- * 
+ *
  * Demonstrates current capabilities and simulates future universal storage features
  */
 
@@ -23,7 +23,7 @@ console.log('='.repeat(50))
 // Configuration
 const config = {
   baseUrl: 'http://localhost:4500',
-  apiKey: 'demo-key'
+  apiKey: 'demo-key',
 }
 
 configure(config)
@@ -77,12 +77,16 @@ console.log('\n🔍 Demo 4: Multi-chain Blob Status')
 console.log('-'.repeat(30))
 
 try {
-  const blobStatus = await getBlobStatus(exampleBlobId, ['sui', 'ethereum', 'solana'])
+  const blobStatus = await getBlobStatus(exampleBlobId, [
+    'sui',
+    'ethereum',
+    'solana',
+  ])
   console.log(`Blob ID: ${blobStatus.blobId}`)
   console.log(`Available on: ${blobStatus.summary.availableChains.join(', ')}`)
   console.log(`Total chains checked: ${blobStatus.summary.totalChains}`)
   console.log(`Best chain: ${blobStatus.summary.bestChain || 'None'}`)
-  
+
   console.log('\nPer-chain status:')
   Object.entries(blobStatus.chains).forEach(([chain, status]) => {
     const emoji = status.exists ? '✅' : '❌'
@@ -102,22 +106,26 @@ const mockFiles = [
   { name: 'video.mp4', type: 'video/mp4', size: 10240 },
   { name: 'document.pdf', type: 'application/pdf', size: 1024 },
   { name: 'metadata.json', type: 'application/json', size: 512 },
-  { name: 'audio.mp3', type: 'audio/mpeg', size: 5120 }
+  { name: 'audio.mp3', type: 'audio/mpeg', size: 5120 },
 ]
 
-mockFiles.forEach(fileInfo => {
-  const mockFile = new File(['mock-content'], fileInfo.name, { type: fileInfo.type })
+mockFiles.forEach((fileInfo) => {
+  const mockFile = new File(['mock-content'], fileInfo.name, {
+    type: fileInfo.type,
+  })
   const category = FileTypeHandler.detectCategory(mockFile)
-  
+
   console.log(`File: ${fileInfo.name}`)
   console.log(`  Category: ${category}`)
   console.log(`  Size: ${fileInfo.size} bytes`)
-  
+
   // Show optimal strategy for different chains
   const chains = ['ethereum', 'sui', 'solana']
-  chains.forEach(chain => {
+  chains.forEach((chain) => {
     const strategy = FileTypeHandler.getStorageStrategy(category, chain)
-    console.log(`  ${chain}: ${strategy.compression} compression, max ${(strategy.maxSize / 1024 / 1024).toFixed(1)}MB`)
+    console.log(
+      `  ${chain}: ${strategy.compression} compression, max ${(strategy.maxSize / 1024 / 1024).toFixed(1)}MB`,
+    )
   })
   console.log()
 })
@@ -128,7 +136,9 @@ console.log('-'.repeat(30))
 console.log('This demonstrates the future universal upload API:')
 
 // Simulate universal upload
-const mockFile = new File(['mock image data'], 'demo-nft.jpg', { type: 'image/jpeg' })
+const mockFile = new File(['mock image data'], 'demo-nft.jpg', {
+  type: 'image/jpeg',
+})
 
 try {
   const uploadResult = await universalStore(mockFile, {
@@ -138,7 +148,7 @@ try {
       description: 'A demonstration of universal asset storage',
       tags: ['demo', 'nft', 'test'],
       category: 'nft',
-      creator: '0x1234567890123456789012345678901234567890'
+      creator: '0x1234567890123456789012345678901234567890',
     },
     contract: {
       autoDeploy: true,
@@ -146,16 +156,16 @@ try {
       collection: {
         name: 'Demo Collection',
         symbol: 'DEMO',
-        maxSupply: 1000
-      }
+        maxSupply: 1000,
+      },
     },
     optimization: {
       enabled: true,
       imageQuality: 85,
-      formats: ['webp', 'avif']
-    }
+      formats: ['webp', 'avif'],
+    },
   })
-  
+
   console.log('✅ Universal Upload Simulation Result:')
   console.log(`  Blob ID: ${uploadResult.blobId}`)
   console.log(`  CDN URL: ${uploadResult.cdnUrl}`)
@@ -175,17 +185,17 @@ console.log('-'.repeat(30))
 const performanceTest = () => {
   const iterations = 100
   const times = []
-  
+
   for (let i = 0; i < iterations; i++) {
     const start = performance.now()
     getWalrusCDNUrl(`test-blob-${i}`, { chain: 'sui' })
     times.push(performance.now() - start)
   }
-  
+
   const avg = times.reduce((a, b) => a + b, 0) / times.length
   const min = Math.min(...times)
   const max = Math.max(...times)
-  
+
   console.log(`URL Generation Performance (${iterations} iterations):`)
   console.log(`  Average: ${avg.toFixed(3)}ms`)
   console.log(`  Min: ${min.toFixed(3)}ms`)

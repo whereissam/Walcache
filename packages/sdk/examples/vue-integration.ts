@@ -3,9 +3,9 @@
  * Demonstrates blockchain integration with Vue 3 Composition API
  */
 
-import { ref, computed, reactive, onMounted } from 'vue';
-import { WalrusCDNClient } from '@wcdn/sdk';
-import { PRESET_CONFIGS } from '@wcdn/sdk/blockchain';
+import { ref, computed, reactive, onMounted } from 'vue'
+import { WalrusCDNClient } from '@wcdn/sdk'
+import { PRESET_CONFIGS } from '@wcdn/sdk/blockchain'
 
 // =============================================================================
 // CLIENT SETUP
@@ -13,77 +13,81 @@ import { PRESET_CONFIGS } from '@wcdn/sdk/blockchain';
 
 const wcdnClient = new WalrusCDNClient(
   {
-    baseUrl: process.env.VUE_APP_WCDN_BASE_URL || 'https://your-wcdn-instance.com',
+    baseUrl:
+      process.env.VUE_APP_WCDN_BASE_URL || 'https://your-wcdn-instance.com',
     apiKey: process.env.VUE_APP_WCDN_API_KEY,
   },
   {
     ethereum: PRESET_CONFIGS.ethereum.mainnet(
       process.env.VUE_APP_ETHEREUM_CONTRACT_ADDRESS || '',
-      process.env.VUE_APP_ETHEREUM_PRIVATE_KEY
+      process.env.VUE_APP_ETHEREUM_PRIVATE_KEY,
     ),
     sui: PRESET_CONFIGS.sui.mainnet(
       process.env.VUE_APP_SUI_PACKAGE_ID || '',
-      process.env.VUE_APP_SUI_PRIVATE_KEY
+      process.env.VUE_APP_SUI_PRIVATE_KEY,
     ),
-  }
-);
+  },
+)
 
 // =============================================================================
 // COMPOSABLES
 // =============================================================================
 
 export function useWCDNUpload() {
-  const uploading = ref(false);
-  const progress = ref<Record<string, number>>({});
-  const error = ref<string | null>(null);
-  const uploads = ref<any[]>([]);
+  const uploading = ref(false)
+  const progress = ref<Record<string, number>>({})
+  const error = ref<string | null>(null)
+  const uploads = ref<any[]>([])
 
   const uploadFiles = async (
     files: File[],
     options: {
-      chain?: 'ethereum' | 'sui' | 'solana';
-      vaultId?: string;
-      registerOnChain?: boolean;
-    } = {}
+      chain?: 'ethereum' | 'sui' | 'solana'
+      vaultId?: string
+      registerOnChain?: boolean
+    } = {},
   ) => {
-    uploading.value = true;
-    error.value = null;
+    uploading.value = true
+    error.value = null
 
     try {
       // Upload files in batch
       const results = await wcdnClient.createBatchUpload(files, {
         vault_id: options.vaultId,
-      });
+      })
 
       // Register on blockchain if requested
       if (options.registerOnChain && options.chain) {
-        const blobsToRegister = results.map(upload => ({
+        const blobsToRegister = results.map((upload) => ({
           blobId: upload.blob_id,
           size: upload.size,
           contentType: upload.content_type,
           cdnUrl: wcdnClient.getCDNUrl(upload.blob_id),
           contentHash: upload.blob_id,
-        }));
+        }))
 
-        const txHash = await wcdnClient.registerBlobBatchOnChain(blobsToRegister, options.chain);
-        console.log('Blockchain registration:', txHash);
+        const txHash = await wcdnClient.registerBlobBatchOnChain(
+          blobsToRegister,
+          options.chain,
+        )
+        console.log('Blockchain registration:', txHash)
       }
 
-      uploads.value.push(...results);
-      return results;
+      uploads.value.push(...results)
+      return results
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Upload failed';
-      error.value = message;
-      throw new Error(message);
+      const message = err instanceof Error ? err.message : 'Upload failed'
+      error.value = message
+      throw new Error(message)
     } finally {
-      uploading.value = false;
+      uploading.value = false
     }
-  };
+  }
 
   const clearUploads = () => {
-    uploads.value = [];
-    error.value = null;
-  };
+    uploads.value = []
+    error.value = null
+  }
 
   return {
     uploading: readonly(uploading),
@@ -92,87 +96,91 @@ export function useWCDNUpload() {
     uploads: readonly(uploads),
     uploadFiles,
     clearUploads,
-  };
+  }
 }
 
 export function useWCDNBlobQuery() {
-  const loading = ref(false);
-  const error = ref<string | null>(null);
-  const cache = ref(new Map<string, any>());
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+  const cache = ref(new Map<string, any>())
 
   const getBlob = async (blobId: string, useCache = true) => {
     if (useCache && cache.value.has(blobId)) {
-      return cache.value.get(blobId);
+      return cache.value.get(blobId)
     }
 
-    loading.value = true;
-    error.value = null;
+    loading.value = true
+    error.value = null
 
     try {
-      const blob = await wcdnClient.getBlob(blobId);
-      cache.value.set(blobId, blob);
-      return blob;
+      const blob = await wcdnClient.getBlob(blobId)
+      cache.value.set(blobId, blob)
+      return blob
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch blob';
-      error.value = message;
-      throw new Error(message);
+      const message =
+        err instanceof Error ? err.message : 'Failed to fetch blob'
+      error.value = message
+      throw new Error(message)
     } finally {
-      loading.value = false;
+      loading.value = false
     }
-  };
+  }
 
   const getBlobsBatch = async (blobIds: string[]) => {
-    loading.value = true;
-    error.value = null;
+    loading.value = true
+    error.value = null
 
     try {
-      const blobs = await wcdnClient.getBlobsBatch(blobIds);
-      
+      const blobs = await wcdnClient.getBlobsBatch(blobIds)
+
       // Update cache
       blobs.forEach((blob, index) => {
         if (blob) {
-          cache.value.set(blobIds[index], blob);
+          cache.value.set(blobIds[index], blob)
         }
-      });
+      })
 
-      return blobs;
+      return blobs
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch blobs';
-      error.value = message;
-      throw new Error(message);
+      const message =
+        err instanceof Error ? err.message : 'Failed to fetch blobs'
+      error.value = message
+      throw new Error(message)
     } finally {
-      loading.value = false;
+      loading.value = false
     }
-  };
+  }
 
   const checkMultiChainStatus = async (blobId: string) => {
-    loading.value = true;
-    error.value = null;
+    loading.value = true
+    error.value = null
 
     try {
-      const [cacheStatus, blockchainStatus, aggregatorStatus] = await Promise.all([
-        wcdnClient.getBlob(blobId),
-        wcdnClient.getBlobMetadataFromChain(blobId),
-        wcdnClient.getMultiChainBlobStatus(blobId),
-      ]);
+      const [cacheStatus, blockchainStatus, aggregatorStatus] =
+        await Promise.all([
+          wcdnClient.getBlob(blobId),
+          wcdnClient.getBlobMetadataFromChain(blobId),
+          wcdnClient.getMultiChainBlobStatus(blobId),
+        ])
 
       return {
         cache: cacheStatus,
         blockchain: blockchainStatus,
         aggregators: aggregatorStatus,
-      };
+      }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to check blob status';
-      error.value = message;
-      throw new Error(message);
+      const message =
+        err instanceof Error ? err.message : 'Failed to check blob status'
+      error.value = message
+      throw new Error(message)
     } finally {
-      loading.value = false;
+      loading.value = false
     }
-  };
+  }
 
   const clearCache = () => {
-    cache.value.clear();
-  };
+    cache.value.clear()
+  }
 
   return {
     loading: readonly(loading),
@@ -181,7 +189,7 @@ export function useWCDNBlobQuery() {
     getBlobsBatch,
     checkMultiChainStatus,
     clearCache,
-  };
+  }
 }
 
 export function useWCDNAnalytics() {
@@ -189,54 +197,57 @@ export function useWCDNAnalytics() {
     global: null as any,
     blobStats: new Map<string, any>(),
     cacheStats: null as any,
-  });
+  })
 
-  const loading = ref(false);
-  const error = ref<string | null>(null);
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
   const fetchGlobalAnalytics = async () => {
-    loading.value = true;
-    error.value = null;
+    loading.value = true
+    error.value = null
 
     try {
-      analytics.global = await wcdnClient.getGlobalAnalytics();
+      analytics.global = await wcdnClient.getGlobalAnalytics()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch analytics';
-      error.value = message;
+      const message =
+        err instanceof Error ? err.message : 'Failed to fetch analytics'
+      error.value = message
     } finally {
-      loading.value = false;
+      loading.value = false
     }
-  };
+  }
 
   const fetchBlobAnalytics = async (blobId: string) => {
-    loading.value = true;
-    error.value = null;
+    loading.value = true
+    error.value = null
 
     try {
-      const stats = await wcdnClient.getBlobAnalytics(blobId);
-      analytics.blobStats.set(blobId, stats);
-      return stats;
+      const stats = await wcdnClient.getBlobAnalytics(blobId)
+      analytics.blobStats.set(blobId, stats)
+      return stats
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch blob analytics';
-      error.value = message;
+      const message =
+        err instanceof Error ? err.message : 'Failed to fetch blob analytics'
+      error.value = message
     } finally {
-      loading.value = false;
+      loading.value = false
     }
-  };
+  }
 
   const fetchCacheStats = async () => {
-    loading.value = true;
-    error.value = null;
+    loading.value = true
+    error.value = null
 
     try {
-      analytics.cacheStats = await wcdnClient.getCacheStats();
+      analytics.cacheStats = await wcdnClient.getCacheStats()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch cache stats';
-      error.value = message;
+      const message =
+        err instanceof Error ? err.message : 'Failed to fetch cache stats'
+      error.value = message
     } finally {
-      loading.value = false;
+      loading.value = false
     }
-  };
+  }
 
   return {
     analytics,
@@ -245,7 +256,7 @@ export function useWCDNAnalytics() {
     fetchGlobalAnalytics,
     fetchBlobAnalytics,
     fetchCacheStats,
-  };
+  }
 }
 
 // =============================================================================
@@ -254,36 +265,37 @@ export function useWCDNAnalytics() {
 
 export const MultiChainUploader = {
   setup() {
-    const { uploading, error, uploads, uploadFiles, clearUploads } = useWCDNUpload();
-    
-    const selectedChain = ref<'ethereum' | 'sui' | 'solana'>('ethereum');
-    const registerOnChain = ref(true);
-    const files = ref<File[]>([]);
+    const { uploading, error, uploads, uploadFiles, clearUploads } =
+      useWCDNUpload()
+
+    const selectedChain = ref<'ethereum' | 'sui' | 'solana'>('ethereum')
+    const registerOnChain = ref(true)
+    const files = ref<File[]>([])
 
     const handleFileChange = (event: Event) => {
-      const target = event.target as HTMLInputElement;
+      const target = event.target as HTMLInputElement
       if (target.files) {
-        files.value = Array.from(target.files);
+        files.value = Array.from(target.files)
       }
-    };
+    }
 
     const handleUpload = async () => {
-      if (files.value.length === 0) return;
+      if (files.value.length === 0) return
 
       try {
         await uploadFiles(files.value, {
           chain: selectedChain.value,
           registerOnChain: registerOnChain.value,
-        });
-        files.value = [];
+        })
+        files.value = []
       } catch (err) {
-        console.error('Upload failed:', err);
+        console.error('Upload failed:', err)
       }
-    };
+    }
 
     const getCDNUrl = (blobId: string) => {
-      return wcdnClient.getCDNUrl(blobId);
-    };
+      return wcdnClient.getCDNUrl(blobId)
+    }
 
     return {
       uploading,
@@ -296,7 +308,7 @@ export const MultiChainUploader = {
       handleUpload,
       clearUploads,
       getCDNUrl,
-    };
+    }
   },
 
   template: `
@@ -385,44 +397,45 @@ export const MultiChainUploader = {
       </div>
     </div>
   `,
-};
+}
 
 export const BlobStatusDashboard = {
   setup() {
-    const { checkMultiChainStatus, loading } = useWCDNBlobQuery();
-    const { analytics, fetchGlobalAnalytics, fetchCacheStats } = useWCDNAnalytics();
-    
-    const blobId = ref('');
-    const blobStatus = ref<any>(null);
-    const searchHistory = ref<string[]>([]);
+    const { checkMultiChainStatus, loading } = useWCDNBlobQuery()
+    const { analytics, fetchGlobalAnalytics, fetchCacheStats } =
+      useWCDNAnalytics()
+
+    const blobId = ref('')
+    const blobStatus = ref<any>(null)
+    const searchHistory = ref<string[]>([])
 
     const handleStatusCheck = async () => {
-      if (!blobId.value.trim()) return;
+      if (!blobId.value.trim()) return
 
       try {
-        blobStatus.value = await checkMultiChainStatus(blobId.value.trim());
-        
+        blobStatus.value = await checkMultiChainStatus(blobId.value.trim())
+
         // Add to search history
         if (!searchHistory.value.includes(blobId.value.trim())) {
-          searchHistory.value.unshift(blobId.value.trim());
+          searchHistory.value.unshift(blobId.value.trim())
           if (searchHistory.value.length > 10) {
-            searchHistory.value = searchHistory.value.slice(0, 10);
+            searchHistory.value = searchHistory.value.slice(0, 10)
           }
         }
       } catch (err) {
-        console.error('Status check failed:', err);
+        console.error('Status check failed:', err)
       }
-    };
+    }
 
     const selectFromHistory = (id: string) => {
-      blobId.value = id;
-      handleStatusCheck();
-    };
+      blobId.value = id
+      handleStatusCheck()
+    }
 
     onMounted(() => {
-      fetchGlobalAnalytics();
-      fetchCacheStats();
-    });
+      fetchGlobalAnalytics()
+      fetchCacheStats()
+    })
 
     return {
       blobId,
@@ -432,7 +445,7 @@ export const BlobStatusDashboard = {
       analytics,
       handleStatusCheck,
       selectFromHistory,
-    };
+    }
   },
 
   template: `
@@ -610,22 +623,25 @@ export const BlobStatusDashboard = {
       </div>
     </div>
   `,
-};
+}
 
 // =============================================================================
 // PLUGIN SETUP
 // =============================================================================
 
 export default {
-  install(app: any, options: { wcdnConfig?: any; blockchainConfig?: any } = {}) {
+  install(
+    app: any,
+    options: { wcdnConfig?: any; blockchainConfig?: any } = {},
+  ) {
     // Make WCDN client available globally
-    app.config.globalProperties.$wcdn = wcdnClient;
-    
+    app.config.globalProperties.$wcdn = wcdnClient
+
     // Provide composables
-    app.provide('wcdnClient', wcdnClient);
-    
+    app.provide('wcdnClient', wcdnClient)
+
     // Register components globally if needed
-    app.component('MultiChainUploader', MultiChainUploader);
-    app.component('BlobStatusDashboard', BlobStatusDashboard);
+    app.component('MultiChainUploader', MultiChainUploader)
+    app.component('BlobStatusDashboard', BlobStatusDashboard)
   },
-};
+}

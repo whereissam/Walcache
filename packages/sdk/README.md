@@ -10,7 +10,9 @@ The Walcache SDK provides a unified interface for asset storage across Ethereum,
 ## ✨ Why Walcache?
 
 ### **The Problem**
+
 Multi-chain development is painful:
+
 - ❌ Learn 3+ different blockchain APIs (Ethereum, Sui, Solana)
 - ❌ Different metadata standards (ERC-721, Sui Display, Metaplex)
 - ❌ Chain-specific error handling and verification
@@ -18,7 +20,9 @@ Multi-chain development is painful:
 - ❌ Complex NFT gating and access control
 
 ### **The Solution**
+
 One SDK, unified experience:
+
 - ✅ **Same API** for all blockchains
 - ✅ **Automatic metadata normalization** (ERC-721 ↔ Sui Display ↔ Metaplex)
 - ✅ **Unified verification** and error handling
@@ -29,6 +33,7 @@ One SDK, unified experience:
 ## 🎯 Real-World Use Cases
 
 ### 1. **dApp Frontend Hosting** 📱
+
 Deploy different site versions for different chains, with automatic user routing.
 
 ```javascript
@@ -42,16 +47,17 @@ const siteUrl = await sdk.getSiteUrl({ siteName: 'my-dapp', userChain })
 ```
 
 ### 2. **Data Marketplaces** 💰
+
 Sell access to datasets with NFT/token gating.
 
 ```javascript
 // Upload with NFT gating
 await sdk.uploadGatedFile(dataset, {
-  gating: { 
+  gating: {
     type: 'nft_ownership',
     contractAddress: '0xabc...',
-    chain: 'ethereum' 
-  }
+    chain: 'ethereum',
+  },
 })
 
 // Verify and download
@@ -61,6 +67,7 @@ if (await sdk.verifyAccess({ user: '0x123...', fileId })) {
 ```
 
 ### 3. **Gaming Assets** 🎮
+
 User-generated content with ownership and trading.
 
 ```javascript
@@ -71,24 +78,25 @@ await sdk.uploadAsset('./dragon-skin.png', {
   category: 'skin',
   gameId: 'dragon-quest',
   rarity: 'epic',
-  tradeable: true
+  tradeable: true,
 })
 
 // List all user assets
-const assets = await sdk.listAssets({ 
-  owner: '0xuser...', 
-  gameId: 'dragon-quest' 
+const assets = await sdk.listAssets({
+  owner: '0xuser...',
+  gameId: 'dragon-quest',
 })
 ```
 
 ### 4. **Decentralized Identity** 🆔
+
 Store and resolve DID documents with on-chain verification.
 
 ```javascript
 // Store DID document
-await sdk.uploadDID('did:sui:0x123...', didDocument, { 
+await sdk.uploadDID('did:sui:0x123...', didDocument, {
   chain: 'sui',
-  updatePolicy: 'owner_only' 
+  updatePolicy: 'owner_only',
 })
 
 // Resolve DID anywhere
@@ -96,13 +104,14 @@ const { document } = await sdk.resolveDID('did:sui:0x123...')
 ```
 
 ### 5. **Cross-Chain Logs** 📝
+
 Audit trails and proofs for smart contracts.
 
 ```javascript
 // Upload audit log
 const logId = await sdk.uploadLog(auditData, {
   chain: 'ethereum',
-  logType: 'audit'
+  logType: 'audit',
 })
 
 // Get reference hash for smart contracts
@@ -110,6 +119,7 @@ const { referenceHash } = await sdk.getLogReference(logId)
 ```
 
 ### 6. **Media Streaming** 🎵
+
 Gated content with NFT/token access control.
 
 ```javascript
@@ -117,10 +127,10 @@ Gated content with NFT/token access control.
 await sdk.uploadMedia('./concert.mp4', {
   chain: 'ethereum',
   type: 'video',
-  gating: { 
+  gating: {
     type: 'nft_ownership',
-    contractAddress: '0xabc...' 
-  }
+    contractAddress: '0xabc...',
+  },
 })
 
 // Stream with verification
@@ -159,25 +169,25 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     // Upload file to Walrus using v1 API
     const upload = await client.createUpload(req.file, {
       vault_id: req.body.vault_id,
-      parent_id: req.body.parent_id
+      parent_id: req.body.parent_id,
     })
-    
+
     // Get blob information
     const blob = await client.getBlob(upload.blob_id)
-    
+
     res.json({
       success: true,
       upload,
       blob,
-      cdnUrl: client.getCDNUrl(upload.blob_id)
+      cdnUrl: client.getCDNUrl(upload.blob_id),
     })
   } catch (error) {
     res.status(error.status || 500).json({
       error: {
         type: error.type || 'api_error',
         message: error.message,
-        code: error.code
-      }
+        code: error.code,
+      },
     })
   }
 })
@@ -191,12 +201,12 @@ const uploadAsset = async (file, chain) => {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('chain', chain)
-  
+
   const response = await fetch('/api/upload', {
     method: 'POST',
-    body: formData
+    body: formData,
   })
-  
+
   return response.json()
 }
 
@@ -209,6 +219,7 @@ console.log('NFT created:', result.contractAddress)
 ## 🛠 Core Features
 
 ### **Unified Metadata Normalization**
+
 Works across all blockchain standards automatically.
 
 ```javascript
@@ -216,8 +227,8 @@ import { MetadataNormalizer } from '@walcache/sdk'
 
 // Convert any metadata to unified format
 const unified = await MetadataNormalizer.normalizeMetadata(
-  rawMetadata, 
-  'ethereum' // or 'sui', 'solana'
+  rawMetadata,
+  'ethereum', // or 'sui', 'solana'
 )
 
 // Always get consistent format:
@@ -225,6 +236,7 @@ const unified = await MetadataNormalizer.normalizeMetadata(
 ```
 
 ### **Cross-Chain Asset Verification**
+
 Same API for all blockchains.
 
 ```javascript
@@ -235,7 +247,7 @@ const result = await UnifiedVerifier.verifyOwnership(
   userAddress,
   assetId,
   'sui', // or 'ethereum', 'solana'
-  { type: 'nft_ownership' }
+  { type: 'nft_ownership' },
 )
 
 if (result.hasAccess) {
@@ -244,25 +256,24 @@ if (result.hasAccess) {
 ```
 
 ### **Multi-Chain Search**
+
 Find assets across all blockchains.
 
 ```javascript
 import { CrossChainSearchEngine } from '@walcache/sdk'
 
 // Search across all chains
-const assets = await CrossChainSearchEngine.findAssetsByOwner(
-  userAddress,
-  {
-    chains: ['ethereum', 'sui', 'solana'],
-    assetTypes: ['nft', 'collectible'],
-    verifiedOnly: true
-  }
-)
+const assets = await CrossChainSearchEngine.findAssetsByOwner(userAddress, {
+  chains: ['ethereum', 'sui', 'solana'],
+  assetTypes: ['nft', 'collectible'],
+  verifiedOnly: true,
+})
 
 console.log(`Found ${assets.totalCount} assets across chains`)
 ```
 
 ### **Standardized Error Handling**
+
 Consistent error codes across all chains.
 
 ```javascript
@@ -331,25 +342,27 @@ bun production-backend.js
 ## 📊 Performance & Optimization
 
 ### **Automatic Chain Selection**
+
 SDK chooses optimal chain based on your criteria.
 
 ```javascript
 // Cost optimization
 const result = await walcache.uploadAsset(file, {
-  strategy: 'cheapest',        // Auto-selects lowest cost chain
-  maxCost: 0.001,             // Never exceed cost limit
-  userPreference: 'ethereum'   // User's preferred chain
+  strategy: 'cheapest', // Auto-selects lowest cost chain
+  maxCost: 0.001, // Never exceed cost limit
+  userPreference: 'ethereum', // User's preferred chain
 })
 
 // Geographic compliance
 const result = await walcache.uploadAsset(file, {
   strategy: 'compliant',
-  userLocation: 'EU',          // GDPR compliance
-  regulation: 'strict'         // Banking/finance requirements
+  userLocation: 'EU', // GDPR compliance
+  regulation: 'strict', // Banking/finance requirements
 })
 ```
 
 ### **File Optimization**
+
 Automatic compression and format conversion.
 
 ```javascript
@@ -358,9 +371,9 @@ const result = await walcache.uploadAsset(file, {
   optimization: {
     enabled: true,
     imageQuality: 85,
-    formats: ['webp', 'avif'],     // Generate multiple formats
-    maxDimensions: { width: 1920, height: 1080 }
-  }
+    formats: ['webp', 'avif'], // Generate multiple formats
+    maxDimensions: { width: 1920, height: 1080 },
+  },
 })
 
 // Returns optimized versions for different use cases
@@ -370,6 +383,7 @@ console.log('Optimization saved:', result.optimization.compressionRatio)
 ## 🔧 Advanced Configuration
 
 ### **Custom Verifiers**
+
 Add your own verification logic.
 
 ```javascript
@@ -379,11 +393,12 @@ const gating = {
     // Your custom logic here
     const hasAccess = await myCustomCheck(userAddress)
     return hasAccess
-  }
+  },
 }
 ```
 
 ### **Multi-Chain Deployment**
+
 Deploy assets to multiple chains simultaneously.
 
 ```javascript
@@ -391,15 +406,16 @@ const result = await walcache.uploadAsset(file, {
   targetChain: 'sui',
   crossChain: {
     targetChains: ['ethereum', 'solana'],
-    strategy: 'immediate',       // Deploy immediately
-    syncMetadata: true          // Keep metadata in sync
-  }
+    strategy: 'immediate', // Deploy immediately
+    syncMetadata: true, // Keep metadata in sync
+  },
 })
 
 console.log('Deployed to:', Object.keys(result.crossChainResults))
 ```
 
 ### **Access Control**
+
 Built-in token gating and monetization.
 
 ```javascript
@@ -410,14 +426,14 @@ const result = await walcache.uploadAsset(file, {
     tokenRequirements: {
       contractAddress: '0xabc...',
       minimumBalance: '100',
-      tokenType: 'ERC20'
+      tokenType: 'ERC20',
     },
     pricing: {
       amount: '0.1',
       currency: 'ETH',
-      recurringType: 'monthly'
-    }
-  }
+      recurringType: 'monthly',
+    },
+  },
 })
 ```
 
@@ -426,6 +442,7 @@ const result = await walcache.uploadAsset(file, {
 ### **WalrusCDNClient** (v1 API)
 
 #### Core Methods
+
 - `getBlob(blobId)` - Get blob information and metadata
 - `listBlobs(params)` - List blobs with pagination support
 - `createUpload(file, options)` - Upload file to Walrus network
@@ -433,6 +450,7 @@ const result = await walcache.uploadAsset(file, {
 - `listUploads(params)` - List uploads with filtering and pagination
 
 #### Cache Management
+
 - `preloadBlobs(blobIds)` - Preload multiple blobs into cache
 - `getCacheEntry(blobId)` - Get cache entry information
 - `listCacheEntries(params)` - List cache entries with pagination
@@ -442,17 +460,20 @@ const result = await walcache.uploadAsset(file, {
 - `unpinBlob(blobId)` - Unpin blob to allow eviction
 
 #### Analytics & Monitoring
+
 - `getBlobAnalytics(blobId)` - Get analytics for specific blob
 - `listAnalytics(params)` - List analytics with filtering
 - `getGlobalAnalytics()` - Get global CDN performance metrics
 - `getPrometheusMetrics()` - Get Prometheus-format metrics
 
 #### URL Generation
+
 - `getCDNUrl(blobId, options)` - Generate CDN URL for blob
 - `getMultiChainCDNUrl(blobId, options)` - Generate multi-chain optimized URL
 - `getAdvancedCDNUrl(blobId, options)` - Generate URL with asset verification
 
 #### Multi-Chain Support
+
 - `verifyAsset(chain, options)` - Verify asset ownership on blockchain
 - `verifyMultiChain(chains, options)` - Verify across multiple chains
 - `queryAsset(chain, options)` - Query asset from smart contracts
@@ -460,45 +481,52 @@ const result = await walcache.uploadAsset(file, {
 - `selectOptimalNode(chain, strategy, network?)` - Select best performing node
 
 #### Error Handling
+
 All methods throw `WalrusCDNError` with structured error information:
+
 ```javascript
 try {
   await client.getBlob('invalid-id')
 } catch (error) {
-  console.log(error.type)     // 'not_found_error'
-  console.log(error.code)     // 'BLOB_NOT_FOUND'
-  console.log(error.message)  // 'Blob not found'
-  console.log(error.status)   // 404
+  console.log(error.type) // 'not_found_error'
+  console.log(error.code) // 'BLOB_NOT_FOUND'
+  console.log(error.message) // 'Blob not found'
+  console.log(error.status) // 404
 }
 ```
 
 #### Pagination
+
 List methods support cursor-based pagination:
+
 ```javascript
 const blobs = await client.listBlobs({
   limit: 10,
   starting_after: 'blob_123',
   cached: true,
-  pinned: false
+  pinned: false,
 })
 
-console.log(blobs.data)      // Array of BlobResource
-console.log(blobs.has_more)  // Boolean
+console.log(blobs.data) // Array of BlobResource
+console.log(blobs.has_more) // Boolean
 ```
 
 ### **Utility Classes**
 
 #### MetadataNormalizer
+
 - `normalizeMetadata(raw, chain)` - Convert to unified format
 - `toChainFormat(unified, chain)` - Convert to chain-specific format
 - `validateMetadata(metadata)` - Check metadata quality
 
 #### UnifiedVerifier
+
 - `verifyOwnership(user, asset, chain, options)` - Verify ownership
 - `verifyAccess(user, chain, gating)` - Check gated access
 - `batchVerify(verifications)` - Verify multiple assets
 
 #### CrossChainSearchEngine
+
 - `findAssetsByOwner(owner, criteria)` - Search by owner
 - `findAssetsByCollection(collection, chain)` - Search collection
 - `textSearch(query, criteria)` - Text-based search
@@ -527,4 +555,4 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for gu
 npm install @walcache/sdk
 ```
 
-*Zero blockchain complexity. Maximum developer productivity.*
+_Zero blockchain complexity. Maximum developer productivity._

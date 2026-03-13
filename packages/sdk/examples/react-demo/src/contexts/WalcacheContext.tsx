@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react'
+import React, { createContext, useCallback, useContext, useState } from 'react'
 
 export type SupportedChain = 'ethereum' | 'sui' | 'solana'
 
@@ -7,7 +7,10 @@ interface WalcacheContextType {
   setSelectedChain: (chain: SupportedChain) => void
   uploadAsset: (file: File, options: UploadOptions) => Promise<UploadResult>
   getAssetInfo: (assetId: string) => Promise<AssetInfoResult>
-  generateUrls: (blobId: string, params?: Record<string, string>) => Promise<UrlResult>
+  generateUrls: (
+    blobId: string,
+    params?: Record<string, string>,
+  ) => Promise<UrlResult>
   verifyOwnership: (data: VerificationData) => Promise<VerificationResult>
   getMetrics: () => Promise<MetricsResult>
   loading: boolean
@@ -107,7 +110,9 @@ interface MetricsResult {
   error?: string
 }
 
-const WalcacheContext = createContext<WalcacheContextType | undefined>(undefined)
+const WalcacheContext = createContext<WalcacheContextType | undefined>(
+  undefined,
+)
 
 const API_BASE = '/api' // Proxied through Vite to backend
 
@@ -115,87 +120,104 @@ export function WalcacheProvider({ children }: { children: React.ReactNode }) {
   const [selectedChain, setSelectedChain] = useState<SupportedChain>('sui')
   const [loading, setLoading] = useState(false)
 
-  const uploadAsset = useCallback(async (file: File, options: UploadOptions): Promise<UploadResult> => {
-    setLoading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('chain', options.chain)
-      formData.append('name', options.name || file.name)
-      formData.append('description', options.description || '')
-      formData.append('createNFT', String(options.createNFT || false))
-      formData.append('permanent', String(options.permanent || false))
+  const uploadAsset = useCallback(
+    async (file: File, options: UploadOptions): Promise<UploadResult> => {
+      setLoading(true)
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('chain', options.chain)
+        formData.append('name', options.name || file.name)
+        formData.append('description', options.description || '')
+        formData.append('createNFT', String(options.createNFT || false))
+        formData.append('permanent', String(options.permanent || false))
 
-      const response = await fetch(`${API_BASE}/upload`, {
-        method: 'POST',
-        body: formData,
-      })
+        const response = await fetch(`${API_BASE}/upload`, {
+          method: 'POST',
+          body: formData,
+        })
 
-      const result = await response.json()
-      return result
-    } catch (error: any) {
-      return { 
-        success: false, 
-        error: `Upload failed: ${error.message}` 
+        const result = await response.json()
+        return result
+      } catch (error: any) {
+        return {
+          success: false,
+          error: `Upload failed: ${error.message}`,
+        }
+      } finally {
+        setLoading(false)
       }
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    },
+    [],
+  )
 
-  const getAssetInfo = useCallback(async (assetId: string): Promise<AssetInfoResult> => {
-    setLoading(true)
-    try {
-      const response = await fetch(`${API_BASE}/asset/${assetId}?multichain=true`)
-      const result = await response.json()
-      return result
-    } catch (error: any) {
-      return { 
-        success: false, 
-        error: `Failed to get asset info: ${error.message}` 
+  const getAssetInfo = useCallback(
+    async (assetId: string): Promise<AssetInfoResult> => {
+      setLoading(true)
+      try {
+        const response = await fetch(
+          `${API_BASE}/asset/${assetId}?multichain=true`,
+        )
+        const result = await response.json()
+        return result
+      } catch (error: any) {
+        return {
+          success: false,
+          error: `Failed to get asset info: ${error.message}`,
+        }
+      } finally {
+        setLoading(false)
       }
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    },
+    [],
+  )
 
-  const generateUrls = useCallback(async (blobId: string, params?: Record<string, string>): Promise<UrlResult> => {
-    setLoading(true)
-    try {
-      const queryParams = new URLSearchParams(params)
-      const response = await fetch(`${API_BASE}/cdn/${blobId}?${queryParams}`)
-      const result = await response.json()
-      return { success: true, cdnUrl: result.cdnUrl }
-    } catch (error: any) {
-      return { 
-        success: false, 
-        error: `Failed to generate URLs: ${error.message}` 
+  const generateUrls = useCallback(
+    async (
+      blobId: string,
+      params?: Record<string, string>,
+    ): Promise<UrlResult> => {
+      setLoading(true)
+      try {
+        const queryParams = new URLSearchParams(params)
+        const response = await fetch(`${API_BASE}/cdn/${blobId}?${queryParams}`)
+        const result = await response.json()
+        return { success: true, cdnUrl: result.cdnUrl }
+      } catch (error: any) {
+        return {
+          success: false,
+          error: `Failed to generate URLs: ${error.message}`,
+        }
+      } finally {
+        setLoading(false)
       }
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    },
+    [],
+  )
 
-  const verifyOwnership = useCallback(async (data: VerificationData): Promise<VerificationResult> => {
-    setLoading(true)
-    try {
-      const response = await fetch(`${API_BASE}/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
+  const verifyOwnership = useCallback(
+    async (data: VerificationData): Promise<VerificationResult> => {
+      setLoading(true)
+      try {
+        const response = await fetch(`${API_BASE}/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
 
-      const result = await response.json()
-      return result
-    } catch (error: any) {
-      return { 
-        success: false, 
-        error: `Verification failed: ${error.message}` 
+        const result = await response.json()
+        return result
+      } catch (error: any) {
+        return {
+          success: false,
+          error: `Verification failed: ${error.message}`,
+        }
+      } finally {
+        setLoading(false)
       }
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    },
+    [],
+  )
 
   const getMetrics = useCallback(async (): Promise<MetricsResult> => {
     setLoading(true)
@@ -204,9 +226,9 @@ export function WalcacheProvider({ children }: { children: React.ReactNode }) {
       const result = await response.json()
       return result
     } catch (error: any) {
-      return { 
-        success: false, 
-        error: `Failed to load metrics: ${error.message}` 
+      return {
+        success: false,
+        error: `Failed to load metrics: ${error.message}`,
       }
     } finally {
       setLoading(false)
@@ -239,4 +261,12 @@ export function useWalcache() {
   return context
 }
 
-export type { UploadOptions, UploadResult, AssetInfoResult, UrlResult, VerificationData, VerificationResult, MetricsResult }
+export type {
+  UploadOptions,
+  UploadResult,
+  AssetInfoResult,
+  UrlResult,
+  VerificationData,
+  VerificationResult,
+  MetricsResult,
+}

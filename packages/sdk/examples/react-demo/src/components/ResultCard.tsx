@@ -1,5 +1,5 @@
 import React from 'react'
-import { CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle, XCircle } from 'lucide-react'
 
 interface ResultCardProps {
   type: 'success' | 'error' | 'warning'
@@ -8,9 +8,14 @@ interface ResultCardProps {
   className?: string
 }
 
-export default function ResultCard({ type, title, children, className = '' }: ResultCardProps) {
+export default function ResultCard({
+  type,
+  title,
+  children,
+  className = '',
+}: ResultCardProps) {
   const baseClasses = 'p-6 rounded-xl border-2 fade-in'
-  
+
   const typeClasses = {
     success: 'border-green-200 bg-green-50 text-green-800',
     error: 'border-red-200 bg-red-50 text-red-800',
@@ -33,9 +38,7 @@ export default function ResultCard({ type, title, children, className = '' }: Re
           <h4 className="font-semibold text-lg">{title}</h4>
         </div>
       )}
-      <div className="space-y-3">
-        {children}
-      </div>
+      <div className="space-y-3">{children}</div>
     </div>
   )
 }

@@ -5,6 +5,7 @@
 **Walcache SDK** enables developers to integrate **universal blockchain asset storage** into their applications. The SDK handles all blockchain complexity in your **backend**, while your **frontend** provides a simple user interface.
 
 ### Architecture Flow
+
 ```
 Frontend (Your App) → Your Backend API → Walcache SDK → Blockchain Networks
                                      ↓
@@ -14,12 +15,14 @@ Frontend (Your App) → Your Backend API → Walcache SDK → Blockchain Network
 ## 🎯 What Developers Get
 
 ### **One-Line Asset Storage**
+
 ```javascript
 const result = await walcache.store(file, { targetChain: 'ethereum' })
 // Returns: { blobId, cdnUrl, transactionHash, contractAddress }
 ```
 
 ### **Supported Features**
+
 - ✅ Universal file upload to **Sui, Ethereum, Solana**
 - ✅ Automatic **NFT creation** and smart contract deployment
 - ✅ **CDN optimization** with global delivery
@@ -32,6 +35,7 @@ const result = await walcache.store(file, { targetChain: 'ethereum' })
 ## 📦 Installation & Setup
 
 ### 1. Install the SDK
+
 ```bash
 npm install walcache-sdk
 # or
@@ -43,35 +47,38 @@ bun add walcache-sdk
 ### 2. Configuration Options
 
 #### Local Development (Recommended for Testing)
+
 ```javascript
 // For local development and testing
 const walcache = new WalcacheBackendService({
   baseUrl: 'http://localhost:4500', // Your local WCDN instance
   apiKey: process.env.WALCACHE_API_KEY,
-  defaultChain: 'sui'
+  defaultChain: 'sui',
 })
 ```
 
 #### Production Options
+
 ```javascript
 // Option 1: Use hosted WCDN service
 const walcache = new WalcacheBackendService({
   baseUrl: 'https://api.walcache.com', // Hosted service
   apiKey: process.env.WALCACHE_API_KEY,
-  defaultChain: 'sui'
+  defaultChain: 'sui',
 })
 
 // Option 2: Self-hosted WCDN
 const walcache = new WalcacheBackendService({
   baseUrl: 'https://your-cdn-domain.com', // Your self-hosted instance
   apiKey: process.env.WALCACHE_API_KEY,
-  defaultChain: 'sui'
+  defaultChain: 'sui',
 })
 ```
 
 ### 3. Backend Integration
 
 #### Express.js Example
+
 ```javascript
 import express from 'express'
 import multer from 'multer'
@@ -84,7 +91,7 @@ const upload = multer({ dest: 'uploads/' })
 const walcache = new WalcacheBackendService({
   baseUrl: 'https://your-cdn-domain.com',
   apiKey: process.env.WALCACHE_API_KEY,
-  defaultChain: 'sui'
+  defaultChain: 'sui',
 })
 
 // Upload endpoint
@@ -95,9 +102,9 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       name: req.body.name,
       description: req.body.description,
       createNFT: req.body.createNFT === 'true',
-      permanent: req.body.permanent === 'true'
+      permanent: req.body.permanent === 'true',
     })
-    
+
     res.json(result)
   } catch (error) {
     res.status(500).json({ success: false, error: error.message })
@@ -122,6 +129,7 @@ app.listen(3000, () => {
 ```
 
 #### Next.js API Routes Example
+
 ```javascript
 // pages/api/upload.js
 import { WalcacheBackendService } from 'walcache-sdk'
@@ -129,7 +137,7 @@ import { IncomingForm } from 'formidable'
 
 const walcache = new WalcacheBackendService({
   baseUrl: process.env.WALCACHE_CDN_URL,
-  apiKey: process.env.WALCACHE_API_KEY
+  apiKey: process.env.WALCACHE_API_KEY,
 })
 
 export default async function handler(req, res) {
@@ -140,13 +148,13 @@ export default async function handler(req, res) {
   try {
     const form = new IncomingForm()
     const [fields, files] = await form.parse(req)
-    
+
     const result = await walcache.uploadAsset(files.file[0], {
       chain: fields.chain?.[0] || 'sui',
       name: fields.name?.[0],
-      createNFT: fields.createNFT?.[0] === 'true'
+      createNFT: fields.createNFT?.[0] === 'true',
     })
-    
+
     res.json(result)
   } catch (error) {
     res.status(500).json({ success: false, error: error.message })
@@ -154,11 +162,12 @@ export default async function handler(req, res) {
 }
 
 export const config = {
-  api: { bodyParser: false }
+  api: { bodyParser: false },
 }
 ```
 
 #### Fastify Example
+
 ```javascript
 import Fastify from 'fastify'
 import { WalcacheBackendService } from 'walcache-sdk'
@@ -168,18 +177,18 @@ await fastify.register(import('@fastify/multipart'))
 
 const walcache = new WalcacheBackendService({
   baseUrl: process.env.WALCACHE_CDN_URL,
-  apiKey: process.env.WALCACHE_API_KEY
+  apiKey: process.env.WALCACHE_API_KEY,
 })
 
 fastify.post('/api/upload', async (request, reply) => {
   const data = await request.file()
-  
+
   const result = await walcache.uploadAsset(data, {
     chain: data.fields.chain?.value || 'sui',
     name: data.fields.name?.value,
-    createNFT: data.fields.createNFT?.value === 'true'
+    createNFT: data.fields.createNFT?.value === 'true',
   })
-  
+
   return result
 })
 
@@ -187,6 +196,7 @@ await fastify.listen({ port: 3000 })
 ```
 
 ### 4. Environment Configuration
+
 ```bash
 # .env file for local development
 WALCACHE_CDN_URL=http://localhost:4500
@@ -207,6 +217,7 @@ SOLANA_PROGRAM_ID=xyz...
 ## 🎨 Frontend Integration
 
 ### React Example
+
 ```jsx
 import React, { useState } from 'react'
 
@@ -217,20 +228,20 @@ function AssetUploader() {
 
   const handleUpload = async () => {
     if (!file) return
-    
+
     setUploading(true)
     const formData = new FormData()
     formData.append('file', file)
     formData.append('chain', 'ethereum')
     formData.append('createNFT', 'true')
-    
+
     try {
       // This calls YOUR backend API (which uses Walcache SDK)
       const response = await fetch('/api/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
       })
-      
+
       const result = await response.json()
       setResult(result)
     } catch (error) {
@@ -242,19 +253,18 @@ function AssetUploader() {
 
   return (
     <div>
-      <input 
-        type="file" 
-        onChange={(e) => setFile(e.target.files[0])} 
-      />
+      <input type="file" onChange={(e) => setFile(e.target.files[0])} />
       <button onClick={handleUpload} disabled={uploading}>
         {uploading ? 'Uploading...' : 'Upload to Blockchain'}
       </button>
-      
+
       {result && result.success && (
         <div>
           <h3>✅ Upload Successful!</h3>
           <p>Asset ID: {result.data.id}</p>
-          <p>CDN URL: <a href={result.data.cdnUrl}>{result.data.cdnUrl}</a></p>
+          <p>
+            CDN URL: <a href={result.data.cdnUrl}>{result.data.cdnUrl}</a>
+          </p>
           {result.data.transactionHash && (
             <p>Transaction: {result.data.transactionHash}</p>
           )}
@@ -269,6 +279,7 @@ function AssetUploader() {
 ```
 
 ### Vue.js Example
+
 ```vue
 <template>
   <div>
@@ -276,11 +287,13 @@ function AssetUploader() {
     <button @click="uploadFile" :disabled="uploading">
       {{ uploading ? 'Uploading...' : 'Upload to Blockchain' }}
     </button>
-    
+
     <div v-if="result && result.success">
       <h3>✅ Upload Successful!</h3>
       <p>Asset ID: {{ result.data.id }}</p>
-      <p>CDN URL: <a :href="result.data.cdnUrl">{{ result.data.cdnUrl }}</a></p>
+      <p>
+        CDN URL: <a :href="result.data.cdnUrl">{{ result.data.cdnUrl }}</a>
+      </p>
     </div>
   </div>
 </template>
@@ -291,7 +304,7 @@ export default {
     return {
       file: null,
       uploading: false,
-      result: null
+      result: null,
     }
   },
   methods: {
@@ -300,16 +313,16 @@ export default {
     },
     async uploadFile() {
       if (!this.file) return
-      
+
       this.uploading = true
       const formData = new FormData()
       formData.append('file', this.file)
       formData.append('chain', 'sui')
-      
+
       try {
         const response = await fetch('/api/upload', {
           method: 'POST',
-          body: formData
+          body: formData,
         })
         this.result = await response.json()
       } catch (error) {
@@ -317,49 +330,50 @@ export default {
       } finally {
         this.uploading = false
       }
-    }
-  }
+    },
+  },
 }
 </script>
 ```
 
 ### Vanilla JavaScript Example
+
 ```html
-<input type="file" id="fileInput">
+<input type="file" id="fileInput" />
 <button onclick="uploadFile()">Upload to Blockchain</button>
 <div id="result"></div>
 
 <script>
-async function uploadFile() {
-  const fileInput = document.getElementById('fileInput')
-  const file = fileInput.files[0]
-  
-  if (!file) return
-  
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('chain', 'solana')
-  formData.append('createNFT', 'true')
-  
-  try {
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData
-    })
-    
-    const result = await response.json()
-    
-    if (result.success) {
-      document.getElementById('result').innerHTML = `
+  async function uploadFile() {
+    const fileInput = document.getElementById('fileInput')
+    const file = fileInput.files[0]
+
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('chain', 'solana')
+    formData.append('createNFT', 'true')
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        document.getElementById('result').innerHTML = `
         <h3>✅ Upload Successful!</h3>
         <p>Asset ID: ${result.data.id}</p>
         <p>CDN URL: <a href="${result.data.cdnUrl}">${result.data.cdnUrl}</a></p>
       `
+      }
+    } catch (error) {
+      console.error('Upload failed:', error)
     }
-  } catch (error) {
-    console.error('Upload failed:', error)
   }
-}
 </script>
 ```
 
@@ -368,6 +382,7 @@ async function uploadFile() {
 ## 🚀 Advanced Features
 
 ### 1. NFT Collection Creation
+
 ```javascript
 const result = await walcache.uploadAsset(file, {
   chain: 'ethereum',
@@ -378,29 +393,30 @@ const result = await walcache.uploadAsset(file, {
       name: 'My NFT Collection',
       symbol: 'MNC',
       maxSupply: 10000,
-      royalties: 5 // 5% royalties
-    }
+      royalties: 5, // 5% royalties
+    },
   },
   metadata: {
     name: 'Unique NFT #1',
     description: 'A unique digital asset',
     attributes: [
       { trait_type: 'Rarity', value: 'Legendary' },
-      { trait_type: 'Color', value: 'Gold' }
-    ]
-  }
+      { trait_type: 'Color', value: 'Gold' },
+    ],
+  },
 })
 ```
 
 ### 2. Cross-Chain Asset Bridging
+
 ```javascript
 const result = await walcache.uploadAsset(file, {
   targetChain: 'sui',
   crossChain: {
     targetChains: ['ethereum', 'solana'],
     strategy: 'immediate',
-    syncMetadata: true
-  }
+    syncMetadata: true,
+  },
 })
 
 // Result includes cross-chain deployment info
@@ -408,12 +424,13 @@ console.log(result.crossChainResults)
 ```
 
 ### 3. Asset Verification & Access Control
+
 ```javascript
 // Verify user owns an asset
 const verification = await walcache.verifyAssetOwnership(
   '0x123...', // user wallet address
-  '456',      // asset/token ID
-  'ethereum'  // blockchain
+  '456', // asset/token ID
+  'ethereum', // blockchain
 )
 
 if (verification.hasAccess) {
@@ -423,27 +440,29 @@ if (verification.hasAccess) {
 ```
 
 ### 4. Batch Upload
+
 ```javascript
 const results = await walcache.uploadBatch(files, {
   chain: 'sui',
   createNFT: true,
   collection: {
     name: 'Batch Collection',
-    symbol: 'BATCH'
-  }
+    symbol: 'BATCH',
+  },
 })
 
 console.log(`Uploaded ${results.successful}/${results.total} files`)
 ```
 
 ### 5. Real-time Metrics
+
 ```javascript
 app.get('/api/metrics', async (req, res) => {
   const metrics = await walcache.getServiceMetrics()
   res.json({
     totalUploads: metrics.data.cdn.global.totalRequests,
     hitRate: metrics.data.cdn.global.globalHitRate,
-    uptime: metrics.data.service.uptime
+    uptime: metrics.data.service.uptime,
   })
 })
 ```
@@ -453,29 +472,28 @@ app.get('/api/metrics', async (req, res) => {
 ## 🔧 Configuration Options
 
 ### WalcacheBackendService Configuration
+
 ```javascript
 const walcache = new WalcacheBackendService({
   // Required
   baseUrl: 'https://your-cdn-domain.com',
   apiKey: 'your-api-key',
-  
+
   // Optional
-  defaultChain: 'sui',           // Default blockchain
+  defaultChain: 'sui', // Default blockchain
   maxFileSize: 100 * 1024 * 1024, // 100MB limit
-  cacheTTL: 3600,                // Cache TTL in seconds
-  
+  cacheTTL: 3600, // Cache TTL in seconds
+
   // Security
-  allowedMimeTypes: [
-    'image/jpeg', 'image/png', 'video/mp4'
-  ],
-  
+  allowedMimeTypes: ['image/jpeg', 'image/png', 'video/mp4'],
+
   // Chain-specific endpoints
   chainEndpoints: {
     ethereum: {
       primary: 'https://eth-aggregator.com',
-      fallbacks: ['https://eth-backup.com']
-    }
-  }
+      fallbacks: ['https://eth-backup.com'],
+    },
+  },
 })
 ```
 
@@ -484,6 +502,7 @@ const walcache = new WalcacheBackendService({
 ## 🧪 Testing Your Integration
 
 ### 1. Test Upload Endpoint
+
 ```bash
 curl -X POST http://localhost:3000/api/upload \
   -F "file=@test-image.jpg" \
@@ -493,17 +512,21 @@ curl -X POST http://localhost:3000/api/upload \
 ```
 
 ### 2. Test Asset Retrieval
+
 ```bash
 curl http://localhost:3000/api/asset/bafkreih...
 ```
 
 ### 3. Test CDN URL Generation
+
 ```bash
 curl "http://localhost:3000/api/cdn/bafkreih...?width=800&quality=85"
 ```
 
 ### 4. Frontend Testing
+
 Open the included frontend demo:
+
 ```bash
 cd packages/sdk/examples/frontend-demo
 # Serve the HTML file or integrate into your app
@@ -514,6 +537,7 @@ cd packages/sdk/examples/frontend-demo
 ## 📊 Monitoring & Analytics
 
 ### Built-in Metrics
+
 ```javascript
 const metrics = await walcache.getServiceMetrics()
 
@@ -522,11 +546,12 @@ console.log({
   hitRate: metrics.data.cdn.global.globalHitRate,
   avgLatency: metrics.data.cdn.global.avgLatency,
   uniqueAssets: metrics.data.cdn.global.uniqueCIDs,
-  memoryUsage: metrics.data.service.memory.heapUsed
+  memoryUsage: metrics.data.service.memory.heapUsed,
 })
 ```
 
 ### Health Check Endpoint
+
 ```javascript
 app.get('/health', async (req, res) => {
   try {
@@ -543,6 +568,7 @@ app.get('/health', async (req, res) => {
 ## 🚢 Production Deployment
 
 ### 1. Environment Setup
+
 ```bash
 # Production environment variables
 WALCACHE_CDN_URL=https://your-production-cdn.com
@@ -555,27 +581,28 @@ SUI_RPC_URL=https://fullnode.mainnet.sui.io:443
 ```
 
 ### 2. Error Handling
+
 ```javascript
 app.use((error, req, res, next) => {
   console.error('Walcache error:', error)
-  
+
   res.status(500).json({
     success: false,
-    error: process.env.NODE_ENV === 'production' 
-      ? 'Upload failed' 
-      : error.message
+    error:
+      process.env.NODE_ENV === 'production' ? 'Upload failed' : error.message,
   })
 })
 ```
 
 ### 3. Rate Limiting
+
 ```javascript
 import rateLimit from 'express-rate-limit'
 
 const uploadLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 uploads per windowMs
-  message: 'Too many uploads, please try again later'
+  message: 'Too many uploads, please try again later',
 })
 
 app.post('/api/upload', uploadLimit, async (req, res) => {
@@ -626,4 +653,4 @@ npm run dev
 
 **Your users upload files → Your backend uses Walcache SDK → Assets stored on blockchain → Global CDN delivery**
 
-*Zero blockchain complexity for your frontend team!* 🚀
+_Zero blockchain complexity for your frontend team!_ 🚀

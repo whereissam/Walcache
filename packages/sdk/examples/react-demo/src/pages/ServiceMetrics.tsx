@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from 'react'
-import { BarChart3, RefreshCw, TrendingUp, Clock, Zap, Database } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import {
+  BarChart3,
+  Clock,
+  Database,
+  RefreshCw,
+  TrendingUp,
+  Zap,
+} from 'lucide-react'
 import { useWalcache } from '../contexts/WalcacheContext'
 import ResultCard from '../components/ResultCard'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -56,7 +63,7 @@ export default function ServiceMetrics() {
             <BarChart3 className="w-6 h-6" />
             Service Metrics Dashboard
           </h2>
-          
+
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -67,13 +74,15 @@ export default function ServiceMetrics() {
               />
               <span>Auto-refresh (5s)</span>
             </label>
-            
+
             <button
               onClick={loadMetrics}
               disabled={loading}
               className="btn-secondary flex items-center gap-2"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
+              />
               Refresh
             </button>
           </div>
@@ -94,7 +103,9 @@ export default function ServiceMetrics() {
                   <div className="bg-white p-4 rounded-lg border shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs text-gray-600 font-medium">Requests</span>
+                      <span className="text-xs text-gray-600 font-medium">
+                        Requests
+                      </span>
                     </div>
                     <div className="text-2xl font-bold text-gray-800">
                       {metrics.data.cdn.global.totalRequests.toLocaleString()}
@@ -105,9 +116,13 @@ export default function ServiceMetrics() {
                   <div className="bg-white p-4 rounded-lg border shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <Zap className="w-4 h-4 text-green-500" />
-                      <span className="text-xs text-gray-600 font-medium">Hit Rate</span>
+                      <span className="text-xs text-gray-600 font-medium">
+                        Hit Rate
+                      </span>
                     </div>
-                    <div className={`text-2xl font-bold ${getStatusColor(metrics.data.cdn.global.globalHitRate, 'hitRate')}`}>
+                    <div
+                      className={`text-2xl font-bold ${getStatusColor(metrics.data.cdn.global.globalHitRate, 'hitRate')}`}
+                    >
                       {metrics.data.cdn.global.globalHitRate.toFixed(1)}%
                     </div>
                     <div className="text-xs text-gray-500">Cache hits</div>
@@ -116,9 +131,13 @@ export default function ServiceMetrics() {
                   <div className="bg-white p-4 rounded-lg border shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <Clock className="w-4 h-4 text-yellow-500" />
-                      <span className="text-xs text-gray-600 font-medium">Latency</span>
+                      <span className="text-xs text-gray-600 font-medium">
+                        Latency
+                      </span>
                     </div>
-                    <div className={`text-2xl font-bold ${getStatusColor(metrics.data.cdn.global.avgLatency, 'latency')}`}>
+                    <div
+                      className={`text-2xl font-bold ${getStatusColor(metrics.data.cdn.global.avgLatency, 'latency')}`}
+                    >
                       {metrics.data.cdn.global.avgLatency}ms
                     </div>
                     <div className="text-xs text-gray-500">Average</div>
@@ -127,7 +146,9 @@ export default function ServiceMetrics() {
                   <div className="bg-white p-4 rounded-lg border shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <Database className="w-4 h-4 text-purple-500" />
-                      <span className="text-xs text-gray-600 font-medium">Assets</span>
+                      <span className="text-xs text-gray-600 font-medium">
+                        Assets
+                      </span>
                     </div>
                     <div className="text-2xl font-bold text-gray-800">
                       {metrics.data.cdn.global.uniqueCIDs.toLocaleString()}
@@ -138,7 +159,9 @@ export default function ServiceMetrics() {
                   <div className="bg-white p-4 rounded-lg border shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <Clock className="w-4 h-4 text-indigo-500" />
-                      <span className="text-xs text-gray-600 font-medium">Uptime</span>
+                      <span className="text-xs text-gray-600 font-medium">
+                        Uptime
+                      </span>
                     </div>
                     <div className="text-2xl font-bold text-gray-800">
                       {formatUptime(metrics.data.service.uptime)}
@@ -149,7 +172,9 @@ export default function ServiceMetrics() {
                   <div className="bg-white p-4 rounded-lg border shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <BarChart3 className="w-4 h-4 text-red-500" />
-                      <span className="text-xs text-gray-600 font-medium">Memory</span>
+                      <span className="text-xs text-gray-600 font-medium">
+                        Memory
+                      </span>
                     </div>
                     <div className="text-2xl font-bold text-gray-800">
                       {formatMemory(metrics.data.service.memory.heapUsed)}
@@ -161,22 +186,30 @@ export default function ServiceMetrics() {
                 {/* Service Information */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="bg-white p-6 rounded-lg border">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Service Status</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Service Status
+                    </h3>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Optimal Node:</span>
+                        <span className="text-sm text-gray-600">
+                          Optimal Node:
+                        </span>
                         <span className="text-sm font-medium text-gray-800">
                           {metrics.data.network.optimalNode}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Cache Backend:</span>
+                        <span className="text-sm text-gray-600">
+                          Cache Backend:
+                        </span>
                         <span className="text-sm font-medium text-gray-800">
                           {metrics.data.cdn.cache.using}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Last Updated:</span>
+                        <span className="text-sm text-gray-600">
+                          Last Updated:
+                        </span>
                         <span className="text-sm font-medium text-gray-800">
                           {new Date().toLocaleTimeString()}
                         </span>
@@ -185,18 +218,27 @@ export default function ServiceMetrics() {
                   </div>
 
                   <div className="bg-white p-6 rounded-lg border">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Performance Health</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Performance Health
+                    </h3>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Cache Hit Rate:</span>
+                        <span className="text-sm text-gray-600">
+                          Cache Hit Rate:
+                        </span>
                         <div className="flex items-center gap-2">
                           <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div 
+                            <div
                               className={`h-2 rounded-full ${
-                                metrics.data.cdn.global.globalHitRate >= 90 ? 'bg-green-500' :
-                                metrics.data.cdn.global.globalHitRate >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                                metrics.data.cdn.global.globalHitRate >= 90
+                                  ? 'bg-green-500'
+                                  : metrics.data.cdn.global.globalHitRate >= 70
+                                    ? 'bg-yellow-500'
+                                    : 'bg-red-500'
                               }`}
-                              style={{ width: `${metrics.data.cdn.global.globalHitRate}%` }}
+                              style={{
+                                width: `${metrics.data.cdn.global.globalHitRate}%`,
+                              }}
                             ></div>
                           </div>
                           <span className="text-sm font-medium">
@@ -204,18 +246,29 @@ export default function ServiceMetrics() {
                           </span>
                         </div>
                       </div>
-                      
+
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Response Time:</span>
-                        <span className={`text-sm font-medium ${getStatusColor(metrics.data.cdn.global.avgLatency, 'latency')}`}>
-                          {metrics.data.cdn.global.avgLatency < 100 ? '🟢 Excellent' :
-                           metrics.data.cdn.global.avgLatency < 300 ? '🟡 Good' : '🔴 Needs Attention'}
+                        <span className="text-sm text-gray-600">
+                          Response Time:
+                        </span>
+                        <span
+                          className={`text-sm font-medium ${getStatusColor(metrics.data.cdn.global.avgLatency, 'latency')}`}
+                        >
+                          {metrics.data.cdn.global.avgLatency < 100
+                            ? '🟢 Excellent'
+                            : metrics.data.cdn.global.avgLatency < 300
+                              ? '🟡 Good'
+                              : '🔴 Needs Attention'}
                         </span>
                       </div>
-                      
+
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Service Health:</span>
-                        <span className="text-sm font-medium text-green-600">🟢 Healthy</span>
+                        <span className="text-sm text-gray-600">
+                          Service Health:
+                        </span>
+                        <span className="text-sm font-medium text-green-600">
+                          🟢 Healthy
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -223,10 +276,14 @@ export default function ServiceMetrics() {
 
                 {/* Multi-Chain Statistics */}
                 <div className="bg-white p-6 rounded-lg border">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Multi-Chain Performance</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Multi-Chain Performance
+                  </h3>
                   <div className="grid md:grid-cols-3 gap-4">
                     <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <h4 className="font-medium text-blue-800 mb-2">Ethereum</h4>
+                      <h4 className="font-medium text-blue-800 mb-2">
+                        Ethereum
+                      </h4>
                       <div className="text-sm text-blue-700 space-y-1">
                         <div className="flex justify-between">
                           <span>Avg Latency:</span>
@@ -262,7 +319,9 @@ export default function ServiceMetrics() {
                     </div>
 
                     <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                      <h4 className="font-medium text-purple-800 mb-2">Solana</h4>
+                      <h4 className="font-medium text-purple-800 mb-2">
+                        Solana
+                      </h4>
                       <div className="text-sm text-purple-700 space-y-1">
                         <div className="flex justify-between">
                           <span>Avg Latency:</span>
@@ -302,24 +361,46 @@ export default function ServiceMetrics() {
 
       {/* Metrics Information */}
       <div className="card p-6 bg-gray-50">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Understanding Metrics</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          📊 Understanding Metrics
+        </h3>
         <div className="grid md:grid-cols-2 gap-6 text-sm">
           <div>
-            <h4 className="font-medium text-gray-800 mb-2">Performance Indicators</h4>
+            <h4 className="font-medium text-gray-800 mb-2">
+              Performance Indicators
+            </h4>
             <ul className="space-y-1 text-gray-600">
-              <li><strong>Total Requests:</strong> Number of asset requests served</li>
-              <li><strong>Hit Rate:</strong> Percentage of requests served from cache</li>
-              <li><strong>Average Latency:</strong> Mean response time in milliseconds</li>
-              <li><strong>Unique Assets:</strong> Number of distinct assets stored</li>
+              <li>
+                <strong>Total Requests:</strong> Number of asset requests served
+              </li>
+              <li>
+                <strong>Hit Rate:</strong> Percentage of requests served from
+                cache
+              </li>
+              <li>
+                <strong>Average Latency:</strong> Mean response time in
+                milliseconds
+              </li>
+              <li>
+                <strong>Unique Assets:</strong> Number of distinct assets stored
+              </li>
             </ul>
           </div>
           <div>
             <h4 className="font-medium text-gray-800 mb-2">System Health</h4>
             <ul className="space-y-1 text-gray-600">
-              <li><strong>Uptime:</strong> How long the service has been running</li>
-              <li><strong>Memory Usage:</strong> Current heap memory consumption</li>
-              <li><strong>Optimal Node:</strong> Best performing network endpoint</li>
-              <li><strong>Cache Backend:</strong> Storage system being used</li>
+              <li>
+                <strong>Uptime:</strong> How long the service has been running
+              </li>
+              <li>
+                <strong>Memory Usage:</strong> Current heap memory consumption
+              </li>
+              <li>
+                <strong>Optimal Node:</strong> Best performing network endpoint
+              </li>
+              <li>
+                <strong>Cache Backend:</strong> Storage system being used
+              </li>
             </ul>
           </div>
         </div>
