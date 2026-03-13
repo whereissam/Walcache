@@ -1,13 +1,19 @@
-import { Command } from 'commander';
-import chalk from 'chalk';
-import { table } from 'table';
-import ora from 'ora';
-import inquirer from 'inquirer';
-import { getWCDNClient, getConfig, log, verbose, formatBytes } from '../utils/config.js';
+import { Command } from 'commander'
+import chalk from 'chalk'
+import { table } from 'table'
+import ora from 'ora'
+import inquirer from 'inquirer'
+import {
+  getWCDNClient,
+  getConfig,
+  log,
+  verbose,
+  formatBytes,
+} from '../utils/config.js'
 
 export const blockchainCommand = new Command('blockchain')
   .alias('bc')
-  .description('Manage blockchain operations');
+  .description('Manage blockchain operations')
 
 // Status command
 blockchainCommand
@@ -16,68 +22,85 @@ blockchainCommand
   .option('-c, --chain <chain>', 'specific chain to check')
   .action(async (options) => {
     try {
-      const client = getWCDNClient();
-      const config = getConfig();
+      const client = getWCDNClient()
+      const config = getConfig()
 
-      console.log(chalk.bold('🔗 Blockchain Integration Status\n'));
+      console.log(chalk.bold('🔗 Blockchain Integration Status\n'))
 
       // Check if blockchain integration is available
       if (!client.isBlockchainIntegrationAvailable()) {
-        console.log(chalk.red('❌ Blockchain integration not configured'));
-        console.log(chalk.gray('Run "wcdn config blockchain" to set up blockchain integration'));
-        return;
+        console.log(chalk.red('❌ Blockchain integration not configured'))
+        console.log(
+          chalk.gray(
+            'Run "wcdn config blockchain" to set up blockchain integration',
+          ),
+        )
+        return
       }
 
       // Get supported chains
-      const supportedChains = client.getSupportedChains();
-      console.log(chalk.green('✅ Blockchain integration enabled'));
-      console.log(`Supported chains: ${supportedChains.map(c => chalk.cyan(c)).join(', ')}\n`);
+      const supportedChains = client.getSupportedChains()
+      console.log(chalk.green('✅ Blockchain integration enabled'))
+      console.log(
+        `Supported chains: ${supportedChains.map((c) => chalk.cyan(c)).join(', ')}\n`,
+      )
 
       // Check each chain status
       for (const chain of supportedChains) {
-        if (options.chain && options.chain !== chain) continue;
+        if (options.chain && options.chain !== chain) continue
 
-        console.log(chalk.bold(`${chain.toUpperCase()} Status:`));
-        
-        const spinner = ora(`Checking ${chain} integration...`).start();
-        
+        console.log(chalk.bold(`${chain.toUpperCase()} Status:`))
+
+        const spinner = ora(`Checking ${chain} integration...`).start()
+
         try {
           // Test basic connectivity
-          await client.healthCheckNodes(chain);
-          spinner.succeed(`${chain} nodes healthy`);
+          await client.healthCheckNodes(chain)
+          spinner.succeed(`${chain} nodes healthy`)
 
           // Show configuration details
-          const chainConfig = config.blockchain?.[chain];
+          const chainConfig = config.blockchain?.[chain]
           if (chainConfig) {
             const configData = [
               ['Property', 'Value'],
               ['Network', chainConfig.network || 'N/A'],
-              ['RPC URL', chainConfig.rpcUrl ? '✓ Configured' : '✗ Not configured'],
-              ['Contract/Package', chainConfig.contractAddress || chainConfig.packageId || 'N/A'],
-              ['Private Key', chainConfig.privateKey ? '✓ Available (Write operations enabled)' : '✗ Not available (Read-only)'],
-            ];
+              [
+                'RPC URL',
+                chainConfig.rpcUrl ? '✓ Configured' : '✗ Not configured',
+              ],
+              [
+                'Contract/Package',
+                chainConfig.contractAddress || chainConfig.packageId || 'N/A',
+              ],
+              [
+                'Private Key',
+                chainConfig.privateKey
+                  ? '✓ Available (Write operations enabled)'
+                  : '✗ Not available (Read-only)',
+              ],
+            ]
 
-            console.log(table(configData, {
-              header: {
-                alignment: 'center',
-                content: chalk.blue(`${chain.toUpperCase()} Configuration`),
-              },
-            }));
+            console.log(
+              table(configData, {
+                header: {
+                  alignment: 'center',
+                  content: chalk.blue(`${chain.toUpperCase()} Configuration`),
+                },
+              }),
+            )
           }
-
         } catch (error) {
-          spinner.fail(`${chain} integration error: ${error.message}`);
+          spinner.fail(`${chain} integration error: ${error.message}`)
         }
 
-        console.log(''); // Add spacing
+        console.log('') // Add spacing
       }
-
     } catch (error) {
-      log(`Blockchain status error: ${error.message}`, 'error');
-      verbose(error.stack);
-      process.exit(1);
+      log(`Blockchain status error: ${error.message}`, 'error')
+      verbose(error.stack)
+      process.exit(1)
     }
-  });
+  })
 
 // Register command
 blockchainCommand
@@ -91,19 +114,19 @@ blockchainCommand
   .option('-y, --yes', 'skip confirmation prompts')
   .action(async (blobId, options) => {
     try {
-      const client = getWCDNClient();
-      const config = getConfig();
+      const client = getWCDNClient()
+      const config = getConfig()
 
       if (!client.isBlockchainIntegrationAvailable()) {
-        log('Blockchain integration not configured', 'error');
-        return;
+        log('Blockchain integration not configured', 'error')
+        return
       }
 
-      const chain = options.chain || config.defaults?.chain || 'ethereum';
-      
+      const chain = options.chain || config.defaults?.chain || 'ethereum'
+
       if (!client.getSupportedChains().includes(chain)) {
-        log(`Chain "${chain}" not configured`, 'error');
-        return;
+        log(`Chain "${chain}" not configured`, 'error')
+        return
       }
 
       // Get blob information if not provided
@@ -111,18 +134,18 @@ blockchainCommand
         size: options.size,
         contentType: options.contentType,
         contentHash: options.contentHash,
-      };
+      }
 
       if (!metadata.size || !metadata.contentType) {
-        console.log(chalk.blue('Fetching blob information from WCDN...'));
+        console.log(chalk.blue('Fetching blob information from WCDN...'))
         try {
-          const blobInfo = await client.getBlob(blobId);
-          metadata.size = metadata.size || blobInfo.size;
-          metadata.contentType = metadata.contentType || blobInfo.content_type;
-          metadata.contentHash = metadata.contentHash || blobId; // Fallback to blob ID
+          const blobInfo = await client.getBlob(blobId)
+          metadata.size = metadata.size || blobInfo.size
+          metadata.contentType = metadata.contentType || blobInfo.content_type
+          metadata.contentHash = metadata.contentHash || blobId // Fallback to blob ID
         } catch (error) {
-          log(`Failed to fetch blob information: ${error.message}`, 'error');
-          
+          log(`Failed to fetch blob information: ${error.message}`, 'error')
+
           // Prompt for missing information
           const missingInfo = await inquirer.prompt([
             {
@@ -146,22 +169,22 @@ blockchainCommand
               default: blobId,
               when: () => !metadata.contentHash,
             },
-          ]);
+          ])
 
-          metadata = { ...metadata, ...missingInfo };
+          metadata = { ...metadata, ...missingInfo }
         }
       }
 
-      const cdnUrl = client.getCDNUrl(blobId);
+      const cdnUrl = client.getCDNUrl(blobId)
 
       // Show registration summary
-      console.log(chalk.bold('\nRegistration Summary:'));
-      console.log(`Blob ID: ${chalk.cyan(blobId)}`);
-      console.log(`Chain: ${chalk.yellow(chain)}`);
-      console.log(`Size: ${formatBytes(metadata.size)}`);
-      console.log(`Content Type: ${metadata.contentType}`);
-      console.log(`CDN URL: ${cdnUrl}`);
-      console.log(`Content Hash: ${metadata.contentHash}`);
+      console.log(chalk.bold('\nRegistration Summary:'))
+      console.log(`Blob ID: ${chalk.cyan(blobId)}`)
+      console.log(`Chain: ${chalk.yellow(chain)}`)
+      console.log(`Size: ${formatBytes(metadata.size)}`)
+      console.log(`Content Type: ${metadata.contentType}`)
+      console.log(`CDN URL: ${cdnUrl}`)
+      console.log(`Content Hash: ${metadata.contentHash}`)
 
       // Confirm registration
       if (!options.yes) {
@@ -172,17 +195,17 @@ blockchainCommand
             message: `Register blob on ${chain} blockchain?`,
             default: true,
           },
-        ]);
+        ])
 
         if (!proceed) {
-          log('Registration cancelled', 'warning');
-          return;
+          log('Registration cancelled', 'warning')
+          return
         }
       }
 
       // Perform registration
-      const spinner = ora(`Registering blob on ${chain}...`).start();
-      
+      const spinner = ora(`Registering blob on ${chain}...`).start()
+
       try {
         const txHashes = await client.registerBlobOnChain(
           blobId,
@@ -192,31 +215,29 @@ blockchainCommand
             cdnUrl,
             contentHash: metadata.contentHash,
           },
-          chain
-        );
+          chain,
+        )
 
-        const txHash = txHashes[chain];
+        const txHash = txHashes[chain]
         if (txHash) {
-          spinner.succeed(`Blob registered successfully on ${chain}`);
-          console.log(chalk.bold('\nTransaction Details:'));
-          console.log(`Transaction Hash: ${chalk.green(txHash)}`);
-          console.log(`Chain: ${chain}`);
-          console.log(`Block Explorer: ${getBlockExplorerUrl(chain, txHash)}`);
+          spinner.succeed(`Blob registered successfully on ${chain}`)
+          console.log(chalk.bold('\nTransaction Details:'))
+          console.log(`Transaction Hash: ${chalk.green(txHash)}`)
+          console.log(`Chain: ${chain}`)
+          console.log(`Block Explorer: ${getBlockExplorerUrl(chain, txHash)}`)
         } else {
-          spinner.fail('Registration failed - no transaction hash returned');
+          spinner.fail('Registration failed - no transaction hash returned')
         }
-
       } catch (error) {
-        spinner.fail(`Registration failed: ${error.message}`);
-        throw error;
+        spinner.fail(`Registration failed: ${error.message}`)
+        throw error
       }
-
     } catch (error) {
-      log(`Registration error: ${error.message}`, 'error');
-      verbose(error.stack);
-      process.exit(1);
+      log(`Registration error: ${error.message}`, 'error')
+      verbose(error.stack)
+      process.exit(1)
     }
-  });
+  })
 
 // Query command
 blockchainCommand
@@ -227,32 +248,35 @@ blockchainCommand
   .option('--format <format>', 'output format (table, json)', 'table')
   .action(async (blobId, options) => {
     try {
-      const client = getWCDNClient();
+      const client = getWCDNClient()
 
       if (!client.isBlockchainIntegrationAvailable()) {
-        log('Blockchain integration not configured', 'error');
-        return;
+        log('Blockchain integration not configured', 'error')
+        return
       }
 
-      const spinner = ora(`Querying blob metadata from blockchain...`).start();
-      
+      const spinner = ora(`Querying blob metadata from blockchain...`).start()
+
       try {
-        const metadata = await client.getBlobMetadataFromChain(blobId, options.chain);
-        spinner.succeed('Query completed');
+        const metadata = await client.getBlobMetadataFromChain(
+          blobId,
+          options.chain,
+        )
+        spinner.succeed('Query completed')
 
         if (options.format === 'json') {
-          console.log(JSON.stringify(metadata, null, 2));
-          return;
+          console.log(JSON.stringify(metadata, null, 2))
+          return
         }
 
-        console.log(chalk.bold(`\n📋 Blockchain Metadata for: ${blobId}\n`));
+        console.log(chalk.bold(`\n📋 Blockchain Metadata for: ${blobId}\n`))
 
-        let hasData = false;
+        let hasData = false
         for (const [chain, data] of Object.entries(metadata)) {
-          if (!data) continue;
-          hasData = true;
+          if (!data) continue
+          hasData = true
 
-          console.log(chalk.bold(`${chain.toUpperCase()} Metadata:`));
+          console.log(chalk.bold(`${chain.toUpperCase()} Metadata:`))
           const chainData = [
             ['Property', 'Value'],
             ['Blob ID', data.blobId],
@@ -263,33 +287,37 @@ blockchainCommand
             ['CDN URL', data.cdnUrl],
             ['Pinned', data.isPinned ? '✓ Yes' : '✗ No'],
             ['Content Hash', data.contentHash],
-          ];
+          ]
 
-          console.log(table(chainData, {
-            header: {
-              alignment: 'center',
-              content: chalk.blue(`${chain.toUpperCase()} Registry`),
-            },
-          }));
-          console.log('');
+          console.log(
+            table(chainData, {
+              header: {
+                alignment: 'center',
+                content: chalk.blue(`${chain.toUpperCase()} Registry`),
+              },
+            }),
+          )
+          console.log('')
         }
 
         if (!hasData) {
-          console.log(chalk.yellow('No blockchain metadata found for this blob'));
-          console.log(chalk.gray('Use "wcdn blockchain register" to register it'));
+          console.log(
+            chalk.yellow('No blockchain metadata found for this blob'),
+          )
+          console.log(
+            chalk.gray('Use "wcdn blockchain register" to register it'),
+          )
         }
-
       } catch (error) {
-        spinner.fail(`Query failed: ${error.message}`);
-        throw error;
+        spinner.fail(`Query failed: ${error.message}`)
+        throw error
       }
-
     } catch (error) {
-      log(`Query error: ${error.message}`, 'error');
-      verbose(error.stack);
-      process.exit(1);
+      log(`Query error: ${error.message}`, 'error')
+      verbose(error.stack)
+      process.exit(1)
     }
-  });
+  })
 
 // Pin command
 blockchainCommand
@@ -299,38 +327,36 @@ blockchainCommand
   .option('-c, --chain <chain>', 'target blockchain')
   .action(async (blobId, options) => {
     try {
-      const client = getWCDNClient();
-      const config = getConfig();
+      const client = getWCDNClient()
+      const config = getConfig()
 
       if (!client.isBlockchainIntegrationAvailable()) {
-        log('Blockchain integration not configured', 'error');
-        return;
+        log('Blockchain integration not configured', 'error')
+        return
       }
 
-      const chain = options.chain || config.defaults?.chain || 'ethereum';
-      
-      const spinner = ora(`Pinning blob on ${chain}...`).start();
-      
+      const chain = options.chain || config.defaults?.chain || 'ethereum'
+
+      const spinner = ora(`Pinning blob on ${chain}...`).start()
+
       try {
-        const txHash = await client.pinBlobOnChain(blobId, chain);
-        spinner.succeed(`Blob pinned successfully on ${chain}`);
-        
-        console.log(chalk.bold('\nTransaction Details:'));
-        console.log(`Transaction Hash: ${chalk.green(txHash)}`);
-        console.log(`Chain: ${chain}`);
-        console.log(`Block Explorer: ${getBlockExplorerUrl(chain, txHash)}`);
+        const txHash = await client.pinBlobOnChain(blobId, chain)
+        spinner.succeed(`Blob pinned successfully on ${chain}`)
 
+        console.log(chalk.bold('\nTransaction Details:'))
+        console.log(`Transaction Hash: ${chalk.green(txHash)}`)
+        console.log(`Chain: ${chain}`)
+        console.log(`Block Explorer: ${getBlockExplorerUrl(chain, txHash)}`)
       } catch (error) {
-        spinner.fail(`Pin failed: ${error.message}`);
-        throw error;
+        spinner.fail(`Pin failed: ${error.message}`)
+        throw error
       }
-
     } catch (error) {
-      log(`Pin error: ${error.message}`, 'error');
-      verbose(error.stack);
-      process.exit(1);
+      log(`Pin error: ${error.message}`, 'error')
+      verbose(error.stack)
+      process.exit(1)
     }
-  });
+  })
 
 // Verify command
 blockchainCommand
@@ -341,72 +367,80 @@ blockchainCommand
   .option('-c, --chain <chain>', 'target blockchain')
   .action(async (blobId, contentHash, options) => {
     try {
-      const client = getWCDNClient();
-      const config = getConfig();
+      const client = getWCDNClient()
+      const config = getConfig()
 
       if (!client.isBlockchainIntegrationAvailable()) {
-        log('Blockchain integration not configured', 'error');
-        return;
+        log('Blockchain integration not configured', 'error')
+        return
       }
 
-      const chain = options.chain || config.defaults?.chain || 'ethereum';
-      
-      const spinner = ora(`Verifying blob hash on ${chain}...`).start();
-      
+      const chain = options.chain || config.defaults?.chain || 'ethereum'
+
+      const spinner = ora(`Verifying blob hash on ${chain}...`).start()
+
       try {
-        const isValid = await client.verifyBlobHashOnChain(blobId, contentHash, chain);
-        
+        const isValid = await client.verifyBlobHashOnChain(
+          blobId,
+          contentHash,
+          chain,
+        )
+
         if (isValid) {
-          spinner.succeed(`Hash verification successful on ${chain}`);
-          console.log(chalk.green('✅ Content hash matches blockchain record'));
+          spinner.succeed(`Hash verification successful on ${chain}`)
+          console.log(chalk.green('✅ Content hash matches blockchain record'))
         } else {
-          spinner.fail(`Hash verification failed on ${chain}`);
-          console.log(chalk.red('❌ Content hash does not match blockchain record'));
+          spinner.fail(`Hash verification failed on ${chain}`)
+          console.log(
+            chalk.red('❌ Content hash does not match blockchain record'),
+          )
         }
-
       } catch (error) {
-        spinner.fail(`Verification failed: ${error.message}`);
-        throw error;
+        spinner.fail(`Verification failed: ${error.message}`)
+        throw error
       }
-
     } catch (error) {
-      log(`Verification error: ${error.message}`, 'error');
-      verbose(error.stack);
-      process.exit(1);
+      log(`Verification error: ${error.message}`, 'error')
+      verbose(error.stack)
+      process.exit(1)
     }
-  });
+  })
 
 // List user blobs command
 blockchainCommand
   .command('list-user-blobs')
   .description('List blobs uploaded by a specific address')
-  .argument '<address>', 'uploader address'
+  .argument('<address>', 'uploader address')
   .option('-c, --chain <chain>', 'target blockchain')
   .action(async (address, options) => {
     try {
-      const client = getWCDNClient();
-      const config = getConfig();
+      const client = getWCDNClient()
+      const config = getConfig()
 
       if (!client.isBlockchainIntegrationAvailable()) {
-        log('Blockchain integration not configured', 'error');
-        return;
+        log('Blockchain integration not configured', 'error')
+        return
       }
 
-      const chain = options.chain || config.defaults?.chain || 'ethereum';
-      
-      const spinner = ora(`Fetching blobs for address ${address} on ${chain}...`).start();
-      
+      const chain = options.chain || config.defaults?.chain || 'ethereum'
+
+      const spinner = ora(
+        `Fetching blobs for address ${address} on ${chain}...`,
+      ).start()
+
       try {
-        const blobIds = await client.getUploaderBlobsFromChain(address, chain);
-        spinner.succeed(`Found ${blobIds.length} blobs for address`);
+        const blobIds = await client.getUploaderBlobsFromChain(address, chain)
+        spinner.succeed(`Found ${blobIds.length} blobs for address`)
 
         if (blobIds.length === 0) {
-          console.log(chalk.yellow('No blobs found for this address'));
-          return;
+          console.log(chalk.yellow('No blobs found for this address'))
+          return
         }
 
-        console.log(chalk.bold(`\n📁 Blobs uploaded by ${address} on ${chain}:\n`));
-        
+        console.log(
+          chalk.bold(`\n📁 Blobs uploaded by ${address} on ${chain}:\n`),
+        )
+
         const blobData = [
           ['#', 'Blob ID', 'CDN URL'],
           ...blobIds.map((blobId, index) => [
@@ -414,26 +448,26 @@ blockchainCommand
             blobId.slice(0, 20) + '...',
             client.getCDNUrl(blobId),
           ]),
-        ];
+        ]
 
-        console.log(table(blobData, {
-          header: {
-            alignment: 'center',
-            content: chalk.blue(`User Blobs (${chain.toUpperCase()})`),
-          },
-        }));
-
+        console.log(
+          table(blobData, {
+            header: {
+              alignment: 'center',
+              content: chalk.blue(`User Blobs (${chain.toUpperCase()})`),
+            },
+          }),
+        )
       } catch (error) {
-        spinner.fail(`Failed to fetch user blobs: ${error.message}`);
-        throw error;
+        spinner.fail(`Failed to fetch user blobs: ${error.message}`)
+        throw error
       }
-
     } catch (error) {
-      log(`List user blobs error: ${error.message}`, 'error');
-      verbose(error.stack);
-      process.exit(1);
+      log(`List user blobs error: ${error.message}`, 'error')
+      verbose(error.stack)
+      process.exit(1)
     }
-  });
+  })
 
 // Helper function to get block explorer URLs
 function getBlockExplorerUrl(chain: string, txHash: string): string {
@@ -441,7 +475,7 @@ function getBlockExplorerUrl(chain: string, txHash: string): string {
     ethereum: `https://etherscan.io/tx/${txHash}`,
     sui: `https://explorer.sui.io/txblock/${txHash}`,
     solana: `https://explorer.solana.com/tx/${txHash}`,
-  };
+  }
 
-  return explorers[chain] || `Transaction: ${txHash}`;
+  return explorers[chain] || `Transaction: ${txHash}`
 }

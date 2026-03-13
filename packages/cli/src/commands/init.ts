@@ -1,9 +1,9 @@
-import { Command } from 'commander';
-import chalk from 'chalk';
-import inquirer from 'inquirer';
-import fs from 'fs-extra';
-import path from 'path';
-import { saveConfig, log } from '../utils/config.js';
+import path from 'node:path'
+import { Command } from 'commander'
+import chalk from 'chalk'
+import inquirer from 'inquirer'
+import fs from 'fs-extra'
+import { log, saveConfig } from '../utils/config.js'
 
 export const initCommand = new Command('init')
   .description('Initialize WCDN configuration')
@@ -11,10 +11,10 @@ export const initCommand = new Command('init')
   .option('--config <path>', 'config file path', '.wcdn.json')
   .action(async (options) => {
     try {
-      const configPath = path.resolve(options.config);
-      
+      const configPath = path.resolve(options.config)
+
       // Check if config already exists
-      if (await fs.pathExists(configPath) && !options.force) {
+      if ((await fs.pathExists(configPath)) && !options.force) {
         const { overwrite } = await inquirer.prompt([
           {
             type: 'confirm',
@@ -22,15 +22,15 @@ export const initCommand = new Command('init')
             message: `Configuration file already exists at ${configPath}. Overwrite?`,
             default: false,
           },
-        ]);
+        ])
 
         if (!overwrite) {
-          log('Configuration initialization cancelled', 'warning');
-          return;
+          log('Configuration initialization cancelled', 'warning')
+          return
         }
       }
 
-      console.log(chalk.bold('🚀 WCDN Configuration Setup\n'));
+      console.log(chalk.bold('🚀 WCDN Configuration Setup\n'))
 
       // Basic configuration
       const basicConfig = await inquirer.prompt([
@@ -41,10 +41,10 @@ export const initCommand = new Command('init')
           default: 'http://localhost:4500',
           validate: (input) => {
             try {
-              new URL(input);
-              return true;
+              new URL(input)
+              return true
             } catch {
-              return 'Please enter a valid URL';
+              return 'Please enter a valid URL'
             }
           },
         },
@@ -60,7 +60,7 @@ export const initCommand = new Command('init')
           default: 30,
           validate: (input) => input > 0 || 'Timeout must be positive',
         },
-      ]);
+      ])
 
       // Blockchain configuration
       const { enableBlockchain } = await inquirer.prompt([
@@ -70,9 +70,9 @@ export const initCommand = new Command('init')
           message: 'Enable blockchain integration?',
           default: false,
         },
-      ]);
+      ])
 
-      let blockchainConfig = {};
+      const blockchainConfig = {}
 
       if (enableBlockchain) {
         const { chains } = await inquirer.prompt([
@@ -86,11 +86,11 @@ export const initCommand = new Command('init')
               { name: 'Solana (Coming Soon)', value: 'solana', disabled: true },
             ],
           },
-        ]);
+        ])
 
         // Configure Ethereum
         if (chains.includes('ethereum')) {
-          console.log(chalk.cyan('\n📱 Ethereum Configuration:'));
+          console.log(chalk.cyan('\n📱 Ethereum Configuration:'))
           const ethConfig = await inquirer.prompt([
             {
               type: 'list',
@@ -103,8 +103,8 @@ export const initCommand = new Command('init')
               type: 'input',
               name: 'rpcUrl',
               message: 'Ethereum RPC URL:',
-              default: (answers) => 
-                answers.network === 'mainnet' 
+              default: (answers) =>
+                answers.network === 'mainnet'
                   ? 'https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY'
                   : 'https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY',
             },
@@ -112,7 +112,9 @@ export const initCommand = new Command('init')
               type: 'input',
               name: 'contractAddress',
               message: 'WalrusBlobRegistry contract address:',
-              validate: (input) => input.startsWith('0x') || 'Please enter a valid contract address',
+              validate: (input) =>
+                input.startsWith('0x') ||
+                'Please enter a valid contract address',
             },
             {
               type: 'password',
@@ -120,19 +122,19 @@ export const initCommand = new Command('init')
               message: 'Private key (optional, for writing operations):',
               mask: '*',
             },
-          ]);
+          ])
 
           blockchainConfig.ethereum = {
             network: ethConfig.network,
             rpcUrl: ethConfig.rpcUrl,
             contractAddress: ethConfig.contractAddress,
             ...(ethConfig.privateKey && { privateKey: ethConfig.privateKey }),
-          };
+          }
         }
 
         // Configure Sui
         if (chains.includes('sui')) {
-          console.log(chalk.cyan('\n🌊 Sui Configuration:'));
+          console.log(chalk.cyan('\n🌊 Sui Configuration:'))
           const suiConfig = await inquirer.prompt([
             {
               type: 'list',
@@ -150,7 +152,8 @@ export const initCommand = new Command('init')
               type: 'input',
               name: 'packageId',
               message: 'Walrus blob registry package ID:',
-              validate: (input) => input.startsWith('0x') || 'Please enter a valid package ID',
+              validate: (input) =>
+                input.startsWith('0x') || 'Please enter a valid package ID',
             },
             {
               type: 'password',
@@ -158,14 +161,14 @@ export const initCommand = new Command('init')
               message: 'Private key (optional, for writing operations):',
               mask: '*',
             },
-          ]);
+          ])
 
           blockchainConfig.sui = {
             network: suiConfig.network,
             packageId: suiConfig.packageId,
             ...(suiConfig.rpcUrl && { rpcUrl: suiConfig.rpcUrl }),
             ...(suiConfig.privateKey && { privateKey: suiConfig.privateKey }),
-          };
+          }
         }
       }
 
@@ -191,53 +194,69 @@ export const initCommand = new Command('init')
           name: 'concurrency',
           message: 'Default upload concurrency:',
           default: 3,
-          validate: (input) => input > 0 && input <= 10 || 'Concurrency must be between 1 and 10',
+          validate: (input) =>
+            (input > 0 && input <= 10) ||
+            'Concurrency must be between 1 and 10',
         },
-      ]);
+      ])
 
       // Build final configuration
       const config = {
         baseUrl: basicConfig.baseUrl,
         ...(basicConfig.apiKey && { apiKey: basicConfig.apiKey }),
         timeout: basicConfig.timeout * 1000, // Convert to milliseconds
-        ...(Object.keys(blockchainConfig).length > 0 && { blockchain: blockchainConfig }),
+        ...(Object.keys(blockchainConfig).length > 0 && {
+          blockchain: blockchainConfig,
+        }),
         defaults: {
           concurrency: defaults.concurrency,
           ...(defaults.chain && { chain: defaults.chain }),
-          ...(defaults.registerOnChain !== undefined && { registerOnChain: defaults.registerOnChain }),
+          ...(defaults.registerOnChain !== undefined && {
+            registerOnChain: defaults.registerOnChain,
+          }),
         },
-      };
+      }
 
       // Save configuration
-      await saveConfig(config, options.config);
+      await saveConfig(config, options.config)
 
       // Success message
-      console.log(chalk.green('\n✅ Configuration saved successfully!'));
-      console.log(`Config file: ${chalk.cyan(configPath)}`);
-      
+      console.log(chalk.green('\n✅ Configuration saved successfully!'))
+      console.log(`Config file: ${chalk.cyan(configPath)}`)
+
       // Show next steps
-      console.log(chalk.bold('\n📋 Next Steps:'));
-      console.log('1. Test your configuration:');
-      console.log(chalk.gray('   wcdn status'));
-      console.log('2. Upload your first file:');
-      console.log(chalk.gray('   wcdn upload myfile.txt'));
-      
+      console.log(chalk.bold('\n📋 Next Steps:'))
+      console.log('1. Test your configuration:')
+      console.log(chalk.gray('   wcdn status'))
+      console.log('2. Upload your first file:')
+      console.log(chalk.gray('   wcdn upload myfile.txt'))
+
       if (Object.keys(blockchainConfig).length > 0) {
-        console.log('3. Check blockchain integration:');
-        console.log(chalk.gray('   wcdn blockchain status'));
+        console.log('3. Check blockchain integration:')
+        console.log(chalk.gray('   wcdn blockchain status'))
       }
 
       // Show warnings if needed
       if (basicConfig.apiKey && basicConfig.apiKey.includes('YOUR_API_KEY')) {
-        console.log(chalk.yellow('\n⚠️  Warning: Remember to replace placeholder API keys with real values'));
+        console.log(
+          chalk.yellow(
+            '\n⚠️  Warning: Remember to replace placeholder API keys with real values',
+          ),
+        )
       }
 
-      if (blockchainConfig.ethereum?.privateKey || blockchainConfig.sui?.privateKey) {
-        console.log(chalk.yellow('\n🔒 Security Note: Private keys are stored in plain text. Consider using environment variables in production.'));
+      if (
+        blockchainConfig.ethereum?.privateKey ||
+        blockchainConfig.sui?.privateKey
+      ) {
+        console.log(
+          chalk.yellow(
+            '\n🔒 Security Note: Private keys are stored in plain text. Consider using environment variables in production.',
+          ),
+        )
       }
-
     } catch (error) {
-      log(`Configuration error: ${error.message}`, 'error');
-      process.exit(1);
+      log(`Configuration error: ${error.message}`, 'error')
+      process.exit(1)
     }
-  });
+  })
