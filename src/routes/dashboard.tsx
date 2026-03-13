@@ -1,8 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import {
+  Activity,
+  BarChart3,
+  Calendar,
+  CreditCard,
+  Database,
+  Key,
+  Shield,
+  TrendingUp,
+  User,
+  Zap,
+} from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { AuthGuard } from '../components/AuthGuard'
-import { useRealtimeConnection, pollingService } from '../services/realtime'
+import { pollingService, useRealtimeConnection } from '../services/realtime'
 import {
   Card,
   CardContent,
@@ -13,18 +25,6 @@ import {
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Progress } from '../components/ui/progress'
-import {
-  User,
-  CreditCard,
-  Activity,
-  Database,
-  Zap,
-  Calendar,
-  TrendingUp,
-  Shield,
-  Key,
-  BarChart3,
-} from 'lucide-react'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,

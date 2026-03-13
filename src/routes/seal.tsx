@@ -17,8 +17,9 @@ export const Route = createFileRoute('/seal')({
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-4">Seal Encrypted Storage</h1>
             <p className="text-muted-foreground">
-              Upload files with blockchain-based access control powered by Mysten's Seal technology.
-              Your files are encrypted before storage and can only be decrypted by authorized users.
+              Upload files with blockchain-based access control powered by
+              Mysten's Seal technology. Your files are encrypted before storage
+              and can only be decrypted by authorized users.
             </p>
           </div>
           <SealUpload />

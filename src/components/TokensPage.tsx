@@ -1,6 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useAuthStore, type ApiToken } from '../store/authStore'
+import {
+  Activity,
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  Copy,
+  Database,
+  Eye,
+  EyeOff,
+  Key,
+  Loader2,
+  Plus,
+  Settings,
+  Shield,
+  Trash2,
+} from 'lucide-react'
+import { useAuthStore } from '../store/authStore'
 import { AuthGuard } from './AuthGuard'
 import {
   Card,
@@ -21,27 +37,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select'
-import {
-  Key,
-  Plus,
-  Trash2,
-  Eye,
-  EyeOff,
-  Copy,
-  CheckCircle,
-  AlertCircle,
-  Activity,
-  Database,
-  Calendar,
-  Shield,
-  Settings,
-  Loader2,
-} from 'lucide-react'
+import type { ApiToken } from '../store/authStore'
 
 interface CreateTokenForm {
   name: string
   description: string
-  permissions: string[]
+  permissions: Array<string>
   expiresAt: string
 }
 

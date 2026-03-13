@@ -1,4 +1,14 @@
 import { useState } from 'react'
+import {
+  AlertTriangle,
+  Clock,
+  Globe,
+  Pin,
+  RefreshCw,
+  Settings,
+  Trash2,
+  Upload,
+} from 'lucide-react'
 import { useWalcacheStore } from '../store/walcacheStore'
 import {
   Card,
@@ -16,16 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select'
-import {
-  Upload,
-  Trash2,
-  RefreshCw,
-  AlertTriangle,
-  Settings,
-  Clock,
-  Pin,
-  Globe,
-} from 'lucide-react'
 
 export function CacheManager() {
   const [preloadCIDs, setPreloadCIDs] = useState('')
@@ -110,7 +110,7 @@ export function CacheManager() {
       } else {
         await pinBlob(cidInfo.cid)
       }
-      
+
       // Refresh blob info using v1 API
       await fetchBlob(cidInfo.cid)
     } catch (error) {
@@ -121,7 +121,7 @@ export function CacheManager() {
       } else {
         await pinCID(cidInfo.cid)
       }
-      
+
       // Refresh the CID info
       await fetchCIDStats(cidInfo.cid)
     }

@@ -1,4 +1,6 @@
 import { memo } from 'react'
+import { AlertTriangle, Check, Copy, ExternalLink } from 'lucide-react'
+import { formatBytes, formatDate, truncateCID } from '../lib/utils'
 import {
   Card,
   CardContent,
@@ -7,8 +9,6 @@ import {
   CardTitle,
 } from './ui/card'
 import { Button } from './ui/button'
-import { ExternalLink, Copy, Check, AlertTriangle } from 'lucide-react'
-import { formatBytes, formatDate, truncateCID } from '../lib/utils'
 
 interface FileStatus {
   walrusExists: boolean | null
@@ -31,7 +31,7 @@ interface DirectUpload {
 }
 
 interface DirectUploadsProps {
-  directUploads: DirectUpload[]
+  directUploads: Array<DirectUpload>
   fileStatuses: Record<string, FileStatus>
   copiedUrl: string | null
   showingLinksFor: string | null

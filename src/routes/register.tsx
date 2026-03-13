@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { AlertCircle, Check, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -20,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select'
-import { AlertCircle, Eye, EyeOff, Loader2, Check } from 'lucide-react'
 
 interface RegisterForm {
   email: string

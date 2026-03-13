@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { useWalcacheStore } from '../store/walcacheStore'
 import { Card, CardContent } from './ui/card'
 import { VaultSelector } from './VaultSelector'
@@ -34,7 +34,7 @@ export const UploadManager = memo(function UploadManager() {
     {},
   )
   const [showingLinksFor, setShowingLinksFor] = useState<string | null>(null)
-  const [directUploads, setDirectUploads] = useState<DirectUpload[]>([])
+  const [directUploads, setDirectUploads] = useState<Array<DirectUpload>>([])
 
   const {
     fetchVaults,
@@ -108,16 +108,16 @@ export const UploadManager = memo(function UploadManager() {
           const upload = await createUpload(file, {
             vault_id: selectedVault,
           })
-          
+
           // Get blob information
           const blob = await fetchBlob(upload.blob_id)
-          
+
           console.log(`✅ File uploaded via v1 API:`, {
             uploadId: upload.id,
             blobId: blob.id,
-            cached: blob.cached
+            cached: blob.cached,
           })
-          
+
           setFileStatuses((prev) => ({
             ...prev,
             [blob.id]: {
@@ -127,7 +127,7 @@ export const UploadManager = memo(function UploadManager() {
           }))
         } catch (v1Error) {
           console.warn('v1 API upload failed, falling back to legacy method')
-          
+
           // Fallback to legacy uploadAndVerify
           const result = await uploadAndVerify(file, selectedVault)
 
@@ -329,10 +329,14 @@ export const UploadManager = memo(function UploadManager() {
       {error && (
         <ErrorHandler
           error={error}
-          onRetry={shouldShowRetry(error) ? () => {
-            // Retry last operation
-            setError(null)
-          } : undefined}
+          onRetry={
+            shouldShowRetry(error)
+              ? () => {
+                  // Retry last operation
+                  setError(null)
+                }
+              : undefined
+          }
           onDismiss={() => setError(null)}
           showRetry={shouldShowRetry(error)}
         />

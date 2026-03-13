@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { WALCACHE_BASE_URL } from '@/config/env'
 
 interface CIDStats {
@@ -71,7 +71,7 @@ async function fetchCIDStats(cid: string): Promise<CIDStats> {
   return response.json()
 }
 
-async function fetchTopCIDs(): Promise<CIDStats[]> {
+async function fetchTopCIDs(): Promise<Array<CIDStats>> {
   const response = await fetch(`${WALCACHE_BASE_URL}/api/top-cids`)
   if (!response.ok) {
     throw new Error(`Failed to fetch top CIDs: ${response.statusText}`)
@@ -162,7 +162,7 @@ export function usePreloadCIDs() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (cids: string[]) => {
+    mutationFn: async (cids: Array<string>) => {
       const response = await fetch(`${WALCACHE_BASE_URL}/api/preload`, {
         method: 'POST',
         headers: {

@@ -1,5 +1,27 @@
 import { useState } from 'react'
+import {
+  Activity,
+  Clock,
+  Copy,
+  Download,
+  ExternalLink,
+  FileText,
+  Globe,
+  HardDrive,
+  Pin,
+  PinOff,
+  RefreshCw,
+  Search,
+} from 'lucide-react'
 import { useWalcacheStore } from '../store/walcacheStore'
+import {
+  formatBytes,
+  formatDate,
+  formatLatency,
+  formatNumber,
+  formatPercentage,
+  truncateCID,
+} from '../lib/utils'
 import {
   Card,
   CardContent,
@@ -9,28 +31,6 @@ import {
 } from './ui/card'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import {
-  Search,
-  Pin,
-  PinOff,
-  Clock,
-  Activity,
-  HardDrive,
-  Globe,
-  Download,
-  Copy,
-  ExternalLink,
-  FileText,
-  RefreshCw,
-} from 'lucide-react'
-import {
-  formatBytes,
-  formatNumber,
-  formatPercentage,
-  formatLatency,
-  formatDate,
-  truncateCID,
-} from '../lib/utils'
 
 export function CIDExplorer() {
   const [searchCID, setSearchCID] = useState('')

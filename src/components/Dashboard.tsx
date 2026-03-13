@@ -1,10 +1,44 @@
-import { useMemo, memo } from 'react'
+import { memo, useMemo } from 'react'
 import {
-  useGlobalStats,
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
+import {
+  Activity,
+  Clock,
+  Database,
+  Globe,
+  HardDrive,
+  TrendingUp,
+  Users,
+  Zap,
+} from 'lucide-react'
+import {
   useCacheStats,
+  useGlobalStats,
   useTopCIDs,
 } from '../hooks/api/useStats'
 import { useRealtimeConnection } from '../services/realtime'
+import {
+  formatBytes,
+  formatDate,
+  formatLatency,
+  formatNumber,
+  formatPercentage,
+  truncateCID,
+} from '../lib/utils'
 import {
   Card,
   CardContent,
@@ -12,40 +46,6 @@ import {
   CardHeader,
   CardTitle,
 } from './ui/card'
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  LineChart,
-  Line,
-  Area,
-  AreaChart,
-} from 'recharts'
-import {
-  formatBytes,
-  formatNumber,
-  formatPercentage,
-  formatLatency,
-  truncateCID,
-  formatDate,
-} from '../lib/utils'
-import {
-  Activity,
-  Database,
-  Clock,
-  HardDrive,
-  Zap,
-  TrendingUp,
-  Globe,
-  Users,
-} from 'lucide-react'
 
 export const Dashboard = memo(function Dashboard() {
   // Use React Query hooks for data fetching

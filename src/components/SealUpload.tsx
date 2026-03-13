@@ -1,13 +1,25 @@
 import React, { useState } from 'react'
+import { Clock, Globe, Key, Loader2, Shield, Upload, Users } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from './ui/card'
 import { Alert, AlertDescription } from './ui/alert'
 import { Badge } from './ui/badge'
-import { Loader2, Upload, Shield, Key, Clock, Users, Globe } from 'lucide-react'
 
 interface SealUploadProps {
   onUploadComplete?: (result: any) => void
@@ -145,7 +157,8 @@ export function SealUpload({ onUploadComplete }: SealUploadProps) {
             Seal Encrypted Upload
           </CardTitle>
           <CardDescription>
-            Upload files with blockchain-based access control using Mysten's Seal
+            Upload files with blockchain-based access control using Mysten's
+            Seal
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -160,7 +173,8 @@ export function SealUpload({ onUploadComplete }: SealUploadProps) {
             />
             {file && (
               <div className="text-sm text-muted-foreground">
-                Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)}{' '}
+                MB)
               </div>
             )}
           </div>
@@ -176,7 +190,8 @@ export function SealUpload({ onUploadComplete }: SealUploadProps) {
               disabled={uploading}
             />
             <div className="text-xs text-muted-foreground">
-              Deploy the Move access control contract and paste the package ID here
+              Deploy the Move access control contract and paste the package ID
+              here
             </div>
           </div>
 
@@ -205,7 +220,11 @@ export function SealUpload({ onUploadComplete }: SealUploadProps) {
           {/* Access Type */}
           <div className="space-y-2">
             <Label>Access Control Type</Label>
-            <Select value={accessType} onValueChange={setAccessType} disabled={uploading}>
+            <Select
+              value={accessType}
+              onValueChange={setAccessType}
+              disabled={uploading}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -237,14 +256,19 @@ export function SealUpload({ onUploadComplete }: SealUploadProps) {
               </SelectContent>
             </Select>
             <div className="text-xs text-muted-foreground">
-              You'll need to create the corresponding access control object on-chain
+              You'll need to create the corresponding access control object
+              on-chain
             </div>
           </div>
 
           {/* Threshold */}
           <div className="space-y-2">
             <Label htmlFor="threshold">Decryption Threshold</Label>
-            <Select value={threshold} onValueChange={setThreshold} disabled={uploading}>
+            <Select
+              value={threshold}
+              onValueChange={setThreshold}
+              disabled={uploading}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -324,19 +348,27 @@ export function SealUpload({ onUploadComplete }: SealUploadProps) {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <Label>Blob ID</Label>
-                <div className="font-mono text-xs break-all">{result.data.id}</div>
+                <div className="font-mono text-xs break-all">
+                  {result.data.id}
+                </div>
               </div>
               <div>
                 <Label>Content ID</Label>
-                <div className="font-mono text-xs break-all">{result.data.contentId}</div>
+                <div className="font-mono text-xs break-all">
+                  {result.data.contentId}
+                </div>
               </div>
               <div>
                 <Label>Package ID</Label>
-                <div className="font-mono text-xs break-all">{result.data.packageId}</div>
+                <div className="font-mono text-xs break-all">
+                  {result.data.packageId}
+                </div>
               </div>
               <div>
                 <Label>Threshold</Label>
-                <Badge variant="secondary">{result.data.threshold} servers</Badge>
+                <Badge variant="secondary">
+                  {result.data.threshold} servers
+                </Badge>
               </div>
             </div>
 
@@ -361,11 +393,19 @@ export function SealUpload({ onUploadComplete }: SealUploadProps) {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <Label>Original Size</Label>
-                <div>{(result.data.metadata.originalSize / 1024 / 1024).toFixed(2)} MB</div>
+                <div>
+                  {(result.data.metadata.originalSize / 1024 / 1024).toFixed(2)}{' '}
+                  MB
+                </div>
               </div>
               <div>
                 <Label>Encrypted Size</Label>
-                <div>{(result.data.metadata.encryptedSize / 1024 / 1024).toFixed(2)} MB</div>
+                <div>
+                  {(result.data.metadata.encryptedSize / 1024 / 1024).toFixed(
+                    2,
+                  )}{' '}
+                  MB
+                </div>
               </div>
             </div>
 
@@ -374,9 +414,18 @@ export function SealUpload({ onUploadComplete }: SealUploadProps) {
               <AlertDescription>
                 <strong>Next Steps:</strong>
                 <ol className="list-decimal list-inside mt-2 space-y-1">
-                  <li>Deploy the access control object on Sui using the Move contract</li>
-                  <li>Configure access permissions (add users to allowlist, set expiration, etc.)</li>
-                  <li>Users can decrypt by calling the appropriate seal_approve function</li>
+                  <li>
+                    Deploy the access control object on Sui using the Move
+                    contract
+                  </li>
+                  <li>
+                    Configure access permissions (add users to allowlist, set
+                    expiration, etc.)
+                  </li>
+                  <li>
+                    Users can decrypt by calling the appropriate seal_approve
+                    function
+                  </li>
                 </ol>
               </AlertDescription>
             </Alert>

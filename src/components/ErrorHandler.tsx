@@ -1,8 +1,8 @@
 import { memo } from 'react'
-import { Alert, AlertDescription, AlertTitle } from './ui/alert'
-import { AlertTriangle, X, RefreshCw, Info } from 'lucide-react'
-import { Button } from './ui/button'
+import { AlertTriangle, Info, RefreshCw, X } from 'lucide-react'
 import { WalrusCDNError } from '../../packages/sdk/src/types'
+import { Alert, AlertDescription, AlertTitle } from './ui/alert'
+import { Button } from './ui/button'
 
 interface ErrorHandlerProps {
   error: WalrusCDNError | string | null
@@ -87,7 +87,7 @@ export const ErrorHandler = memo(function ErrorHandler({
   onRetry,
   onDismiss,
   showRetry = false,
-  className = ''
+  className = '',
 }: ErrorHandlerProps) {
   if (!error) return null
 
@@ -106,15 +106,15 @@ export const ErrorHandler = memo(function ErrorHandler({
       code: error.code,
       message: error.message,
       status: error.status,
-      param: error.param
+      param: error.param,
     }
   } else if (typeof error === 'string') {
     errorData = {
-      message: error
+      message: error,
     }
   } else {
     errorData = {
-      message: 'An unknown error occurred'
+      message: 'An unknown error occurred',
     }
   }
 
@@ -154,14 +154,14 @@ export const ErrorHandler = memo(function ErrorHandler({
       </AlertTitle>
       <AlertDescription className="mt-2 space-y-2">
         <div>{errorData.message}</div>
-        
+
         {suggestion && (
           <div className="text-sm text-muted-foreground flex items-start gap-2">
             <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
             {suggestion}
           </div>
         )}
-        
+
         {/* Developer information for debugging */}
         {process.env.NODE_ENV === 'development' && (
           <details className="text-xs text-muted-foreground">
@@ -186,7 +186,7 @@ export const ErrorHandler = memo(function ErrorHandler({
 export const ValidationErrorHandler = memo(function ValidationErrorHandler({
   error,
   onRetry,
-  onDismiss
+  onDismiss,
 }: Omit<ErrorHandlerProps, 'showRetry'>) {
   return (
     <ErrorHandler
@@ -201,7 +201,7 @@ export const ValidationErrorHandler = memo(function ValidationErrorHandler({
 export const NetworkErrorHandler = memo(function NetworkErrorHandler({
   error,
   onRetry,
-  onDismiss
+  onDismiss,
 }: Omit<ErrorHandlerProps, 'showRetry'>) {
   return (
     <ErrorHandler
@@ -216,14 +216,16 @@ export const NetworkErrorHandler = memo(function NetworkErrorHandler({
 export const RateLimitErrorHandler = memo(function RateLimitErrorHandler({
   error,
   onDismiss,
-  retryAfter = 60
+  retryAfter = 60,
 }: Omit<ErrorHandlerProps, 'onRetry' | 'showRetry'> & { retryAfter?: number }) {
   return (
     <Alert variant="warning">
       <RefreshCw className="h-4 w-4" />
       <AlertTitle>Rate Limit Exceeded</AlertTitle>
       <AlertDescription className="space-y-2">
-        <div>You have made too many requests. Please wait before trying again.</div>
+        <div>
+          You have made too many requests. Please wait before trying again.
+        </div>
         <div className="text-sm text-muted-foreground">
           Retry after: {retryAfter} seconds
         </div>
@@ -252,9 +254,9 @@ export const useErrorHandler = () => {
         code: error.code,
         message: error.message,
         status: error.status,
-        param: error.param
+        param: error.param,
       })
-      
+
       return error
     } else if (error instanceof Error) {
       // Handle generic errors
@@ -269,7 +271,9 @@ export const useErrorHandler = () => {
 
   const isRetryableError = (error: unknown) => {
     if (error instanceof WalrusCDNError) {
-      return ['network_error', 'api_error', 'rate_limit_error'].includes(error.type || '')
+      return ['network_error', 'api_error', 'rate_limit_error'].includes(
+        error.type || '',
+      )
     }
     return false
   }
@@ -281,6 +285,6 @@ export const useErrorHandler = () => {
   return {
     handleError,
     isRetryableError,
-    shouldShowRetry
+    shouldShowRetry,
   }
 }

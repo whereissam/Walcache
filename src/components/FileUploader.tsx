@@ -1,4 +1,5 @@
-import { useState, useCallback, memo } from 'react'
+import { memo, useCallback, useState } from 'react'
+import { AlertTriangle, Upload } from 'lucide-react'
 import { useWalcacheStore } from '../store/walcacheStore'
 import {
   Card,
@@ -8,7 +9,6 @@ import {
   CardTitle,
 } from './ui/card'
 import { Button } from './ui/button'
-import { Upload, AlertTriangle } from 'lucide-react'
 
 interface FileUploaderProps {
   selectedVault: string

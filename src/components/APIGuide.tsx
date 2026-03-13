@@ -1,5 +1,13 @@
 import { useState } from 'react'
 import {
+  Code,
+  Copy,
+  Download,
+  ExternalLink,
+  Globe,
+  Terminal,
+} from 'lucide-react'
+import {
   Card,
   CardContent,
   CardDescription,
@@ -8,14 +16,6 @@ import {
 } from './ui/card'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import {
-  Copy,
-  ExternalLink,
-  Code,
-  Download,
-  Globe,
-  Terminal,
-} from 'lucide-react'
 
 export function APIGuide() {
   const [copySuccess, setCopySuccess] = useState<string>('')
@@ -308,7 +308,9 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground">Unpin CID from cache.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Unpin CID from cache.
+                  </p>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react'
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import React, { Component } from 'react'
+import { AlertTriangle, Home, RefreshCw } from 'lucide-react'
 import { Button } from './ui/button'
 import {
   Card,
@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from './ui/card'
+import type { ErrorInfo, ReactNode } from 'react'
 
 interface Props {
   children: ReactNode

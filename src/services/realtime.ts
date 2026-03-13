@@ -211,7 +211,7 @@ export const useRealtimeConnection = () => {
 
 // Polling fallback for when real-time connection is not available
 export class PollingService {
-  private intervals: NodeJS.Timeout[] = []
+  private intervals: Array<NodeJS.Timeout> = []
   private isPolling = false
 
   start() {

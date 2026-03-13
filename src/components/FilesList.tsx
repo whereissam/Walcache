@@ -1,6 +1,8 @@
-import { useState, useEffect, memo } from 'react'
-import { useVaults, useFiles, useDeleteFile } from '../hooks/api/useVaults'
+import { memo, useEffect, useState } from 'react'
+import { AlertTriangle, Check, Copy, ExternalLink, Trash2 } from 'lucide-react'
+import { useDeleteFile, useFiles, useVaults } from '../hooks/api/useVaults'
 import { useCheckBlobOnWalrus } from '../hooks/api/useWalrus'
+import { formatBytes, formatDate, truncateCID } from '../lib/utils'
 import {
   Card,
   CardContent,
@@ -9,8 +11,6 @@ import {
   CardTitle,
 } from './ui/card'
 import { Button } from './ui/button'
-import { ExternalLink, Copy, Check, AlertTriangle, Trash2 } from 'lucide-react'
-import { formatBytes, formatDate, truncateCID } from '../lib/utils'
 
 // Walrus endpoints (testnet first, then mainnet)
 const WALRUS_AGGREGATORS = [

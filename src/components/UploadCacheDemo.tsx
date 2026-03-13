@@ -1,4 +1,23 @@
-import React, { useState, useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  Clock,
+  Copy,
+  Database,
+  ExternalLink,
+  FileText,
+  Globe,
+  Hash,
+  Link,
+  RefreshCw,
+  Sparkles,
+  TrendingUp,
+  Upload,
+  Zap,
+} from 'lucide-react'
+import { ENV_CONFIG } from '../config/env.js'
 import {
   Card,
   CardContent,
@@ -14,31 +33,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip'
-import { ChainSelector, type SupportedChain } from './ChainSelector'
-import {
-  Upload,
-  Zap,
-  Clock,
-  Check,
-  AlertTriangle,
-  Database,
-  FileText,
-  Copy,
-  ExternalLink,
-  RefreshCw,
-  ArrowRight,
-  TrendingUp,
-  Globe,
-  Link,
-  Hash,
-  Sparkles,
-} from 'lucide-react'
+import { ChainSelector } from './ChainSelector'
+import type { SupportedChain } from './ChainSelector'
 
 // Real SDK integration - import types only to avoid build issues
 import type { WalrusCDNClient } from '../../packages/sdk/src/index.js'
 
 // Safe environment configuration
-import { ENV_CONFIG } from '../config/env.js'
 
 const WALCACHE_CONFIG = {
   baseUrl: ENV_CONFIG.baseUrl,
@@ -284,7 +285,7 @@ export function UploadCacheDemo() {
   const [backendStatus, setBackendStatus] = useState<
     'checking' | 'online' | 'offline'
   >('checking')
-  const [uploadHistory, setUploadHistory] = useState<UploadResult[]>([])
+  const [uploadHistory, setUploadHistory] = useState<Array<UploadResult>>([])
 
   // URL generation state
   const [mode, setMode] = useState<'upload' | 'generate'>('upload')
@@ -517,7 +518,7 @@ export function UploadCacheDemo() {
   }
 
   const getStepStatus = (step: DemoStep) => {
-    const stepOrder: DemoStep[] = [
+    const stepOrder: Array<DemoStep> = [
       'select',
       'uploading',
       'uploaded',

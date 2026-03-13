@@ -1,29 +1,29 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import {
+  BarChart3,
+  ChevronDown,
+  Code,
+  CreditCard,
+  Globe,
+  Key,
+  LogIn,
+  LogOut,
+  Menu,
+  PlayCircle,
   Search,
   Settings,
-  BarChart3,
-  Upload,
-  Menu,
-  X,
-  Code,
-  Globe,
-  PlayCircle,
-  User,
-  LogOut,
-  Key,
-  CreditCard,
-  ChevronDown,
-  LogIn,
-  UserPlus,
   Shield,
+  Upload,
+  User,
+  UserPlus,
+  X,
 } from 'lucide-react'
+import { useAuthStore } from '../store/authStore'
+import walcacheLogo from '../assets/walcache-logo.jpeg'
 import { ThemeToggle } from './ui/theme-toggle'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
-import { useAuthStore } from '../store/authStore'
-import walcacheLogo from '../assets/walcache-logo.jpeg'
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)

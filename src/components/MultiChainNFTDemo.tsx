@@ -1,4 +1,18 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import {
+  Activity,
+  AlertTriangle,
+  Clock,
+  Copy,
+  Database,
+  ExternalLink,
+  FileText,
+  Gamepad2,
+  Image,
+  Star,
+  Zap,
+} from 'lucide-react'
+import { useWalcacheStore } from '../store/walcacheStore'
 import {
   Card,
   CardContent,
@@ -8,21 +22,8 @@ import {
 } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
-import { ChainSelector, type SupportedChain } from './ChainSelector'
-import {
-  Copy,
-  ExternalLink,
-  Zap,
-  Clock,
-  AlertTriangle,
-  Star,
-  Image,
-  Gamepad2,
-  FileText,
-  Database,
-  Activity,
-} from 'lucide-react'
-import { useWalcacheStore } from '../store/walcacheStore'
+import { ChainSelector } from './ChainSelector'
+import type { SupportedChain } from './ChainSelector'
 
 // Real SDK integration
 const WCDN_API_BASE = 'http://localhost:4500'
@@ -53,7 +54,7 @@ interface MultiChainAsset {
   blobId: string
   description: string
   originalChain: SupportedChain
-  availableOn: SupportedChain[]
+  availableOn: Array<SupportedChain>
   metadata: {
     size: string
     contentType: string
@@ -100,8 +101,8 @@ export function MultiChainNFTDemo() {
     null,
   )
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
-  const [loadingAssets, setLoadingAssets] = useState<string[]>([])
-  const [realAssets, setRealAssets] = useState<MultiChainAsset[]>([])
+  const [loadingAssets, setLoadingAssets] = useState<Array<string>>([])
+  const [realAssets, setRealAssets] = useState<Array<MultiChainAsset>>([])
 
   // Get real data from store
   const {
@@ -140,7 +141,7 @@ export function MultiChainNFTDemo() {
     )
     const prioritizedFiles = [...imageFiles, ...textFiles, ...otherFiles] // Show all files
 
-    const uploadedAssets: MultiChainAsset[] = prioritizedFiles.map(
+    const uploadedAssets: Array<MultiChainAsset> = prioritizedFiles.map(
       (file, index) => {
         // Determine type based on file content
         let assetType: 'nft' | 'game' | 'document' | 'uploaded' = 'uploaded'
@@ -167,7 +168,7 @@ export function MultiChainNFTDemo() {
           blobId: file.blobId,
           description: `Real ${file.type} file uploaded to Walrus by user`,
           originalChain: 'sui' as SupportedChain,
-          availableOn: ['sui', 'ethereum', 'solana'] as SupportedChain[],
+          availableOn: ['sui', 'ethereum', 'solana'] as Array<SupportedChain>,
           metadata: {
             size: formatBytes(file.size),
             contentType: file.type,
@@ -367,7 +368,7 @@ export function MultiChainNFTDemo() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {(['sui', 'ethereum', 'solana'] as SupportedChain[]).map(
+            {(['sui', 'ethereum', 'solana'] as Array<SupportedChain>).map(
               (chain) => (
                 <div key={chain} className="text-center p-3 border rounded-lg">
                   <div className="text-sm font-medium mb-1">

@@ -1,5 +1,7 @@
-import { useState, memo } from 'react'
-import { useVaults, useFiles, useCreateVault } from '../hooks/api/useVaults'
+import { memo, useState } from 'react'
+import { Database, Plus } from 'lucide-react'
+import { useCreateVault, useFiles, useVaults } from '../hooks/api/useVaults'
+import { truncateText } from '../lib/utils'
 import {
   Card,
   CardContent,
@@ -16,8 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select'
-import { Plus, Database } from 'lucide-react'
-import { truncateText } from '../lib/utils'
 
 interface VaultSelectorProps {
   selectedVault: string

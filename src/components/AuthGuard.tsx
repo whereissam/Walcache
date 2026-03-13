@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { useAuthStore } from '../store/authStore'
 import { Loader2 } from 'lucide-react'
+import { useAuthStore } from '../store/authStore'
 
 interface AuthGuardProps {
   children: React.ReactNode
   requireAuth?: boolean
-  requiredPermissions?: string[]
+  requiredPermissions?: Array<string>
   fallbackPath?: string
 }
 

@@ -1,22 +1,28 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Badge } from './ui/badge'
+import { useEffect, useState } from 'react'
 import {
-  Zap,
-  Shield,
-  Globe,
-  Code,
+  ArrowRight,
   BarChart3,
   CheckCircle,
-  ArrowRight,
-  PlayCircle,
-  Database,
   Clock,
+  Code,
+  Database,
+  Globe,
+  PlayCircle,
+  Shield,
+  TrendingUp,
   Users,
-  TrendingUp
+  Zap,
 } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from './ui/card'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
 
 interface ApiMetric {
   label: string
@@ -26,81 +32,93 @@ interface ApiMetric {
 }
 
 export function ValueProposition() {
-  const [metrics, setMetrics] = useState<ApiMetric[]>([
+  const [metrics, setMetrics] = useState<Array<ApiMetric>>([
     {
       label: 'Response Time',
       value: '< 50ms',
       trend: 'up',
-      icon: <Zap className="h-4 w-4" />
+      icon: <Zap className="h-4 w-4" />,
     },
     {
       label: 'Cache Hit Rate',
       value: '94.2%',
       trend: 'up',
-      icon: <Database className="h-4 w-4" />
+      icon: <Database className="h-4 w-4" />,
     },
     {
       label: 'Global CDN Nodes',
       value: '25+',
       trend: 'stable',
-      icon: <Globe className="h-4 w-4" />
+      icon: <Globe className="h-4 w-4" />,
     },
     {
       label: 'Monthly Requests',
       value: '2.4M+',
       trend: 'up',
-      icon: <BarChart3 className="h-4 w-4" />
-    }
+      icon: <BarChart3 className="h-4 w-4" />,
+    },
   ])
 
   const features = [
     {
       icon: <Code className="h-6 w-6" />,
       title: 'Stripe-Style API',
-      description: 'Professional, consistent API design with full TypeScript support and comprehensive documentation.',
-      example: 'client.listBlobs({ limit: 10, cached: true })'
+      description:
+        'Professional, consistent API design with full TypeScript support and comprehensive documentation.',
+      example: 'client.listBlobs({ limit: 10, cached: true })',
     },
     {
       icon: <Zap className="h-6 w-6" />,
       title: 'Lightning Fast',
-      description: 'Global CDN with intelligent caching delivers content with sub-50ms latency worldwide.',
-      example: 'GET /v1/blobs/your-content → < 50ms'
+      description:
+        'Global CDN with intelligent caching delivers content with sub-50ms latency worldwide.',
+      example: 'GET /v1/blobs/your-content → < 50ms',
     },
     {
       icon: <Shield className="h-6 w-6" />,
       title: 'Decentralized Storage',
-      description: 'Built on Walrus network for ultimate data integrity, availability, and censorship resistance.',
-      example: 'Multi-chain verification across Sui, Ethereum, Solana'
+      description:
+        'Built on Walrus network for ultimate data integrity, availability, and censorship resistance.',
+      example: 'Multi-chain verification across Sui, Ethereum, Solana',
     },
     {
       icon: <BarChart3 className="h-6 w-6" />,
       title: 'Real-time Analytics',
-      description: 'Comprehensive metrics, performance monitoring, and usage analytics with Prometheus integration.',
-      example: 'client.getGlobalAnalytics() → detailed insights'
-    }
+      description:
+        'Comprehensive metrics, performance monitoring, and usage analytics with Prometheus integration.',
+      example: 'client.getGlobalAnalytics() → detailed insights',
+    },
   ]
 
   const useCases = [
     {
       title: 'NFT Marketplaces',
-      description: 'Store and serve NFT metadata and images with guaranteed availability',
-      benefits: ['Immutable storage', 'Global CDN', 'Sub-second loading']
+      description:
+        'Store and serve NFT metadata and images with guaranteed availability',
+      benefits: ['Immutable storage', 'Global CDN', 'Sub-second loading'],
     },
     {
       title: 'Web3 Applications',
-      description: 'Host dApp frontends with decentralized, censorship-resistant delivery',
-      benefits: ['Zero downtime', 'Multi-chain support', 'Developer-friendly API']
+      description:
+        'Host dApp frontends with decentralized, censorship-resistant delivery',
+      benefits: [
+        'Zero downtime',
+        'Multi-chain support',
+        'Developer-friendly API',
+      ],
     },
     {
       title: 'Content Creators',
-      description: 'Distribute media content with token-gated access and monetization',
-      benefits: ['Token gating', 'Analytics', 'Revenue streams']
+      description:
+        'Distribute media content with token-gated access and monetization',
+      benefits: ['Token gating', 'Analytics', 'Revenue streams'],
     },
     {
       title: 'Enterprise Data',
-      description: 'Archive critical data with cryptographic proof of integrity',
-      benefits: ['Audit trails', 'Compliance ready', 'Enterprise SLA']
-    }
+      description:
+        'Archive critical data with cryptographic proof of integrity',
+      benefits: ['Audit trails', 'Compliance ready', 'Enterprise SLA'],
+    },
   ]
 
   const apiPreview = {
@@ -122,7 +140,7 @@ const analytics = await client.getGlobalAnalytics()`,
   "blob_id": "blob_xyz789",
   "status": "completed",
   "created": 1703123456
-}`
+}`,
   }
 
   return (
@@ -138,8 +156,8 @@ const analytics = await client.getGlobalAnalytics()`,
             Walrus CDN for Developers
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            The first professional CDN for decentralized storage. Stripe-style API, global performance, 
-            Web3 native features.
+            The first professional CDN for decentralized storage. Stripe-style
+            API, global performance, Web3 native features.
           </p>
         </div>
 
@@ -171,7 +189,10 @@ const analytics = await client.getGlobalAnalytics()`,
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {metrics.map((metric, index) => (
-              <div key={index} className="text-center p-4 bg-gray-50 rounded-lg">
+              <div
+                key={index}
+                className="text-center p-4 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center justify-center gap-2 mb-2">
                   {metric.icon}
                   <span className="text-2xl font-bold">{metric.value}</span>
@@ -202,9 +223,7 @@ const analytics = await client.getGlobalAnalytics()`,
         <Card>
           <CardHeader>
             <CardTitle>Structured Responses</CardTitle>
-            <CardDescription>
-              Consistent, typed API responses
-            </CardDescription>
+            <CardDescription>Consistent, typed API responses</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
@@ -216,7 +235,9 @@ const analytics = await client.getGlobalAnalytics()`,
 
       {/* Key Features */}
       <div>
-        <h2 className="text-3xl font-bold text-center mb-8">Why Choose WCDN?</h2>
+        <h2 className="text-3xl font-bold text-center mb-8">
+          Why Choose WCDN?
+        </h2>
         <div className="grid md:grid-cols-2 gap-6">
           {features.map((feature, index) => (
             <Card key={index} className="relative overflow-hidden">
@@ -231,7 +252,9 @@ const analytics = await client.getGlobalAnalytics()`,
               <CardContent className="space-y-3">
                 <p className="text-gray-600">{feature.description}</p>
                 <div className="bg-gray-100 p-3 rounded-lg">
-                  <code className="text-sm text-gray-800">{feature.example}</code>
+                  <code className="text-sm text-gray-800">
+                    {feature.example}
+                  </code>
                 </div>
               </CardContent>
             </Card>
@@ -241,7 +264,9 @@ const analytics = await client.getGlobalAnalytics()`,
 
       {/* Use Cases */}
       <div>
-        <h2 className="text-3xl font-bold text-center mb-8">Perfect For Your Use Case</h2>
+        <h2 className="text-3xl font-bold text-center mb-8">
+          Perfect For Your Use Case
+        </h2>
         <div className="grid md:grid-cols-2 gap-6">
           {useCases.map((useCase, index) => (
             <Card key={index}>
@@ -269,7 +294,8 @@ const analytics = await client.getGlobalAnalytics()`,
         <CardContent className="text-center py-12">
           <h2 className="text-3xl font-bold mb-4">Ready to Build?</h2>
           <p className="text-xl mb-8 opacity-90">
-            Join developers building the future of decentralized content delivery
+            Join developers building the future of decentralized content
+            delivery
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/api-showcase">
@@ -279,7 +305,11 @@ const analytics = await client.getGlobalAnalytics()`,
               </Button>
             </Link>
             <Link to="/register">
-              <Button size="lg" variant="outline" className="gap-2 text-white border-white hover:bg-white hover:text-blue-600">
+              <Button
+                size="lg"
+                variant="outline"
+                className="gap-2 text-white border-white hover:bg-white hover:text-blue-600"
+              >
                 <Users className="h-5 w-5" />
                 Start Building
                 <ArrowRight className="h-4 w-4" />

@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { useState } from 'react'
+import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -13,7 +14,6 @@ import {
 } from '../components/ui/card'
 import { Label } from '../components/ui/label'
 import { Alert, AlertDescription } from '../components/ui/alert'
-import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
 
 interface LoginForm {
   email: string

@@ -1,4 +1,6 @@
 import React from 'react'
+import { AlertTriangle, Check, Clock, Globe, Zap } from 'lucide-react'
+import { CHAIN_CONFIG } from '../types/chains'
 import {
   Card,
   CardContent,
@@ -8,9 +10,7 @@ import {
 } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
-import { Check, Globe, Zap, Clock, AlertTriangle } from 'lucide-react'
-import type { SupportedChain, ChainInfo } from '../types/chains'
-import { CHAIN_CONFIG } from '../types/chains'
+import type { ChainInfo, SupportedChain } from '../types/chains'
 
 // Re-export for convenience
 export type { SupportedChain }
@@ -69,9 +69,11 @@ export function ChainSelector({
     if (showBlobStatus && blobId) {
       // Check blob status on all chains
       const statuses = {} as Record<SupportedChain, ChainBlobStatus>
-      ;(['sui', 'ethereum', 'solana'] as SupportedChain[]).forEach((chain) => {
-        statuses[chain] = getMockBlobStatus(chain, blobId)
-      })
+      ;(['sui', 'ethereum', 'solana'] as Array<SupportedChain>).forEach(
+        (chain) => {
+          statuses[chain] = getMockBlobStatus(chain, blobId)
+        },
+      )
       setBlobStatuses(statuses)
     }
   }, [showBlobStatus, blobId])
@@ -94,75 +96,81 @@ export function ChainSelector({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {(['sui', 'ethereum', 'solana'] as SupportedChain[]).map((chain) => {
-            const config = CHAIN_CONFIG[chain]
-            const isSelected = selectedChain === chain
-            const blobStatus = blobStatuses[chain]
+          {(['sui', 'ethereum', 'solana'] as Array<SupportedChain>).map(
+            (chain) => {
+              const config = CHAIN_CONFIG[chain]
+              const isSelected = selectedChain === chain
+              const blobStatus = blobStatuses[chain]
 
-            return (
-              <Button
-                key={chain}
-                variant={isSelected ? 'default' : 'outline'}
-                className="h-auto p-4 flex flex-col items-start space-y-2"
-                onClick={() => onChainSelect(chain)}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg">{config.icon}</span>
-                    <span className="font-semibold">{config.displayName}</span>
+              return (
+                <Button
+                  key={chain}
+                  variant={isSelected ? 'default' : 'outline'}
+                  className="h-auto p-4 flex flex-col items-start space-y-2"
+                  onClick={() => onChainSelect(chain)}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">{config.icon}</span>
+                      <span className="font-semibold">
+                        {config.displayName}
+                      </span>
+                    </div>
+                    {isSelected && <Check className="h-4 w-4" />}
                   </div>
-                  {isSelected && <Check className="h-4 w-4" />}
-                </div>
 
-                <div className="flex flex-wrap gap-1 w-full">
-                  <Badge
-                    variant={
-                      config.status === 'active' ? 'default' : 'secondary'
-                    }
-                    className="text-xs"
-                  >
-                    {config.status === 'active' ? '🟢 Active' : '🔶 Mock'}
-                  </Badge>
-
-                  {showBlobStatus && blobStatus && (
+                  <div className="flex flex-wrap gap-1 w-full">
                     <Badge
-                      variant={blobStatus.available ? 'default' : 'destructive'}
+                      variant={
+                        config.status === 'active' ? 'default' : 'secondary'
+                      }
                       className="text-xs"
                     >
-                      {blobStatus.available ? (
-                        <span className="flex items-center space-x-1">
-                          <Zap className="h-3 w-3" />
-                          <span>{blobStatus.latency}ms</span>
-                        </span>
-                      ) : (
-                        <span className="flex items-center space-x-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          <span>N/A</span>
-                        </span>
-                      )}
+                      {config.status === 'active' ? '🟢 Active' : '🔶 Mock'}
                     </Badge>
-                  )}
-                </div>
 
-                <p className="text-xs text-muted-foreground text-left w-full">
-                  {config.description}
-                </p>
-
-                {showBlobStatus && blobStatus?.lastChecked && (
-                  <p className="text-xs text-muted-foreground w-full text-left">
-                    <Clock className="h-3 w-3 inline mr-1" />
-                    Checked{' '}
-                    {Math.round(
-                      (new Date().getTime() -
-                        blobStatus.lastChecked.getTime()) /
-                        1000,
+                    {showBlobStatus && blobStatus && (
+                      <Badge
+                        variant={
+                          blobStatus.available ? 'default' : 'destructive'
+                        }
+                        className="text-xs"
+                      >
+                        {blobStatus.available ? (
+                          <span className="flex items-center space-x-1">
+                            <Zap className="h-3 w-3" />
+                            <span>{blobStatus.latency}ms</span>
+                          </span>
+                        ) : (
+                          <span className="flex items-center space-x-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            <span>N/A</span>
+                          </span>
+                        )}
+                      </Badge>
                     )}
-                    s ago
+                  </div>
+
+                  <p className="text-xs text-muted-foreground text-left w-full">
+                    {config.description}
                   </p>
-                )}
-              </Button>
-            )
-          })}
+
+                  {showBlobStatus && blobStatus?.lastChecked && (
+                    <p className="text-xs text-muted-foreground w-full text-left">
+                      <Clock className="h-3 w-3 inline mr-1" />
+                      Checked{' '}
+                      {Math.round(
+                        (new Date().getTime() -
+                          blobStatus.lastChecked.getTime()) /
+                          1000,
+                      )}
+                      s ago
+                    </p>
+                  )}
+                </Button>
+              )
+            },
+          )}
         </div>
 
         {/* Chain Comparison Table */}
@@ -176,7 +184,7 @@ export function ChainSelector({
               <div className="font-medium">Status</div>
               <div className="font-medium">Latency</div>
 
-              {(['sui', 'ethereum', 'solana'] as SupportedChain[]).map(
+              {(['sui', 'ethereum', 'solana'] as Array<SupportedChain>).map(
                 (chain) => {
                   const status = blobStatuses[chain]
                   const config = CHAIN_CONFIG[chain]
