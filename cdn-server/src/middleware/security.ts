@@ -1,15 +1,15 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import crypto from 'node:crypto'
 import { appConfig } from '../config/index.js'
 import { metricsService } from '../services/metrics.js'
 import { AuthenticationError, ErrorCode } from '../errors/base-error.js'
-import crypto from 'crypto'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 export interface SecurityConfig {
   enableCsrf: boolean
   enableRequestSigning: boolean
   maxRequestSize: number
-  blockedUserAgents: string[]
-  allowedIpRanges?: string[]
+  blockedUserAgents: Array<string>
+  allowedIpRanges?: Array<string>
   enableDDoSProtection: boolean
   enableBruteForceProtection: boolean
 }
@@ -201,25 +201,34 @@ export class SecurityMiddleware {
     }
   }
 
+  private ddosRequestCounts = new Map<string, { count: number; windowStart: number }>()
+
   private async ddosProtection(
     request: FastifyRequest,
     reply: FastifyReply,
   ): Promise<void> {
     const clientIP = this.getClientIP(request)
+    const now = Date.now()
+    const windowMs = 60000 // 1 minute window
 
-    // Simple DDoS protection based on request rate
-    const rateLimitKey = `ddos:${clientIP}`
-    const currentCount = this.connectionCounts.get(rateLimitKey) || 0
+    // Use a dedicated rate counter with time window
+    const entry = this.ddosRequestCounts.get(clientIP)
+    if (!entry || now - entry.windowStart > windowMs) {
+      this.ddosRequestCounts.set(clientIP, { count: 1, windowStart: now })
+      return
+    }
 
-    if (currentCount > 50) {
-      // 50 requests per minute threshold
+    entry.count++
+
+    if (entry.count > 200) {
+      // 200 requests per minute threshold for a CDN
       this.blockedIPs.add(clientIP)
       metricsService.counter('security.ddos.blocked', 1, { clientIP })
 
       throw new AuthenticationError(
         'DDoS protection triggered',
         ErrorCode.AUTH_RATE_LIMIT_EXCEEDED,
-        { clientIP },
+        undefined,
         undefined,
       )
     }
@@ -366,15 +375,11 @@ export class SecurityMiddleware {
   }
 
   private getClientIP(request: FastifyRequest): string {
-    const forwarded = request.headers['x-forwarded-for'] as string
-    const realIP = request.headers['x-real-ip'] as string
-
-    if (forwarded) {
-      return forwarded.split(',')[0].trim()
-    }
-
-    if (realIP) {
-      return realIP
+    // Only trust proxy headers in production when behind a known proxy
+    // In development, always use request.ip to prevent IP spoofing
+    if (appConfig.env === 'production') {
+      // Use Fastify's built-in trust proxy handling (configured via server.trustProxy)
+      return request.ip
     }
 
     return request.ip
@@ -474,7 +479,7 @@ export class SecurityMiddleware {
 
 export function createSecurityMiddleware(): SecurityMiddleware {
   const securityConfig: SecurityConfig = {
-    enableCsrf: appConfig.env === 'production',
+    enableCsrf: appConfig.env === 'production' || appConfig.env === 'staging',
     enableRequestSigning: appConfig.env === 'production',
     maxRequestSize: 10 * 1024 * 1024, // 10MB
     blockedUserAgents: ['curl', 'wget', 'python-requests'],

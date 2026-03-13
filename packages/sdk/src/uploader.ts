@@ -1,4 +1,4 @@
-import type { SupportedChain, ChainEndpointConfig } from './types'
+import type { ChainEndpointConfig, SupportedChain } from './types'
 
 // WCDN Backend API endpoint
 const WCDN_API_BASE = 'http://localhost:4500'
@@ -96,7 +96,7 @@ export async function uploadToWalrusWithCache(
       method: 'POST',
       body: formData,
       headers: {
-        'X-API-Key': 'dev-secret-wcdn-2024', // For protected endpoints
+        ...(process.env.WCDN_API_KEY ? { 'X-API-Key': process.env.WCDN_API_KEY } : {}),
       },
     })
 
@@ -289,7 +289,7 @@ export async function uploadAndGetInstantUrl(
 /**
  * 🔄 Pre-warm cache for frequently accessed content
  */
-export async function preloadToCache(blobIds: string[]): Promise<{
+export async function preloadToCache(blobIds: Array<string>): Promise<{
   success: number
   failed: number
   results: Array<{ blobId: string; success: boolean; error?: string }>
@@ -299,7 +299,7 @@ export async function preloadToCache(blobIds: string[]): Promise<{
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': 'dev-secret-wcdn-2024',
+        ...(process.env.WCDN_API_KEY ? { 'X-API-Key': process.env.WCDN_API_KEY } : {}),
       },
       body: JSON.stringify({ cids: blobIds }),
     })

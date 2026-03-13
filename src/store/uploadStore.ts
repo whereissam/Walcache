@@ -31,8 +31,8 @@ export interface UploadProgress {
 
 interface UploadState {
   // Data
-  vaults: TuskyVault[]
-  files: TuskyFile[]
+  vaults: Array<TuskyVault>
+  files: Array<TuskyFile>
   uploads: Record<string, UploadProgress>
 
   // UI State
@@ -61,7 +61,7 @@ const API_BASE = 'http://localhost:4500'
 // Helper function to get authentication token
 const getAuthToken = () => {
   const authStore = JSON.parse(localStorage.getItem('auth-storage') || '{}')
-  return authStore.state?.token || 'dev-secret-wcdn-2024'
+  return authStore.state?.token || ''
 }
 
 export const useUploadStore = create<UploadState>()(

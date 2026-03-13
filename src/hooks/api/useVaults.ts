@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { WALCACHE_BASE_URL } from '@/config/env'
 
 interface TuskyVault {
@@ -38,10 +38,13 @@ export const vaultKeys = {
 }
 
 // API functions
-async function fetchVaults(): Promise<TuskyVault[]> {
+async function fetchVaults(): Promise<Array<TuskyVault>> {
   const response = await fetch(`${WALCACHE_BASE_URL}/upload/vaults`, {
     headers: {
-      'X-API-Key': 'dev-secret-walcache-2024',
+      'X-API-Key': localStorage.getItem('auth-storage')
+        ? JSON.parse(localStorage.getItem('auth-storage') || '{}').state
+            ?.token || ''
+        : '',
     },
   })
   if (!response.ok) {
@@ -50,14 +53,17 @@ async function fetchVaults(): Promise<TuskyVault[]> {
   return response.json()
 }
 
-async function fetchFiles(vaultId?: string): Promise<TuskyFile[]> {
+async function fetchFiles(vaultId?: string): Promise<Array<TuskyFile>> {
   const url = vaultId
     ? `${WALCACHE_BASE_URL}/upload/files?vaultId=${vaultId}`
     : `${WALCACHE_BASE_URL}/upload/files`
 
   const response = await fetch(url, {
     headers: {
-      'X-API-Key': 'dev-secret-walcache-2024',
+      'X-API-Key': localStorage.getItem('auth-storage')
+        ? JSON.parse(localStorage.getItem('auth-storage') || '{}').state
+            ?.token || ''
+        : '',
     },
   })
   if (!response.ok) {
@@ -74,7 +80,10 @@ async function createVault(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': 'dev-secret-walcache-2024',
+      'X-API-Key': localStorage.getItem('auth-storage')
+        ? JSON.parse(localStorage.getItem('auth-storage') || '{}').state
+            ?.token || ''
+        : '',
     },
     body: JSON.stringify({ name, description }),
   })
@@ -92,7 +101,10 @@ async function uploadFile(file: File, vaultId: string): Promise<TuskyFile> {
   const response = await fetch(`${WALCACHE_BASE_URL}/upload/file`, {
     method: 'POST',
     headers: {
-      'X-API-Key': 'dev-secret-walcache-2024',
+      'X-API-Key': localStorage.getItem('auth-storage')
+        ? JSON.parse(localStorage.getItem('auth-storage') || '{}').state
+            ?.token || ''
+        : '',
     },
     body: formData,
   })
@@ -106,7 +118,10 @@ async function deleteFile(fileId: string): Promise<void> {
   const response = await fetch(`${WALCACHE_BASE_URL}/upload/files/${fileId}`, {
     method: 'DELETE',
     headers: {
-      'X-API-Key': 'dev-secret-walcache-2024',
+      'X-API-Key': localStorage.getItem('auth-storage')
+        ? JSON.parse(localStorage.getItem('auth-storage') || '{}').state
+            ?.token || ''
+        : '',
     },
   })
   if (!response.ok) {

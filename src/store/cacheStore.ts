@@ -11,7 +11,7 @@ interface CacheState {
   setLoading: (loading: boolean) => void
 
   // Cache Management Actions
-  preloadCIDs: (cids: string[]) => Promise<void>
+  preloadCIDs: (cids: Array<string>) => Promise<void>
   pinCID: (cid: string) => Promise<void>
   unpinCID: (cid: string) => Promise<void>
   clearCache: () => Promise<void>
@@ -22,7 +22,7 @@ const API_BASE = 'http://localhost:4500/api'
 // Helper function to get authentication token
 const getAuthToken = () => {
   const authStore = JSON.parse(localStorage.getItem('auth-storage') || '{}')
-  return authStore.state?.token || 'dev-secret-wcdn-2024'
+  return authStore.state?.token || ''
 }
 
 export const useCacheStore = create<CacheState>()(
@@ -37,7 +37,7 @@ export const useCacheStore = create<CacheState>()(
       setLoading: (loading) => set({ isLoading: loading }),
 
       // Cache Management Actions
-      preloadCIDs: async (cids: string[]) => {
+      preloadCIDs: async (cids: Array<string>) => {
         set({ isLoading: true, error: null })
         try {
           const response = await fetch(`${API_BASE}/preload`, {

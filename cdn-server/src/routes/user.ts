@@ -1,24 +1,24 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { userService } from '../services/user.js'
-import type {
-  UserRegistration,
-  LoginCredentials,
-  TokenRequest,
-} from '../types/user.js'
-import { SubscriptionTier, ApiPermission } from '../types/user.js'
+import { ApiPermission, SubscriptionTier } from '../types/user.js'
 import {
+  optionalAuth,
   requireAuth,
   requirePermission,
-  optionalAuth,
-  type AuthenticatedRequest,
 } from '../middleware/auth.js'
 import {
-  ValidationError,
   AuthenticationError,
   ErrorCode,
+  ValidationError,
 } from '../errors/base-error.js'
 import { metricsService } from '../services/metrics.js'
+import type { AuthenticatedRequest } from '../middleware/auth.js'
+import type {
+  LoginCredentials,
+  TokenRequest,
+  UserRegistration,
+} from '../types/user.js'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 // Validation schemas
 const userRegistrationSchema = z.object({
@@ -140,10 +140,10 @@ export async function userRoutes(fastify: FastifyInstance) {
     },
   )
 
-  // Update user subscription
+  // Update user subscription (admin only - self-service upgrade requires payment verification)
   fastify.put(
     '/subscription',
-    { preHandler: requireAuth },
+    { preHandler: [requireAuth, requirePermission(ApiPermission.ADMIN)] },
     async (request: AuthenticatedRequest, reply: FastifyReply) => {
       try {
         const { tier } = subscriptionUpdateSchema.parse(request.body)

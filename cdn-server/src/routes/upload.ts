@@ -1,16 +1,13 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { tuskyService } from '../services/tusky.js'
 import { cacheService } from '../services/cache.js'
 import { analyticsService } from '../services/analytics.js'
-import type { WalrusUploadResponse } from '../types/walrus.js'
-import {
-  requireAuth,
-  optionalAuth,
-  type AuthenticatedRequest,
-} from '../middleware/auth.js'
+import { optionalAuth, requireAuth } from '../middleware/auth.js'
 import { config } from '../config/index.js'
 import { WALRUS_ENDPOINTS } from '../config/walrus-endpoints.js'
+import type { AuthenticatedRequest } from '../middleware/auth.js'
+import type { WalrusUploadResponse } from '../types/walrus.js'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 const uploadFileSchema = z.object({
   vaultId: z.string().optional(),
@@ -27,6 +24,11 @@ interface UploadQueryParams {
   parentId?: string
 }
 
+// Sanitize filename for Content-Disposition header to prevent header injection
+function sanitizeFilename(filename: string): string {
+  return filename.replace(/[^a-zA-Z0-9._\- ]/g, '_')
+}
+
 export async function uploadRoutes(fastify: FastifyInstance) {
   // Register multipart support
   await fastify.register(import('@fastify/multipart'), {
@@ -38,6 +40,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
   // Direct upload to Walrus (official API)
   fastify.post(
     '/walrus',
+    { preHandler: requireAuth },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const data = await request.file()
@@ -51,7 +54,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
         const contentType = data.mimetype || 'application/octet-stream'
 
         // Use Walrus publisher directly (following official docs)
-        const network = config.WALRUS_NETWORK as 'testnet' | 'mainnet'
+        const network = config.WALRUS_NETWORK
         const publishers = WALRUS_ENDPOINTS[network].publishers
 
         let lastError: Error | null = null
@@ -117,7 +120,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                 size: buffer.length,
                 fileName,
                 contentType,
-                cdnUrl: `http://localhost:4500/cdn/${blobId}`,
+                cdnUrl: `${request.protocol}://${request.hostname}:${config.server.port}/cdn/${blobId}`,
                 directUrl: `${config.WALRUS_AGGREGATOR}/v1/blobs/${blobId}`,
                 cached: true,
                 publisherUsed: publisherUrl,
@@ -208,8 +211,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
           success: true,
           file: {
             ...tuskyFile,
-            cdnUrl: `http://localhost:4500/cdn/${tuskyFile.blobId}`,
-            downloadUrl: `http://localhost:4500/upload/files/${tuskyFile.id}/download`,
+            cdnUrl: `${request.protocol}://${request.hostname}:${config.server.port}/cdn/${tuskyFile.blobId}`,
+            downloadUrl: `${request.protocol}://${request.hostname}:${config.server.port}/upload/files/${tuskyFile.id}/download`,
           },
           cached: true,
         })
@@ -226,6 +229,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
   // Get vaults
   fastify.get(
     '/vaults',
+    { preHandler: requireAuth },
     async (request: FastifyRequest, reply: FastifyReply) => {
       if (!tuskyService.isConfigured()) {
         return reply.status(503).send({
@@ -287,6 +291,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
   // Get files
   fastify.get<{ Querystring: UploadQueryParams }>(
     '/files',
+    { preHandler: requireAuth },
     async (
       request: FastifyRequest<{ Querystring: UploadQueryParams }>,
       reply: FastifyReply,
@@ -308,8 +313,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
           .filter((file) => file.status === 'active')
           .map((file) => ({
             ...file,
-            cdnUrl: `http://localhost:4500/cdn/${file.blobId}`,
-            downloadUrl: `http://localhost:4500/upload/files/${file.id}/download`,
+            cdnUrl: `/cdn/${file.blobId}`,
+            downloadUrl: `/upload/files/${file.id}/download`,
           }))
 
         return reply.send({ files: activeFiles })
@@ -394,7 +399,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             reply.header('Content-Length', data.length.toString())
             reply.header(
               'Content-Disposition',
-              `inline; filename="${file.name}"`,
+              `inline; filename="${sanitizeFilename(file.name)}"`,
             )
             reply.header('X-Source', 'tusky-api')
 
@@ -405,7 +410,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
         }
 
         // Fallback: Try to fetch from Walrus aggregator directly
-        const network = config.WALRUS_NETWORK as 'testnet' | 'mainnet'
+        const network = config.WALRUS_NETWORK
         const aggregators = WALRUS_ENDPOINTS[network].aggregators
 
         for (const aggregatorUrl of aggregators) {

@@ -1,5 +1,6 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import crypto from 'node:crypto'
 import { BaseError, ErrorCode } from '../errors/base-error.js'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 export interface ErrorResponse {
   error: {
@@ -42,6 +43,7 @@ export async function errorHandler(
   if (error instanceof BaseError) {
     request.log.error(errorLog, `${error.code}: ${error.message}`)
 
+    const isProduction = process.env.NODE_ENV === 'production'
     const errorResponse: ErrorResponse = {
       error: {
         code: error.code,
@@ -50,7 +52,8 @@ export async function errorHandler(
         timestamp: error.timestamp.toISOString(),
         correlationId: error.correlationId || correlationId,
         retryAfter: error.retryAfter,
-        context: error.context,
+        // Only include context in non-production environments
+        ...(isProduction ? {} : { context: error.context }),
       },
     }
 
@@ -74,8 +77,10 @@ export async function errorHandler(
 }
 
 function generateCorrelationId(): string {
-  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  return `req_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`
 }
+
+const CORRELATION_ID_REGEX = /^[a-zA-Z0-9_\-]{1,64}$/
 
 function sanitizeHeaders(headers: any): any {
   const sanitized = { ...headers }
@@ -94,10 +99,15 @@ export function registerErrorHandler(fastify: FastifyInstance): void {
 
   // Add correlation ID to all requests
   fastify.addHook('onRequest', async (request, reply) => {
-    const correlationId =
+    const clientCorrelationId =
       (request.headers['x-correlation-id'] as string) ||
-      (request.headers['x-request-id'] as string) ||
-      generateCorrelationId()
+      (request.headers['x-request-id'] as string)
+
+    // Validate client-provided correlation ID, generate server-side if invalid
+    const correlationId =
+      clientCorrelationId && CORRELATION_ID_REGEX.test(clientCorrelationId)
+        ? clientCorrelationId
+        : generateCorrelationId()
 
     request.headers['x-correlation-id'] = correlationId
     reply.header('X-Correlation-ID', correlationId)

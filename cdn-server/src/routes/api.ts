@@ -1,16 +1,13 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { walrusService } from '../services/walrus.js'
 import { cacheService } from '../services/cache.js'
 import { analyticsService } from '../services/analytics.js'
 import { metricsService } from '../services/metrics.js'
-import {
-  requireAuth,
-  optionalAuth,
-  type AuthenticatedRequest,
-} from '../middleware/auth.js'
+import { optionalAuth, requireAuth } from '../middleware/auth.js'
 import { WebhookService } from '../services/webhook.js'
 import { appConfig } from '../config/index.js'
+import type { AuthenticatedRequest } from '../middleware/auth.js'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 const preloadSchema = z.object({
   cids: z.array(z.string().min(1)).min(1).max(100),
@@ -215,6 +212,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     '/metrics',
+    { preHandler: requireAuth },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const globalStats = analyticsService.getGlobalStats()
       const cacheStats = await cacheService.getStats()
@@ -236,6 +234,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
   // Prometheus metrics endpoint
   fastify.get(
     '/metrics/prometheus',
+    { preHandler: requireAuth },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const prometheusMetrics = metricsService.getPrometheusMetrics()
       reply.header('Content-Type', 'text/plain; version=0.0.4')
@@ -246,6 +245,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
   // Detailed system metrics
   fastify.get(
     '/metrics/system',
+    { preHandler: requireAuth },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const systemMetrics = metricsService.getSystemMetrics()
       return reply.send(systemMetrics)
@@ -254,6 +254,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     '/cache/stats',
+    { preHandler: requireAuth },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const stats = await cacheService.getStats()
       return reply.send(stats)
@@ -364,8 +365,12 @@ export async function apiRoutes(fastify: FastifyInstance) {
       try {
         // Check if webhook secret is configured
         if (!appConfig.secrets.webhookSecret) {
-          fastify.log.error('Webhook secret not configured - rejecting webhook request')
-          return reply.status(401).send({ error: 'Webhook authentication not configured' })
+          fastify.log.error(
+            'Webhook secret not configured - rejecting webhook request',
+          )
+          return reply
+            .status(401)
+            .send({ error: 'Webhook authentication not configured' })
         }
 
         // Verify webhook signature
@@ -377,14 +382,23 @@ export async function apiRoutes(fastify: FastifyInstance) {
 
         const rawBody = JSON.stringify(request.body)
         let isValid = false
-        
+
         try {
-          isValid = WebhookService.verifySignature(rawBody, signature, appConfig.secrets.webhookSecret)
+          isValid = WebhookService.verifySignature(
+            rawBody,
+            signature,
+            appConfig.secrets.webhookSecret,
+          )
         } catch (signatureError) {
-          fastify.log.error('Webhook signature verification failed:', signatureError)
-          return reply.status(401).send({ error: 'Invalid webhook signature format' })
+          fastify.log.error(
+            'Webhook signature verification failed:',
+            signatureError,
+          )
+          return reply
+            .status(401)
+            .send({ error: 'Invalid webhook signature format' })
         }
-        
+
         if (!isValid) {
           fastify.log.error('Invalid webhook signature')
           return reply.status(401).send({ error: 'Invalid webhook signature' })

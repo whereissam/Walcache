@@ -1,7 +1,11 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { WalrusCDNClient } from '../../packages/sdk/src/index.js'
-import { BlockchainIntegrator, PRESET_CONFIGS, WALRUS_BLOB_REGISTRY_ABI } from '../../packages/sdk/src/blockchain.js'
+import {
+  BlockchainIntegrator,
+  PRESET_CONFIGS,
+  WALRUS_BLOB_REGISTRY_ABI,
+} from '../../packages/sdk/src/blockchain.js'
 import type {
   BlobResource,
   UploadResource,
@@ -15,7 +19,7 @@ import type {
   // Legacy types for backward compatibility
   CIDStats,
   CIDInfo,
-  GlobalMetrics
+  GlobalMetrics,
 } from '../../packages/sdk/src/types.js'
 
 // Legacy interface adapters for backward compatibility
@@ -105,7 +109,7 @@ interface MultiChainStatus {
   blobId: string
   chains: Record<SupportedChain, BlockchainVerificationResult>
   consensus: 'none' | 'minority' | 'majority' | 'unanimous'
-  trustedChains: SupportedChain[]
+  trustedChains: Array<SupportedChain>
 }
 
 interface WalcacheState {
@@ -120,19 +124,26 @@ interface WalcacheState {
   // Legacy Data (for backward compatibility)
   cidStats: Record<string, CIDStats>
   globalStats: LegacyGlobalStats | null
-  topCIDs: CIDStats[]
+  topCIDs: Array<CIDStats>
   cidInfo: CIDInfo | null
 
   // Upload Data (Tusky integration)
-  vaults: TuskyVault[]
-  files: TuskyFile[]
+  vaults: Array<TuskyVault>
+  files: Array<TuskyFile>
   uploadProgress: Record<string, UploadProgress | UploadResource>
 
   // Blockchain Integration State
   blockchainIntegrator: BlockchainIntegrator | null
-  supportedChains: SupportedChain[]
+  supportedChains: Array<SupportedChain>
   verificationResults: Record<string, MultiChainStatus>
-  registrationProgress: Record<string, { chain: SupportedChain; status: 'pending' | 'completed' | 'failed'; txHash?: string }>
+  registrationProgress: Record<
+    string,
+    {
+      chain: SupportedChain
+      status: 'pending' | 'completed' | 'failed'
+      txHash?: string
+    }
+  >
 
   // Pagination State
   pagination: {
@@ -154,20 +165,31 @@ interface WalcacheState {
 
   // v1 API Actions
   fetchBlob: (blobId: string) => Promise<BlobResource>
-  listBlobs: (params?: { limit?: number; cached?: boolean; pinned?: boolean }) => Promise<BlobResource[]>
-  createUpload: (file: File, options?: { vault_id?: string; parent_id?: string }) => Promise<UploadResource>
-  listUploads: (params?: { limit?: number; vault_id?: string; status?: string }) => Promise<UploadResource[]>
-  preloadBlobs: (blobIds: string[]) => Promise<void>
+  listBlobs: (params?: {
+    limit?: number
+    cached?: boolean
+    pinned?: boolean
+  }) => Promise<Array<BlobResource>>
+  createUpload: (
+    file: File,
+    options?: { vault_id?: string; parent_id?: string },
+  ) => Promise<UploadResource>
+  listUploads: (params?: {
+    limit?: number
+    vault_id?: string
+    status?: string
+  }) => Promise<Array<UploadResource>>
+  preloadBlobs: (blobIds: Array<string>) => Promise<void>
   pinBlob: (blobId: string) => Promise<BlobResource>
   unpinBlob: (blobId: string) => Promise<BlobResource>
-  clearCacheEntries: (blobIds?: string[]) => Promise<void>
+  clearCacheEntries: (blobIds?: Array<string>) => Promise<void>
   fetchGlobalAnalytics: () => Promise<void>
   fetchCacheStatistics: () => Promise<void>
 
   // Legacy API Actions (backward compatibility)
   fetchCIDStats: (cid: string) => Promise<void>
   fetchGlobalStats: () => Promise<void>
-  preloadCIDs: (cids: string[]) => Promise<void>
+  preloadCIDs: (cids: Array<string>) => Promise<void>
   pinCID: (cid: string) => Promise<void>
   unpinCID: (cid: string) => Promise<void>
   clearCache: () => Promise<void>
@@ -206,12 +228,32 @@ interface WalcacheState {
 
   // Blockchain Integration Actions
   initializeBlockchainIntegrator: (configs: Record<SupportedChain, any>) => void
-  registerBlobOnChain: (blobId: string, metadata: any, chain: SupportedChain) => Promise<string>
-  registerBlobBatch: (blobs: Array<{ blobId: string; metadata: any }>, chain: SupportedChain) => Promise<string>
-  verifyBlobOnChain: (blobId: string, chain: SupportedChain) => Promise<BlockchainVerificationResult>
-  verifyMultiChain: (blobId: string, chains?: SupportedChain[]) => Promise<MultiChainStatus>
-  getBlobRegistrationStatus: (blobId: string, chain: SupportedChain) => Promise<{ registered: boolean; txHash?: string }>
-  uploadAndRegisterOnChain: (file: File, chain: SupportedChain, vaultId?: string) => Promise<{
+  registerBlobOnChain: (
+    blobId: string,
+    metadata: any,
+    chain: SupportedChain,
+  ) => Promise<string>
+  registerBlobBatch: (
+    blobs: Array<{ blobId: string; metadata: any }>,
+    chain: SupportedChain,
+  ) => Promise<string>
+  verifyBlobOnChain: (
+    blobId: string,
+    chain: SupportedChain,
+  ) => Promise<BlockchainVerificationResult>
+  verifyMultiChain: (
+    blobId: string,
+    chains?: Array<SupportedChain>,
+  ) => Promise<MultiChainStatus>
+  getBlobRegistrationStatus: (
+    blobId: string,
+    chain: SupportedChain,
+  ) => Promise<{ registered: boolean; txHash?: string }>
+  uploadAndRegisterOnChain: (
+    file: File,
+    chain: SupportedChain,
+    vaultId?: string,
+  ) => Promise<{
     upload: UploadResource
     txHash: string
     verified: boolean
@@ -224,7 +266,7 @@ const API_BASE = 'http://localhost:4500/api'
 // Helper function to get authentication token
 const getAuthToken = () => {
   const authStore = JSON.parse(localStorage.getItem('auth-storage') || '{}')
-  return authStore.state?.token || 'dev-secret-wcdn-2024' // Fallback to dev key
+  return authStore.state?.token || ''
 }
 
 // Initialize SDK client with proper API key
@@ -290,7 +332,7 @@ export const useWalcacheStore = create<WalcacheState>()(
 
       // Blockchain Integration state
       blockchainIntegrator: null,
-      supportedChains: ['ethereum', 'sui'] as SupportedChain[],
+      supportedChains: ['ethereum', 'sui'] as Array<SupportedChain>,
       verificationResults: {},
       registrationProgress: {},
 
@@ -329,15 +371,18 @@ export const useWalcacheStore = create<WalcacheState>()(
         }
       },
 
-      listBlobs: async (params = {}): Promise<BlobResource[]> => {
+      listBlobs: async (params = {}): Promise<Array<BlobResource>> => {
         set({ isLoading: true, error: null })
         updateClientApiKey()
         try {
           const result = await cdnClient.listBlobs(params)
-          const blobsMap = result.data.reduce((acc, blob) => {
-            acc[blob.id] = blob
-            return acc
-          }, {} as Record<string, BlobResource>)
+          const blobsMap = result.data.reduce(
+            (acc, blob) => {
+              acc[blob.id] = blob
+              return acc
+            },
+            {} as Record<string, BlobResource>,
+          )
 
           set((state) => ({
             blobs: { ...state.blobs, ...blobsMap },
@@ -345,8 +390,11 @@ export const useWalcacheStore = create<WalcacheState>()(
               ...state.pagination,
               blobs: {
                 has_more: result.has_more,
-                starting_after: result.data.length > 0 ? result.data[result.data.length - 1].id : undefined
-              }
+                starting_after:
+                  result.data.length > 0
+                    ? result.data[result.data.length - 1].id
+                    : undefined,
+              },
             },
             isLoading: false,
           }))
@@ -358,7 +406,10 @@ export const useWalcacheStore = create<WalcacheState>()(
         }
       },
 
-      createUpload: async (file: File, options = {}): Promise<UploadResource> => {
+      createUpload: async (
+        file: File,
+        options = {},
+      ): Promise<UploadResource> => {
         set({ isLoading: true, error: null })
         updateClientApiKey()
         try {
@@ -375,14 +426,17 @@ export const useWalcacheStore = create<WalcacheState>()(
         }
       },
 
-      listUploads: async (params = {}): Promise<UploadResource[]> => {
+      listUploads: async (params = {}): Promise<Array<UploadResource>> => {
         set({ isLoading: true, error: null })
         try {
           const result = await cdnClient.listUploads(params)
-          const uploadsMap = result.data.reduce((acc, upload) => {
-            acc[upload.id] = upload
-            return acc
-          }, {} as Record<string, UploadResource>)
+          const uploadsMap = result.data.reduce(
+            (acc, upload) => {
+              acc[upload.id] = upload
+              return acc
+            },
+            {} as Record<string, UploadResource>,
+          )
 
           set((state) => ({
             uploads: { ...state.uploads, ...uploadsMap },
@@ -390,8 +444,11 @@ export const useWalcacheStore = create<WalcacheState>()(
               ...state.pagination,
               uploads: {
                 has_more: result.has_more,
-                starting_after: result.data.length > 0 ? result.data[result.data.length - 1].id : undefined
-              }
+                starting_after:
+                  result.data.length > 0
+                    ? result.data[result.data.length - 1].id
+                    : undefined,
+              },
             },
             isLoading: false,
           }))
@@ -403,7 +460,7 @@ export const useWalcacheStore = create<WalcacheState>()(
         }
       },
 
-      preloadBlobs: async (blobIds: string[]) => {
+      preloadBlobs: async (blobIds: Array<string>) => {
         set({ isLoading: true, error: null })
         try {
           await cdnClient.preloadBlobs(blobIds)
@@ -447,7 +504,7 @@ export const useWalcacheStore = create<WalcacheState>()(
         }
       },
 
-      clearCacheEntries: async (blobIds?: string[]) => {
+      clearCacheEntries: async (blobIds?: Array<string>) => {
         set({ isLoading: true, error: null })
         try {
           await cdnClient.clearCache(blobIds)
@@ -561,7 +618,7 @@ export const useWalcacheStore = create<WalcacheState>()(
         }
       },
 
-      preloadCIDs: async (cids: string[]) => {
+      preloadCIDs: async (cids: Array<string>) => {
         set({ isLoading: true, error: null })
         try {
           const response = await fetch(`${API_BASE}/preload`, {
@@ -1183,17 +1240,28 @@ export const useWalcacheStore = create<WalcacheState>()(
       },
 
       // Blockchain Integration Actions
-      initializeBlockchainIntegrator: (configs: Record<SupportedChain, any>) => {
+      initializeBlockchainIntegrator: (
+        configs: Record<SupportedChain, any>,
+      ) => {
         try {
           const integrator = new BlockchainIntegrator(configs)
           set({ blockchainIntegrator: integrator })
-          console.log('✅ Blockchain integrator initialized with chains:', Object.keys(configs))
+          console.log(
+            '✅ Blockchain integrator initialized with chains:',
+            Object.keys(configs),
+          )
         } catch (error) {
-          set({ error: `Failed to initialize blockchain integrator: ${error instanceof Error ? error.message : 'Unknown error'}` })
+          set({
+            error: `Failed to initialize blockchain integrator: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          })
         }
       },
 
-      registerBlobOnChain: async (blobId: string, metadata: any, chain: SupportedChain): Promise<string> => {
+      registerBlobOnChain: async (
+        blobId: string,
+        metadata: any,
+        chain: SupportedChain,
+      ): Promise<string> => {
         const { blockchainIntegrator } = get()
         if (!blockchainIntegrator) {
           throw new Error('Blockchain integrator not initialized')
@@ -1203,18 +1271,22 @@ export const useWalcacheStore = create<WalcacheState>()(
         set((state) => ({
           registrationProgress: {
             ...state.registrationProgress,
-            [registrationId]: { chain, status: 'pending' }
-          }
+            [registrationId]: { chain, status: 'pending' },
+          },
         }))
 
         try {
-          const txHash = await blockchainIntegrator.registerBlob(blobId, metadata, chain)
-          
+          const txHash = await blockchainIntegrator.registerBlob(
+            blobId,
+            metadata,
+            chain,
+          )
+
           set((state) => ({
             registrationProgress: {
               ...state.registrationProgress,
-              [registrationId]: { chain, status: 'completed', txHash }
-            }
+              [registrationId]: { chain, status: 'completed', txHash },
+            },
           }))
 
           console.log(`✅ Blob ${blobId} registered on ${chain}: ${txHash}`)
@@ -1223,14 +1295,17 @@ export const useWalcacheStore = create<WalcacheState>()(
           set((state) => ({
             registrationProgress: {
               ...state.registrationProgress,
-              [registrationId]: { chain, status: 'failed' }
-            }
+              [registrationId]: { chain, status: 'failed' },
+            },
           }))
           throw error
         }
       },
 
-      registerBlobBatch: async (blobs: Array<{ blobId: string; metadata: any }>, chain: SupportedChain): Promise<string> => {
+      registerBlobBatch: async (
+        blobs: Array<{ blobId: string; metadata: any }>,
+        chain: SupportedChain,
+      ): Promise<string> => {
         const { blockchainIntegrator } = get()
         if (!blockchainIntegrator) {
           throw new Error('Blockchain integrator not initialized')
@@ -1238,12 +1313,14 @@ export const useWalcacheStore = create<WalcacheState>()(
 
         try {
           const txHash = await blockchainIntegrator.registerBlobBatch(
-            blobs.map(b => b.blobId),
-            blobs.map(b => b.metadata),
-            chain
+            blobs.map((b) => b.blobId),
+            blobs.map((b) => b.metadata),
+            chain,
           )
-          
-          console.log(`✅ Batch of ${blobs.length} blobs registered on ${chain}: ${txHash}`)
+
+          console.log(
+            `✅ Batch of ${blobs.length} blobs registered on ${chain}: ${txHash}`,
+          )
           return txHash
         } catch (error) {
           console.error(`❌ Batch registration failed on ${chain}:`, error)
@@ -1251,7 +1328,10 @@ export const useWalcacheStore = create<WalcacheState>()(
         }
       },
 
-      verifyBlobOnChain: async (blobId: string, chain: SupportedChain): Promise<BlockchainVerificationResult> => {
+      verifyBlobOnChain: async (
+        blobId: string,
+        chain: SupportedChain,
+      ): Promise<BlockchainVerificationResult> => {
         const { blockchainIntegrator } = get()
         if (!blockchainIntegrator) {
           throw new Error('Blockchain integrator not initialized')
@@ -1259,14 +1339,14 @@ export const useWalcacheStore = create<WalcacheState>()(
 
         try {
           const result = await blockchainIntegrator.verifyBlob(blobId, chain)
-          
+
           const verificationResult: BlockchainVerificationResult = {
             blobId,
             chain,
             verified: result.verified,
             transactionHash: result.transactionHash,
             uploader: result.uploader,
-            timestamp: result.timestamp
+            timestamp: result.timestamp,
           }
 
           return verificationResult
@@ -1275,27 +1355,36 @@ export const useWalcacheStore = create<WalcacheState>()(
             blobId,
             chain,
             verified: false,
-            error: error instanceof Error ? error.message : 'Verification failed'
+            error:
+              error instanceof Error ? error.message : 'Verification failed',
           }
         }
       },
 
-      verifyMultiChain: async (blobId: string, chains?: SupportedChain[]): Promise<MultiChainStatus> => {
+      verifyMultiChain: async (
+        blobId: string,
+        chains?: Array<SupportedChain>,
+      ): Promise<MultiChainStatus> => {
         const { supportedChains } = get()
         const targetChains = chains || supportedChains
-        
-        const verificationPromises = targetChains.map(chain => 
-          get().verifyBlobOnChain(blobId, chain)
+
+        const verificationPromises = targetChains.map((chain) =>
+          get().verifyBlobOnChain(blobId, chain),
         )
 
         const results = await Promise.all(verificationPromises)
-        const chainResults: Record<SupportedChain, BlockchainVerificationResult> = {}
-        
-        results.forEach(result => {
+        const chainResults: Record<
+          SupportedChain,
+          BlockchainVerificationResult
+        > = {}
+
+        results.forEach((result) => {
           chainResults[result.chain] = result
         })
 
-        const verifiedChains = results.filter(r => r.verified).map(r => r.chain)
+        const verifiedChains = results
+          .filter((r) => r.verified)
+          .map((r) => r.chain)
         const totalChains = targetChains.length
         const verifiedCount = verifiedChains.length
 
@@ -1309,20 +1398,23 @@ export const useWalcacheStore = create<WalcacheState>()(
           blobId,
           chains: chainResults,
           consensus,
-          trustedChains: verifiedChains
+          trustedChains: verifiedChains,
         }
 
         set((state) => ({
           verificationResults: {
             ...state.verificationResults,
-            [blobId]: multiChainStatus
-          }
+            [blobId]: multiChainStatus,
+          },
         }))
 
         return multiChainStatus
       },
 
-      getBlobRegistrationStatus: async (blobId: string, chain: SupportedChain) => {
+      getBlobRegistrationStatus: async (
+        blobId: string,
+        chain: SupportedChain,
+      ) => {
         const { blockchainIntegrator } = get()
         if (!blockchainIntegrator) {
           throw new Error('Blockchain integrator not initialized')
@@ -1332,43 +1424,60 @@ export const useWalcacheStore = create<WalcacheState>()(
           const result = await blockchainIntegrator.verifyBlob(blobId, chain)
           return {
             registered: result.verified,
-            txHash: result.transactionHash
+            txHash: result.transactionHash,
           }
         } catch (error) {
           return { registered: false }
         }
       },
 
-      uploadAndRegisterOnChain: async (file: File, chain: SupportedChain, vaultId?: string) => {
+      uploadAndRegisterOnChain: async (
+        file: File,
+        chain: SupportedChain,
+        vaultId?: string,
+      ) => {
         set({ isLoading: true, error: null })
-        
+
         try {
           // Step 1: Upload file using existing upload function
           const upload = await get().createUpload(file, { vault_id: vaultId })
-          
+
           // Step 2: Register on blockchain
           const metadata = {
             size: upload.size,
             contentType: upload.content_type,
             cdnUrl: cdnClient.getCDNUrl(upload.blob_id),
-            contentHash: upload.blob_id // In practice, compute actual hash
+            contentHash: upload.blob_id, // In practice, compute actual hash
           }
-          
-          const txHash = await get().registerBlobOnChain(upload.blob_id, metadata, chain)
-          
+
+          const txHash = await get().registerBlobOnChain(
+            upload.blob_id,
+            metadata,
+            chain,
+          )
+
           // Step 3: Verify registration
-          const verification = await get().verifyBlobOnChain(upload.blob_id, chain)
-          
+          const verification = await get().verifyBlobOnChain(
+            upload.blob_id,
+            chain,
+          )
+
           set({ isLoading: false })
-          
+
           return {
             upload,
             txHash,
             verified: verification.verified,
-            cdnUrl: cdnClient.getCDNUrl(upload.blob_id)
+            cdnUrl: cdnClient.getCDNUrl(upload.blob_id),
           }
         } catch (error) {
-          set({ error: error instanceof Error ? error.message : 'Upload and registration failed', isLoading: false })
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Upload and registration failed',
+            isLoading: false,
+          })
           throw error
         }
       },

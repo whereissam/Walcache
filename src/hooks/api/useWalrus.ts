@@ -13,7 +13,10 @@ async function checkBlobOnWalrus(blobId: string): Promise<WalrusCheckResult> {
     `${WALCACHE_BASE_URL}/api/walrus/check/${blobId}`,
     {
       headers: {
-        'X-API-Key': 'dev-secret-walcache-2024',
+        'X-API-Key': localStorage.getItem('auth-storage')
+          ? JSON.parse(localStorage.getItem('auth-storage') || '{}').state
+              ?.token || ''
+          : '',
       },
     },
   )

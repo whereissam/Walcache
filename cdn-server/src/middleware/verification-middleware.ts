@@ -2,20 +2,25 @@
  * Verification Middleware for Automatic Content Verification
  */
 
-import { FastifyRequest, FastifyReply } from 'fastify';
-import { OnChainVerificationService, createVerificationMiddleware } from '../services/verification.js';
-import { webhookService } from '../routes/webhooks.js';
+import {
+  OnChainVerificationService,
+  createVerificationMiddleware,
+} from '../services/verification.js'
+import { webhookService } from '../routes/webhooks.js'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 
 // Initialize verification service for middleware
 const verificationConfig = {
   ethereum: {
-    rpcUrl: process.env.ETHEREUM_RPC_URL || 'https://eth-mainnet.g.alchemy.com/v2/SVPGtLg2pMLIc57MJXG-R1En6DcnBB9K',
-    contractAddress: process.env.ETHEREUM_CONTRACT_ADDRESS || '0x1234567890123456789012345678901234567890',
+    rpcUrl: process.env.ETHEREUM_RPC_URL || '',
+    contractAddress:
+      process.env.ETHEREUM_CONTRACT_ADDRESS ||
+      '0x1234567890123456789012345678901234567890',
     abi: [], // Would include actual ABI
   },
-};
+}
 
-const verificationService = new OnChainVerificationService(verificationConfig);
+const verificationService = new OnChainVerificationService(verificationConfig)
 
 // Create verification middleware with webhook integration
 export const contentVerificationMiddleware = createVerificationMiddleware({
@@ -24,27 +29,27 @@ export const contentVerificationMiddleware = createVerificationMiddleware({
   cacheTimeout: 300000, // 5 minutes
   requireVerification: process.env.REQUIRE_VERIFICATION === 'true',
   trustedChains: ['ethereum', 'sui'],
-});
+})
 
 // Enhanced middleware with webhook notifications
 export async function enhancedVerificationMiddleware(
   request: FastifyRequest,
   reply: FastifyReply,
-  next: Function
+  next: Function,
 ) {
   try {
     // Run base verification middleware
     await new Promise<void>((resolve, reject) => {
       contentVerificationMiddleware(request, reply, (error?: any) => {
-        if (error) reject(error);
-        else resolve();
-      });
-    });
+        if (error) reject(error)
+        else resolve()
+      })
+    })
 
     // Send verification webhook if verification was performed
     if ((request as any).verificationResult) {
-      const result = (request as any).verificationResult;
-      
+      const result = (request as any).verificationResult
+
       // Send webhook notification
       await webhookService.sendWebhook('blob.verified', {
         blobId: result.blobId,
@@ -53,16 +58,16 @@ export async function enhancedVerificationMiddleware(
         consensusLevel: result.consensusLevel,
         trustedChains: result.trustedChains,
         timestamp: new Date().toISOString(),
-      });
+      })
     }
 
-    next();
+    next()
   } catch (error) {
     reply.status(500).send({
       error: {
         type: 'verification_error',
         message: error.message,
       },
-    });
+    })
   }
 }

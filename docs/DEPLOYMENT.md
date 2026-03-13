@@ -11,7 +11,7 @@ bun run dev:server      # Backend: http://localhost:4500
 
 # Environment
 REACT_APP_WCDN_URL=http://localhost:4500
-REACT_APP_WCDN_API_KEY=dev-secret-wcdn-2024
+REACT_APP_WCDN_API_KEY=your-api-key-here
 ```
 
 ### Phase 2: Production Deployment
@@ -80,7 +80,7 @@ const API_BASE = process.env.REACT_APP_WCDN_URL
   ? `${process.env.REACT_APP_WCDN_URL}/api`
   : 'http://localhost:4500/api'
 
-const API_KEY = process.env.REACT_APP_WCDN_API_KEY || 'dev-secret-wcdn-2024'
+const API_KEY = process.env.REACT_APP_WCDN_API_KEY || 'your-api-key-here'
 ```
 
 ### 2. SDK Integration
@@ -89,7 +89,7 @@ const API_KEY = process.env.REACT_APP_WCDN_API_KEY || 'dev-secret-wcdn-2024'
 // Already updated in UploadCacheDemo.tsx
 configure({
   baseUrl: process.env.REACT_APP_WCDN_URL || 'http://localhost:4500',
-  apiKey: process.env.REACT_APP_WCDN_API_KEY || 'dev-secret-wcdn-2024',
+  apiKey: process.env.REACT_APP_WCDN_API_KEY || 'your-api-key-here',
 })
 ```
 

@@ -1,12 +1,14 @@
-import type { FastifyRequest, FastifyReply } from 'fastify'
 import { config } from '../config/index.js'
 import { userService } from '../services/user.js'
-import type { AuthenticatedUser } from '../types/user.js'
 import { ApiPermission } from '../types/user.js'
 import { AuthenticationError, ErrorCode } from '../errors/base-error.js'
 import { metricsService } from '../services/metrics.js'
-
-import type { RouteGenericInterface } from 'fastify'
+import type { AuthenticatedUser } from '../types/user.js'
+import type {
+  FastifyReply,
+  FastifyRequest,
+  RouteGenericInterface,
+} from 'fastify'
 
 export interface AuthenticatedRequest<
   T extends RouteGenericInterface = RouteGenericInterface,
@@ -39,6 +41,7 @@ export async function optionalAuth(
           subscriptionStatus: 'active' as any,
           permissions: [ApiPermission.ADMIN],
         }
+        request.log.warn({ url: request.url, method: request.method }, 'LEGACY_AUTH_USED: Migrate to token-based auth')
       }
     } catch (error) {
       // Invalid token, continue without auth
@@ -97,6 +100,7 @@ export async function requireAuth(
         permissions: [ApiPermission.ADMIN],
       }
       metricsService.counter('auth.legacy_success', 1)
+      request.log.warn({ url: request.url, method: request.method }, 'LEGACY_AUTH_USED: Migrate to token-based auth')
       return
     }
   } catch (error) {

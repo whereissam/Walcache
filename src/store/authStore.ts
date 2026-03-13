@@ -16,7 +16,7 @@ export interface ApiToken {
   id: string
   name: string
   token: string
-  permissions: string[]
+  permissions: Array<string>
   limits: {
     requestsPerMinute: number
     requestsPerDay: number
@@ -40,7 +40,7 @@ export interface SubscriptionPlan {
   tier: string
   name: string
   price: number
-  features: string[]
+  features: Array<string>
   limits: {
     requestsPerMinute: number
     requestsPerDay: number
@@ -58,8 +58,8 @@ interface AuthState {
   error: string | null
 
   // User data
-  tokens: ApiToken[]
-  subscriptionPlans: SubscriptionPlan[]
+  tokens: Array<ApiToken>
+  subscriptionPlans: Array<SubscriptionPlan>
   dashboard: {
     totalUsage: {
       totalRequests: number
@@ -91,7 +91,7 @@ interface AuthState {
   // Token management actions
   createToken: (tokenData: {
     name: string
-    permissions: string[]
+    permissions: Array<string>
     expiresAt?: string
     description?: string
   }) => Promise<ApiToken>
@@ -541,7 +541,8 @@ export const useAuthStore = create<AuthState>()(
         name: 'auth-storage',
         partialize: (state) => ({
           user: state.user,
-          token: state.token,
+          // Do NOT persist token in localStorage (XSS risk)
+          // Token should be stored in httpOnly cookies in production
           isAuthenticated: state.isAuthenticated,
         }),
       },

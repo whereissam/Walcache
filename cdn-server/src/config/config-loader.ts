@@ -1,10 +1,6 @@
 import { z } from 'zod'
-import {
-  environmentSchema,
-  type Environment,
-  type EnvironmentConfig,
-  environmentConfigs,
-} from './environments.js'
+import { environmentConfigs, environmentSchema } from './environments.js'
+import type { Environment, EnvironmentConfig } from './environments.js'
 
 // Environment variables schema
 const envSchema = z.object({
@@ -27,7 +23,7 @@ const envSchema = z.object({
   ENABLE_IPFS_FALLBACK: z.coerce.boolean().optional(),
 
   // Security
-  API_KEY_SECRET: z.string().min(1).default('dev-secret-key'),
+  API_KEY_SECRET: z.string().min(32, 'API_KEY_SECRET must be at least 32 characters. Set this environment variable.'),
   WEBHOOK_SECRET: z.string().min(32).optional(),
   ALLOWED_ORIGINS: z.string().optional(),
 
@@ -144,8 +140,12 @@ export class ConfigLoader {
         seal: {
           ...baseConfig.integrations.seal,
           enabled: env.ENABLE_SEAL ?? baseConfig.integrations.seal.enabled,
-          defaultThreshold: env.SEAL_DEFAULT_THRESHOLD || baseConfig.integrations.seal.defaultThreshold,
-          defaultPackageId: env.SEAL_DEFAULT_PACKAGE_ID || baseConfig.integrations.seal.defaultPackageId,
+          defaultThreshold:
+            env.SEAL_DEFAULT_THRESHOLD ||
+            baseConfig.integrations.seal.defaultThreshold,
+          defaultPackageId:
+            env.SEAL_DEFAULT_PACKAGE_ID ||
+            baseConfig.integrations.seal.defaultPackageId,
         },
       },
       secrets: {

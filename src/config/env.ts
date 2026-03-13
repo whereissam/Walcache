@@ -25,7 +25,7 @@ function getEnvVar(key: string, fallback: string = ''): string {
 // Main configuration
 export const ENV_CONFIG: WalcacheConfig = {
   baseUrl: getEnvVar('REACT_APP_WALCACHE_URL', 'http://localhost:4500'),
-  apiKey: getEnvVar('REACT_APP_WALCACHE_API_KEY', 'dev-secret-walcache-2024'),
+  apiKey: getEnvVar('REACT_APP_WALCACHE_API_KEY', ''),
   isDevelopment: getEnvVar('NODE_ENV', 'development') === 'development',
   isProduction: getEnvVar('NODE_ENV', 'development') === 'production',
 }

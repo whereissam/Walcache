@@ -51,7 +51,7 @@ interface StatsState {
   cidStats: Record<string, CIDStats>
   globalStats: GlobalStats | null
   cacheStats: CacheStats | null
-  topCIDs: CIDStats[]
+  topCIDs: Array<CIDStats>
   cidInfo: CIDInfo | null
 
   // UI State
@@ -73,7 +73,7 @@ const API_BASE = 'http://localhost:4500/api'
 // Helper function to get authentication token
 const getAuthToken = () => {
   const authStore = JSON.parse(localStorage.getItem('auth-storage') || '{}')
-  return authStore.state?.token || 'dev-secret-wcdn-2024'
+  return authStore.state?.token || ''
 }
 
 export const useStatsStore = create<StatsState>()(
