@@ -1,11 +1,16 @@
 import { walrusService } from '../services/walrus.js'
 import { cacheService } from '../services/cache.js'
 import { analyticsService } from '../services/analytics.js'
+import { signedUrlService } from '../services/signed-url.js'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { CachedBlob } from '../types/cache.js'
 
 interface CDNParams {
   cid: string
+}
+
+interface CDNQuery {
+  token?: string
 }
 
 /**

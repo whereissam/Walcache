@@ -5,6 +5,7 @@ import { analyticsService } from '../services/analytics.js'
 import { metricsService } from '../services/metrics.js'
 import { endpointHealthService } from '../services/endpoint-health.js'
 import { userService } from '../services/user.js'
+import { signedUrlService } from '../services/signed-url.js'
 import { optionalAuth, requireAuth } from '../middleware/auth.js'
 import { WebhookService } from '../services/webhook.js'
 import { appConfig } from '../config/index.js'
@@ -391,6 +392,78 @@ export async function apiRoutes(fastify: FastifyInstance) {
           },
         })),
       })
+    },
+  )
+
+  // Signed URL generation (auth required)
+  fastify.post(
+    '/signed-url',
+    { preHandler: requireAuth },
+    async (request: AuthenticatedRequest, reply: FastifyReply) => {
+      try {
+        const schema = z.object({
+          cid: z.string().min(1),
+          expiresIn: z.number().min(60).max(86400 * 7).optional(),
+          ip: z.string().ip().optional(),
+          metadata: z.record(z.string()).optional(),
+        })
+
+        const body = schema.parse(request.body)
+
+        if (!walrusService.validateCID(body.cid)) {
+          return reply.status(400).send({ error: 'Invalid CID format' })
+        }
+
+        const baseUrl = `${request.protocol}://${request.hostname}`
+        const token = signedUrlService.generateToken({
+          cid: body.cid,
+          expiresIn: body.expiresIn,
+          ip: body.ip,
+          metadata: body.metadata,
+        })
+        const signedUrl = signedUrlService.generateSignedUrl(baseUrl, {
+          cid: body.cid,
+          expiresIn: body.expiresIn,
+          ip: body.ip,
+          metadata: body.metadata,
+        })
+
+        return reply.send({
+          cid: body.cid,
+          token,
+          signedUrl,
+          expiresIn: body.expiresIn || 3600,
+          expiresAt: new Date(
+            Date.now() + (body.expiresIn || 3600) * 1000,
+          ).toISOString(),
+        })
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply
+            .status(400)
+            .send({ error: 'Validation error', details: error.errors })
+        }
+        return reply.status(500).send({ error: 'Internal server error' })
+      }
+    },
+  )
+
+  // Verify a signed URL token (public, no auth)
+  fastify.get(
+    '/signed-url/verify',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { token, cid } = request.query as { token?: string; cid?: string }
+
+      if (!token || !cid) {
+        return reply
+          .status(400)
+          .send({ error: 'Missing token or cid query parameter' })
+      }
+
+      const clientIp = request.ip
+      const result = signedUrlService.validateRequest(cid, token, clientIp)
+
+      return reply.send(result)
     },
   )
 

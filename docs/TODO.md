@@ -4,7 +4,7 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 
 **Core insight:** Walcache is not a CDN. It's the **control plane for Walrus apps** — the developer platform that sits between raw Walrus storage and production applications.
 
-**Progress: 14/29 items complete (48%)**
+**Progress: 15/29 items complete (52%)**
 
 ---
 
@@ -53,7 +53,7 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 ### Access Control
 - [ ] NFT-gated access (verify ownership before serving content)
 - [ ] Allowlist-based access (Seal integration)
-- [ ] Time-limited signed URLs with HMAC verification
+- [x] Time-limited signed URLs with HMAC verification — `POST /api/signed-url` generates tokens, `GET /api/signed-url/verify` validates. IP restriction, custom metadata, configurable expiry (60s–7d). 11 tests.
 
 ### Analytics & Observability
 - [ ] Cost tracking per blob/project (storage epochs + bandwidth)
