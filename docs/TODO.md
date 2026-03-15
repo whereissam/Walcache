@@ -1,125 +1,124 @@
-# Walcache/WCDN Strategic TODO
+# WCDN — Walrus Developer Platform Roadmap
 
-Based on [Market Research](./MARKET_RESEARCH.md) findings. Prioritized by impact and urgency.
+Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 
----
+**Core insight:** WCDN is not a CDN. It's the **control plane for Walrus apps** — the developer platform that sits between raw Walrus storage and production applications.
 
-## Phase 1: Foundation & Ecosystem (Month 1-2)
-
-### Funding & Partnerships
-- [ ] Apply to **Sui Foundation ecosystem grants** (highest priority, lowest friction)
-- [ ] Prepare investor deck: full product built, Walrus first-mover, bridge narrative, DePIN alignment
-- [ ] Seek warm intros to **a16z Crypto** and **Lightspeed Faction** (direct Mysten Labs backers)
-- [ ] Research and contact **Multicoin Capital**, **Hack VC**, **Placeholder VC** as thesis-aligned infra funds
-
-### Product Hardening
-- [x] Define and implement **usage-based pricing tiers**: Free ($0) → Starter ($29) → Professional ($99) → Enterprise ($299) with per-tier rate limits, bandwidth, and storage caps. Public endpoint at `GET /api/pricing`.
-- [x] Add **epoch-aware cache TTL** - `CacheService.getEpochAwareTTL()` aligns TTL to remaining time in current Walrus epoch. Configurable via `WALRUS_EPOCH_DURATION`.
-- [x] Improve aggregator health monitoring - `GET /api/health/endpoints` exposes per-aggregator/publisher health, response times, and network score (public, no auth).
-- [x] Add **cache persistence layer** - pinned/high-value blobs persisted to disk (`CACHE_PERSISTENCE_DIR`), restored on startup, survives Redis/memory failures. Three-tier: Memory → Redis → Disk.
-- [x] Document self-hosting guide - `docs/SELF_HOSTING.md` with Docker, Docker Compose, systemd, nginx, security checklist, monitoring.
-
-### Developer Experience
-- [ ] Publish SDK to npm as `@wcdn/sdk`
-- [ ] Publish CLI to npm as `@wcdn/cli`
-- [ ] Create quickstart tutorial (5-min "hello world" with Walrus + WCDN)
-- [ ] Submit WCDN to Sui/Walrus ecosystem directories and docs
+**Progress: 12/29 items complete (41%)**
 
 ---
 
-## Phase 2: Differentiation & Growth (Month 3-6)
+## Phase 0: Reposition (Now)
 
-### Deepen Walrus-Specific Features (Widen Moat)
-- [ ] **Seal encryption integration** - complete the access-controlled CDN flow end-to-end
-- [ ] **Blob availability prediction** - predict availability based on epoch/node patterns
-- [ ] **Smart prefetching** - anticipate content requests based on analytics patterns
-- [ ] **Geographic-aware caching** - region hints for data residency compliance
-- [ ] **Webhook-driven cache invalidation** - production-ready event-driven architecture
+- [x] Rename positioning: ~~Walrus CDN~~ → **Walrus Developer Platform**
+- [ ] Update all messaging: README, docs, SDK descriptions
+- [ ] Apply to **Walrus Foundation RFP program** — frame as ecosystem dev tooling
+- [ ] Post in Sui/Walrus developer communities, get 5-10 SDK users
 
-### Content Moderation & Compliance
-- [ ] Implement DMCA takedown mechanism at CDN layer
-- [ ] Add configurable content filtering (required for enterprise/regulated markets)
-- [ ] Build audit trail export for compliance reporting
-- [ ] Document GDPR approach (epoch-based storage = natural deletion path)
+---
+
+## Phase 1: Platform Foundations (Month 1-2)
+
+### Already Built
+- [x] **SDK** (`@wcdn/sdk`) — multi-chain client, one-line URLs, verification, uploads
+- [x] **CLI** (`@wcdn/cli`) — upload, cache, analytics, config, blockchain commands
+- [x] **Pricing tiers** — Free ($0) → Starter ($29) → Professional ($99) → Enterprise ($299)
+- [x] **Epoch-aware caching** — `getEpochAwareTTL()` aligns TTL to Walrus epochs
+- [x] **Aggregator health monitoring** — `GET /api/health/endpoints` with health scores
+- [x] **Cache persistence** — three-tier: Memory → Redis → Disk
+- [x] **Self-hosting guide** — `docs/SELF_HOSTING.md`
+- [x] **Analytics dashboard** — hit rate, trends, geographic distribution, latency
+- [x] **Prometheus export** — `GET /v1/analytics/prometheus`
+- [x] **Webhook invalidation** — `POST /api/webhook/cache-invalidate` with HMAC
+- [x] **Seal encryption** — routes and service (needs TS fixes for full build)
+- [x] **Rate limiting + access control** — per-tier, per-token usage tracking
+
+### To Build
+- [ ] `wcdn deploy` — upload static site to Walrus, instant hosting
+- [ ] `wcdn deploy --preview` — preview environments (like Vercel preview URLs)
+- [ ] **Signed URLs** — time-limited, token-gated access to Walrus content
+- [ ] Publish `@wcdn/sdk` to npm
+- [ ] Publish `@wcdn/cli` to npm
+- [ ] Quickstart tutorial (5-min "hello world")
+
+---
+
+## Phase 2: Developer Experience (Month 3-4)
+
+### Deploy Workflow
+- [ ] Custom domain support for deployed sites
+- [ ] Git-based deploy (push to deploy)
+- [ ] Deploy logs and rollback
+
+### Access Control
+- [ ] NFT-gated access (verify ownership before serving content)
+- [ ] Allowlist-based access (Seal integration)
+- [ ] Time-limited signed URLs with HMAC verification
 
 ### Analytics & Observability
-- [ ] Enhanced analytics dashboard with blockchain metrics
-- [ ] Cost tracking per blob/project (storage epochs + CDN bandwidth)
+- [ ] Cost tracking per blob/project (storage epochs + bandwidth)
+- [ ] Error monitoring and alerting
 - [ ] SLA monitoring and uptime reporting
-- [ ] Export analytics data for billing integration
+- [ ] Usage dashboards per API token
 
-### Community & Adoption
-- [ ] Build example integrations: NFT marketplace, gaming asset CDN, document verification
-- [ ] Write technical blog posts for Sui/Walrus community
-- [ ] Contribute upstream to Walrus tooling (build ecosystem relationship)
-- [ ] Launch managed/hosted WCDN offering alongside open-source
-
----
-
-## Phase 3: Multi-Protocol Expansion (Month 6-12)
-
-> Multi-protocol support is the **single largest SOM expansion lever** (2-3x near-term SAM)
-
-### Architecture for Multi-Protocol
-- [ ] Abstract storage backend interface (Walrus today, pluggable tomorrow)
-- [ ] Add **IPFS** backend support (content-addressed retrieval)
-- [ ] Add **Arweave** backend support (permanent storage gateway)
-- [ ] Add **Filecoin/Saturn** backend support
-- [ ] Unified blob ID resolution across protocols
-
-### Enterprise Features
-- [ ] Enterprise SLA tiers with guaranteed uptime
-- [ ] Dedicated infrastructure option (private aggregators)
-- [ ] SSO/SAML authentication for team management
-- [ ] Custom domain support for CDN endpoints
-- [ ] Advanced rate limiting and access control policies
-
-### Scale & Performance
-- [ ] Edge caching (deploy cache nodes closer to users)
-- [ ] CDN performance benchmarks vs Cloudflare/Pinata (publish results)
-- [ ] Load testing and capacity planning documentation
-- [ ] Horizontal scaling guide for high-traffic deployments
+### SDK/CLI Improvements
+- [ ] React hooks package (`useWalrus`, `useUpload`, `useVerify`)
+- [ ] Next.js integration guide
+- [ ] `wcdn logs` — real-time log streaming
+- [ ] `wcdn analytics` — rich terminal output with charts
 
 ---
 
-## Competitive Threats to Monitor
+## Phase 3: Platform Growth (Month 5-8)
 
-| Threat | Check Frequency | Action Trigger |
-|--------|----------------|---------------|
-| Mysten Labs building first-party CDN | Monthly | Accelerate differentiation on DX/analytics |
-| Fleek/Pinata adding Walrus support | Monthly | Deepen Walrus-specific features they can't replicate |
-| Walrus adoption metrics | Quarterly | If stalling, accelerate multi-protocol support |
-| New Walrus CDN competitors | Monthly | Analyze positioning gaps |
+### Team & Collaboration
+- [ ] Team accounts with role-based access
+- [ ] Project-level API keys and analytics
+- [ ] Audit trail for compliance reporting
 
----
+### Multi-Protocol (Later)
+- [ ] Abstract storage backend interface
+- [ ] IPFS backend support (content-addressed retrieval)
+- [ ] Arweave backend support (permanent storage gateway)
 
-## Key Metrics to Track
-
-### Product Metrics
-- Monthly active projects using WCDN
-- Cache hit rate (target: >90%)
-- P95 latency (cached vs uncached)
-- Total blobs served / bandwidth
-
-### Business Metrics
-- ARR / MRR
-- Paying customers by tier
-- Customer acquisition cost
-- Churn rate
-
-### Ecosystem Metrics
-- Walrus network storage volume growth
-- Sui developer population growth
-- Competitor activity (new entrants, feature launches)
+### Enterprise
+- [ ] Enterprise SLA tiers
+- [ ] Dedicated infrastructure option
+- [ ] SSO/SAML authentication
 
 ---
 
-## Revenue Targets (Base Case)
+## Competitive Positioning
 
-| Period | Paying Customers | ARR Target |
-|--------|-----------------|------------|
-| Year 1 | 10-30 | $100K-$200K |
-| Year 2 | 50-120 | $800K-$1.5M |
-| Year 3 | 100-300+ | $2M-$5M |
+WCDN complements (not competes with) the Walrus stack:
 
-See [Market Research](./MARKET_RESEARCH.md) for detailed TAM/SAM/SOM analysis and sensitivity scenarios.
+| Layer | Who | Role |
+|-------|-----|------|
+| Storage | **Walrus** | Erasure-coded blob storage |
+| Delivery | **Pipe Network** | 280K PoP nodes, sub-50ms CDN |
+| Uploads | **Tusky.io** | Upload management, vaults |
+| **Developer Platform** | **WCDN** | SDK, CLI, analytics, verification, deploy, access control |
+
+Nobody else is building the control plane. Fleek and Pinata don't support Walrus. Pipe Network is delivery-only. Tusky is upload-only.
+
+---
+
+## Grant Strategy
+
+| Target | What to pitch | Priority |
+|--------|--------------|----------|
+| **Walrus Foundation RFP** | Developer platform: SDK, CLI, analytics, deploy tooling | Highest |
+| **Sui Foundation grants** | Ecosystem tooling for Sui developers using Walrus | High |
+| Standard Crypto / a16z (warm intro) | If grant succeeds, approach for seed funding | Later |
+
+---
+
+## Key Metrics
+
+| Metric | Target |
+|--------|--------|
+| SDK npm downloads/week | 100+ |
+| Projects using WCDN | 10+ |
+| `wcdn deploy` sites hosted | 20+ |
+| Cache hit rate | >90% |
+| Grant funding secured | $50K-$150K |
