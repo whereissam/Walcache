@@ -4,7 +4,7 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 
 **Core insight:** Walcache is not a CDN. It's the **control plane for Walrus apps** — the developer platform that sits between raw Walrus storage and production applications.
 
-**Progress: 15/29 items complete (52%)**
+**Progress: 20/29 items complete (69%)**
 
 ---
 
@@ -48,11 +48,11 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 ### Deploy Workflow
 - [ ] Custom domain support for deployed sites
 - [ ] Git-based deploy (push to deploy)
-- [ ] Deploy logs and rollback
+- [x] Deploy logs and rollback — `DeployLogService` with `POST /v1/deploys`, `GET /v1/deploys/:site`, `POST /v1/deploys/:site/rollback`. Tracks versions, auto-supersedes old deploys, cache warming on rollback. 9 tests.
 
 ### Access Control
-- [ ] NFT-gated access (verify ownership before serving content)
-- [ ] Allowlist-based access (Seal integration)
+- [x] NFT-gated access — `AccessGateService` verifies ERC-721 ownership (Ethereum) and Sui object ownership on-chain. `POST /v1/access-gates`, `GET /v1/access-gates/check/:cid?wallet=`. 13 tests.
+- [x] Allowlist-based access — same service supports allowlist gates with add/remove wallet endpoints. Case-insensitive matching.
 - [x] Time-limited signed URLs with HMAC verification — `POST /api/signed-url` generates tokens, `GET /api/signed-url/verify` validates. IP restriction, custom metadata, configurable expiry (60s–7d). 11 tests.
 
 ### Analytics & Observability
@@ -62,7 +62,7 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 - [ ] Usage dashboards per API token
 
 ### SDK/CLI Improvements
-- [ ] React hooks package (`useWalrus`, `useUpload`, `useVerify`)
+- [x] React hooks package — `useUpload`, `useBatchUpload`, `useVerifyCrossChain`, `useAccessCheck` + existing `useStats`, `useWalrus`, `useVaults`. Barrel export at `src/hooks/api/index.ts`.
 - [ ] Next.js integration guide
 - [ ] `walcache logs` — real-time log streaming
 - [ ] `walcache analytics` — rich terminal output with charts
