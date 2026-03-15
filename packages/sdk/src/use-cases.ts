@@ -1157,7 +1157,7 @@ export class WalcacheUseCases {
       }))
 
       const streamUrl =
-        formats.find((f) => f.format === options.format)?.url ||
+        formats.find((f: { format: string; url: string; bitrate: number }) => f.format === options.format)?.url ||
         formats[0]?.url ||
         baseStreamUrl
 

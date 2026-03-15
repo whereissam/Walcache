@@ -53,6 +53,9 @@ export interface VerificationResult {
     transactionHash?: string
     blockNumber?: number
     contractData?: any
+    customVerification?: boolean
+    multiResults?: any
+    [key: string]: any
   }
   /** Error details if verification failed */
   error?: {

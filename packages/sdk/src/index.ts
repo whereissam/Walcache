@@ -497,33 +497,14 @@ export async function getBlobStatus(
   return mockStatus
 }
 
-// Export uploader functions (conditional - only if uploader module exists)
-let uploadToWalrusWithCache: any = undefined
-let uploadAndGetInstantUrl: any = undefined
-let getCacheStatus: any = undefined
-let getCachedContent: any = undefined
-let preloadToCache: any = undefined
-
-try {
-  const uploaderModule = await import('./uploader.js')
-  uploadToWalrusWithCache = uploaderModule.uploadToWalrusWithCache
-  uploadAndGetInstantUrl = uploaderModule.uploadAndGetInstantUrl
-  getCacheStatus = uploaderModule.getCacheStatus
-  getCachedContent = uploaderModule.getCachedContent
-  preloadToCache = uploaderModule.preloadToCache
-} catch (error) {
-  // Uploader module not available - functions will be undefined
-  console.warn('Uploader module not available:', error)
-}
-
-// Export the functions (will be undefined if module not available)
+// Re-export uploader functions directly
 export {
   uploadToWalrusWithCache,
   uploadAndGetInstantUrl,
   getCacheStatus,
   getCachedContent,
   preloadToCache,
-}
+} from './uploader.js'
 
 // Export uploader types (conditional)
 export type { UploadOptions, UploadResult, CacheStatus } from './types.js'

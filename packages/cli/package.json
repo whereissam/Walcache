@@ -40,6 +40,14 @@
     "progress": "^2.0.3",
     "dotenv": "^16.3.1"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/whereissam/Walcache.git",
+    "directory": "packages/cli"
+  },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/inquirer": "^9.0.7",

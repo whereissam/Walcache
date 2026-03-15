@@ -217,7 +217,7 @@ export class EthereumQueryEngine implements ContractQueryEngine {
         'latest',
       ])
 
-      const tokenURI = this.decodeString(tokenURICall)
+      const tokenURI = tokenURICall ? this.decodeString(tokenURICall) : ''
 
       // Fetch metadata from tokenURI if available
       let metadata: any = {

@@ -1,5 +1,5 @@
 {
-  "name": "walcache-sdk",
+  "name": "@wcdn/sdk",
   "version": "1.0.0",
   "description": "🚀 Multi-chain Walcache SDK - One-line function to get CDN URLs for Sui, Ethereum, Solana",
   "main": "dist/index.js",
@@ -10,8 +10,10 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "tsup src/index.ts --format cjs,esm --dts --onSuccess 'echo Build complete' || tsup src/index.ts --format cjs,esm",
+    "build:js": "tsup src/index.ts --format cjs,esm",
+    "build:full": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --watch",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",

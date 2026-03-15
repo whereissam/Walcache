@@ -565,7 +565,7 @@ export class CrossChainSearchEngine {
     criteria: SearchCriteria = {},
   ): Promise<SearchResult> {
     const startTime = Date.now()
-    const chains = criteria.chains?.length
+    const chains: Array<SupportedChain> = criteria.chains?.length
       ? criteria.chains
       : ['ethereum', 'sui', 'solana']
 
@@ -659,7 +659,7 @@ export class CrossChainSearchEngine {
     criteria: SearchCriteria = {},
   ): Promise<SearchResult> {
     const startTime = Date.now()
-    const chains = criteria.chains?.length
+    const chains: Array<SupportedChain> = criteria.chains?.length
       ? criteria.chains
       : ['ethereum', 'sui', 'solana']
 
@@ -722,7 +722,7 @@ export class CrossChainSearchEngine {
    */
   static async advancedSearch(criteria: SearchCriteria): Promise<SearchResult> {
     const startTime = Date.now()
-    const chains = criteria.chains?.length
+    const chains: Array<SupportedChain> = criteria.chains?.length
       ? criteria.chains
       : ['ethereum', 'sui', 'solana']
 
