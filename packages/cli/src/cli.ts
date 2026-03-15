@@ -1,22 +1,21 @@
 #!/usr/bin/env node
 
 /**
- * WCDN CLI - Command-line interface for Walrus Content Delivery Network
+ * Walcache CLI - Developer platform for Walrus decentralized storage
  */
 
 import { Command } from 'commander'
 import chalk from 'chalk'
 import { config } from 'dotenv'
-import { WalrusCDNClient } from '@wcdn/sdk'
-import { PRESET_CONFIGS } from '@wcdn/sdk/blockchain'
 import { uploadCommand } from './commands/upload.js'
+import { deployCommand } from './commands/deploy.js'
 import { statusCommand } from './commands/status.js'
 import { cacheCommand } from './commands/cache.js'
 import { analyticsCommand } from './commands/analytics.js'
 import { blockchainCommand } from './commands/blockchain.js'
 import { configCommand } from './commands/config.js'
 import { initCommand } from './commands/init.js'
-import { getWCDNClient, loadConfig } from './utils/config.js'
+import { loadConfig } from './utils/config.js'
 
 // Load environment variables
 config()
@@ -25,13 +24,13 @@ const program = new Command()
 
 // CLI Metadata
 program
-  .name('wcdn')
-  .description('CLI for WCDN (Walrus Content Delivery Network)')
+  .name('walcache')
+  .description('Walcache — Developer platform for Walrus decentralized storage')
   .version('1.0.0')
   .option('-c, --config <path>', 'path to config file', '.wcdn.json')
   .option('-v, --verbose', 'enable verbose logging')
-  .option('--api-key <key>', 'WCDN API key (overrides config)')
-  .option('--base-url <url>', 'WCDN base URL (overrides config)')
+  .option('--api-key <key>', 'API key (overrides config)')
+  .option('--base-url <url>', 'base URL (overrides config)')
   .hook('preAction', async (thisCommand) => {
     const options = thisCommand.opts()
 
@@ -42,11 +41,11 @@ program
     // Load configuration
     try {
       await loadConfig(options.config)
-    } catch (error) {
+    } catch (error: any) {
       if (thisCommand.name() !== 'init') {
         console.error(chalk.red('Error loading config:'), error.message)
         console.log(
-          chalk.yellow('Run "wcdn init" to create a configuration file.'),
+          chalk.yellow('Run "walcache init" to create a configuration file.'),
         )
         process.exit(1)
       }
@@ -58,6 +57,7 @@ program
   .addCommand(initCommand)
   .addCommand(configCommand)
   .addCommand(uploadCommand)
+  .addCommand(deployCommand)
   .addCommand(statusCommand)
   .addCommand(cacheCommand)
   .addCommand(analyticsCommand)

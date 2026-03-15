@@ -4,7 +4,7 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 
 **Core insight:** Walcache is not a CDN. It's the **control plane for Walrus apps** — the developer platform that sits between raw Walrus storage and production applications.
 
-**Progress: 12/29 items complete (41%)**
+**Progress: 14/29 items complete (48%)**
 
 ---
 
@@ -34,8 +34,8 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 - [x] **Rate limiting + access control** — per-tier, per-token usage tracking
 
 ### To Build
-- [ ] `walcache deploy` — upload static site to Walrus, instant hosting
-- [ ] `walcache deploy --preview` — preview environments (like Vercel preview URLs)
+- [x] `walcache deploy` — upload static site to Walrus, auto-detects build dirs (dist/build/out), creates manifest, preloads cache
+- [x] `walcache deploy --preview` — preview deployments with unique versioned URLs
 - [ ] **Signed URLs** — time-limited, token-gated access to Walrus content
 - [ ] Publish `@walcache/sdk` to npm
 - [ ] Publish `@walcache/cli` to npm
