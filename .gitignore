@@ -8,3 +8,9 @@ count.txt
 .env
 .nitro
 .tanstack
+*.lockb
+package-lock.json
+uploads/
+frontend.log
+.cta.json
+cdn-server/data/
