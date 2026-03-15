@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UploadRouteImport } from './routes/upload'
 import { Route as TokensRouteImport } from './routes/tokens'
+import { Route as SealRouteImport } from './routes/seal'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as MultichainRouteImport } from './routes/multichain'
 import { Route as LoginRouteImport } from './routes/login'
@@ -30,6 +31,11 @@ const UploadRoute = UploadRouteImport.update({
 const TokensRoute = TokensRouteImport.update({
   id: '/tokens',
   path: '/tokens',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SealRoute = SealRouteImport.update({
+  id: '/seal',
+  path: '/seal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/multichain': typeof MultichainRoute
   '/register': typeof RegisterRoute
+  '/seal': typeof SealRoute
   '/tokens': typeof TokensRoute
   '/upload': typeof UploadRoute
 }
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/multichain': typeof MultichainRoute
   '/register': typeof RegisterRoute
+  '/seal': typeof SealRoute
   '/tokens': typeof TokensRoute
   '/upload': typeof UploadRoute
 }
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/multichain': typeof MultichainRoute
   '/register': typeof RegisterRoute
+  '/seal': typeof SealRoute
   '/tokens': typeof TokensRoute
   '/upload': typeof UploadRoute
 }
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/multichain'
     | '/register'
+    | '/seal'
     | '/tokens'
     | '/upload'
   fileRoutesByTo: FileRoutesByTo
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/multichain'
     | '/register'
+    | '/seal'
     | '/tokens'
     | '/upload'
   id:
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/multichain'
     | '/register'
+    | '/seal'
     | '/tokens'
     | '/upload'
   fileRoutesById: FileRoutesById
@@ -182,6 +194,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MultichainRoute: typeof MultichainRoute
   RegisterRoute: typeof RegisterRoute
+  SealRoute: typeof SealRoute
   TokensRoute: typeof TokensRoute
   UploadRoute: typeof UploadRoute
 }
@@ -200,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/tokens'
       fullPath: '/tokens'
       preLoaderRoute: typeof TokensRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seal': {
+      id: '/seal'
+      path: '/seal'
+      fullPath: '/seal'
+      preLoaderRoute: typeof SealRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -286,6 +306,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MultichainRoute: MultichainRoute,
   RegisterRoute: RegisterRoute,
+  SealRoute: SealRoute,
   TokensRoute: TokensRoute,
   UploadRoute: UploadRoute,
 }
