@@ -21,4 +21,14 @@ export interface CacheStats {
     memory: number
   }
   using: 'redis' | 'memory'
+  epoch?: {
+    currentEpochStart: string
+    epochDurationSeconds: number
+    remainingSeconds: number
+  }
+  persistence?: {
+    enabled: boolean
+    persistedBlobs: number
+    directory: string
+  }
 }

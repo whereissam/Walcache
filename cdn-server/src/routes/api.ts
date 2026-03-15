@@ -3,6 +3,8 @@ import { walrusService } from '../services/walrus.js'
 import { cacheService } from '../services/cache.js'
 import { analyticsService } from '../services/analytics.js'
 import { metricsService } from '../services/metrics.js'
+import { endpointHealthService } from '../services/endpoint-health.js'
+import { userService } from '../services/user.js'
 import { optionalAuth, requireAuth } from '../middleware/auth.js'
 import { WebhookService } from '../services/webhook.js'
 import { appConfig } from '../config/index.js'
@@ -62,7 +64,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
               size: blob.size,
               timestamp: blob.timestamp,
               cached: new Date(),
-              ttl: 3600,
+              ttl: cacheService.getEpochAwareTTL(),
               pinned: false,
             }
 
@@ -358,6 +360,40 @@ export async function apiRoutes(fastify: FastifyInstance) {
     },
   )
 
+  // Endpoint health status (public, no auth required)
+  fastify.get(
+    '/health/endpoints',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const healthStatus = endpointHealthService.getHealthStatus()
+      return reply.send(healthStatus)
+    },
+  )
+
+  // Pricing plans (public, no auth required)
+  fastify.get(
+    '/pricing',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const plans = userService.getSubscriptionPlans()
+      return reply.send({
+        plans: plans.map((plan) => ({
+          tier: plan.tier,
+          name: plan.name,
+          price: plan.price,
+          currency: plan.currency,
+          billingPeriod: plan.billingPeriod,
+          features: plan.features,
+          limits: {
+            requestsPerMinute: plan.limits.requestsPerMinute,
+            requestsPerMonth: plan.limits.requestsPerMonth,
+            bandwidthPerMonth: plan.limits.bandwidthPerMonth,
+            maxStorageSize: plan.limits.maxStorageSize,
+            maxUploadSize: plan.limits.maxUploadSize,
+          },
+        })),
+      })
+    },
+  )
+
   // Webhook endpoint for automatic cache invalidation
   fastify.post(
     '/webhook/cache-invalidate',
@@ -425,7 +461,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
 
         return reply.send({ status: 'processed' })
       } catch (error) {
-        if (error.name === 'ZodError') {
+        if (error instanceof z.ZodError) {
           fastify.log.error('Invalid webhook payload:', error.issues)
           return reply.status(400).send({ error: 'Invalid webhook payload' })
         }

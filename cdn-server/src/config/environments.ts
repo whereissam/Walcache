@@ -22,11 +22,14 @@ export interface EnvironmentConfig {
     ttl: number
     maxSize: number
     redisUrl: string
+    persistenceDir: string
+    enablePersistence: boolean
   }
   walrus: {
     network: 'testnet' | 'mainnet'
     endpoint: string
     aggregator: string
+    epochDurationSeconds: number
     ipfs: {
       gateway: string
       fallbackEnabled: boolean
@@ -79,11 +82,14 @@ export const developmentConfig: EnvironmentConfig = {
     ttl: 3600,
     maxSize: 100,
     redisUrl: 'redis://localhost:6379',
+    persistenceDir: './data/cache',
+    enablePersistence: true,
   },
   walrus: {
     network: 'testnet',
     endpoint: 'https://publisher.walrus-testnet.walrus.space',
     aggregator: 'https://aggregator.walrus-testnet.walrus.space',
+    epochDurationSeconds: 86400,
     ipfs: {
       gateway: 'https://ipfs.io/ipfs/',
       fallbackEnabled: true,
@@ -128,11 +134,14 @@ export const stagingConfig: EnvironmentConfig = {
     ttl: 7200,
     maxSize: 500,
     redisUrl: 'redis://redis:6379',
+    persistenceDir: './data/cache',
+    enablePersistence: true,
   },
   walrus: {
     network: 'testnet',
     endpoint: 'https://publisher.walrus-testnet.walrus.space',
     aggregator: 'https://aggregator.walrus-testnet.walrus.space',
+    epochDurationSeconds: 86400,
     ipfs: {
       gateway: 'https://ipfs.io/ipfs/',
       fallbackEnabled: true,
@@ -177,11 +186,14 @@ export const productionConfig: EnvironmentConfig = {
     ttl: 86400,
     maxSize: 10000,
     redisUrl: 'redis://redis:6379',
+    persistenceDir: '/var/lib/wcdn/cache',
+    enablePersistence: true,
   },
   walrus: {
     network: 'mainnet',
     endpoint: 'https://publisher.walrus.space',
     aggregator: 'https://aggregator.walrus.space',
+    epochDurationSeconds: 86400,
     ipfs: {
       gateway: 'https://ipfs.io/ipfs/',
       fallbackEnabled: true,
@@ -226,11 +238,14 @@ export const testConfig: EnvironmentConfig = {
     ttl: 60,
     maxSize: 10,
     redisUrl: 'redis://localhost:6379',
+    persistenceDir: './data/cache-test',
+    enablePersistence: false,
   },
   walrus: {
     network: 'testnet',
     endpoint: 'https://publisher.walrus-testnet.walrus.space',
     aggregator: 'https://aggregator.walrus-testnet.walrus.space',
+    epochDurationSeconds: 300,
     ipfs: {
       gateway: 'https://ipfs.io/ipfs/',
       fallbackEnabled: false,

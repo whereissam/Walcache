@@ -13,6 +13,10 @@ export const config = {
   REDIS_URL: appConfig.cache.redisUrl,
   CACHE_TTL: appConfig.cache.ttl,
   MAX_CACHE_SIZE: appConfig.cache.maxSize,
+  CACHE_PERSISTENCE_DIR: appConfig.cache.persistenceDir,
+  ENABLE_CACHE_PERSISTENCE: appConfig.cache.enablePersistence,
+
+  WALRUS_EPOCH_DURATION: appConfig.walrus.epochDurationSeconds,
 
   API_KEY_SECRET: appConfig.secrets.apiKeySecret,
   WEBHOOK_SECRET: appConfig.secrets.webhookSecret,

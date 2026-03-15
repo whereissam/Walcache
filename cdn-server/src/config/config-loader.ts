@@ -22,6 +22,13 @@ const envSchema = z.object({
   IPFS_GATEWAY: z.string().url().optional(),
   ENABLE_IPFS_FALLBACK: z.coerce.boolean().optional(),
 
+  // Cache persistence
+  CACHE_PERSISTENCE_DIR: z.string().optional(),
+  ENABLE_CACHE_PERSISTENCE: z.coerce.boolean().optional(),
+
+  // Walrus epoch
+  WALRUS_EPOCH_DURATION: z.coerce.number().optional(),
+
   // Security
   API_KEY_SECRET: z.string().min(32, 'API_KEY_SECRET must be at least 32 characters. Set this environment variable.'),
   WEBHOOK_SECRET: z.string().min(32).optional(),
@@ -103,12 +110,18 @@ export class ConfigLoader {
         ttl: env.CACHE_TTL || baseConfig.cache.ttl,
         maxSize: env.MAX_CACHE_SIZE || baseConfig.cache.maxSize,
         redisUrl: env.REDIS_URL || baseConfig.cache.redisUrl,
+        persistenceDir:
+          env.CACHE_PERSISTENCE_DIR || baseConfig.cache.persistenceDir,
+        enablePersistence:
+          env.ENABLE_CACHE_PERSISTENCE ?? baseConfig.cache.enablePersistence,
       },
       walrus: {
         ...baseConfig.walrus,
         network: env.WALRUS_NETWORK || baseConfig.walrus.network,
         endpoint: env.WALRUS_ENDPOINT || baseConfig.walrus.endpoint,
         aggregator: env.WALRUS_AGGREGATOR || baseConfig.walrus.aggregator,
+        epochDurationSeconds:
+          env.WALRUS_EPOCH_DURATION || baseConfig.walrus.epochDurationSeconds,
         ipfs: {
           ...baseConfig.walrus.ipfs,
           gateway: env.IPFS_GATEWAY || baseConfig.walrus.ipfs.gateway,

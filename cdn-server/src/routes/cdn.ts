@@ -179,7 +179,7 @@ export async function cdnRoutes(fastify: FastifyInstance) {
               size: blob.size,
               timestamp: blob.timestamp,
               cached: new Date(),
-              ttl: 3600,
+              ttl: cacheService.getEpochAwareTTL(),
               pinned: false,
             }
 

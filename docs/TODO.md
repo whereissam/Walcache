@@ -13,11 +13,11 @@ Based on [Market Research](./MARKET_RESEARCH.md) findings. Prioritized by impact
 - [ ] Research and contact **Multicoin Capital**, **Hack VC**, **Placeholder VC** as thesis-aligned infra funds
 
 ### Product Hardening
-- [ ] Define and implement **usage-based pricing tiers**: Free → $10-30/mo → $200-2K/mo → Enterprise
-- [ ] Add **epoch-aware cache TTL** - align cache expiration with Walrus storage epochs
-- [ ] Improve aggregator health monitoring - expose health metrics via dashboard
-- [ ] Add **cache persistence layer** for high-value blobs (survive aggregator downtime)
-- [ ] Document self-hosting guide for sovereignty-minded projects
+- [x] Define and implement **usage-based pricing tiers**: Free ($0) → Starter ($29) → Professional ($99) → Enterprise ($299) with per-tier rate limits, bandwidth, and storage caps. Public endpoint at `GET /api/pricing`.
+- [x] Add **epoch-aware cache TTL** - `CacheService.getEpochAwareTTL()` aligns TTL to remaining time in current Walrus epoch. Configurable via `WALRUS_EPOCH_DURATION`.
+- [x] Improve aggregator health monitoring - `GET /api/health/endpoints` exposes per-aggregator/publisher health, response times, and network score (public, no auth).
+- [x] Add **cache persistence layer** - pinned/high-value blobs persisted to disk (`CACHE_PERSISTENCE_DIR`), restored on startup, survives Redis/memory failures. Three-tier: Memory → Redis → Disk.
+- [x] Document self-hosting guide - `docs/SELF_HOSTING.md` with Docker, Docker Compose, systemd, nginx, security checklist, monitoring.
 
 ### Developer Experience
 - [ ] Publish SDK to npm as `@wcdn/sdk`
