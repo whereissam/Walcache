@@ -1,5 +1,5 @@
 {
-  "name": "@wcdn/sdk",
+  "name": "@walcache/sdk",
   "version": "1.0.0",
   "description": "🚀 Multi-chain Walcache SDK - One-line function to get CDN URLs for Sui, Ethereum, Solana",
   "main": "dist/index.js",

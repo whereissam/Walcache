@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://github.com/whereissam/Walcache/blob/main/src/assets/walcache-logo.jpeg?raw=true" alt="Walcache Logo" width="120" height="120" />
 
-  # WCDN - Walrus Developer Platform
+  # Walcache — Walrus Developer Platform
 
   **Developer toolkit for building on Walrus decentralized storage**
 
@@ -17,18 +17,18 @@
 
 ---
 
-## What is WCDN?
+## What is Walcache?
 
-WCDN is the **developer platform for Walrus** — think "Pinata for Walrus" or "Vercel for decentralized storage."
+Walcache is the **developer platform for Walrus** — think "Pinata for Walrus" or "Vercel for decentralized storage."
 
-Walrus handles storage. Pipe Network handles delivery. **WCDN is the control plane** — the SDK, CLI, analytics, verification, and tooling that makes building on Walrus fast and production-ready.
+Walrus handles storage. Pipe Network handles delivery. **Walcache is the control plane** — the SDK, CLI, analytics, verification, and tooling that makes building on Walrus fast and production-ready.
 
 ```
 Walrus       → storage (data plane)
 Pipe Network → delivery (CDN plane)
-WCDN         → developer platform (control plane)
-               ├── SDK (@wcdn/sdk)
-               ├── CLI (@wcdn/cli)
+Walcache     → developer platform (control plane)
+               ├── SDK (@walcache/sdk)
+               ├── CLI (@walcache/cli)
                ├── Analytics dashboard
                ├── Multi-chain verification
                ├── Seal encryption / access control
@@ -54,7 +54,7 @@ bun run dev:all
 ## SDK
 
 ```javascript
-import { getWalrusCDNUrl, WalrusCDNClient } from '@wcdn/sdk'
+import { getWalrusCDNUrl, WalrusCDNClient } from '@walcache/sdk'
 
 // One-liner: get a Walrus URL
 const url = getWalrusCDNUrl('your-blob-id', { chain: 'sui' })
@@ -73,11 +73,12 @@ await client.verifyMultiChain(['ethereum', 'sui'], 'blob-id')
 ## CLI
 
 ```bash
-wcdn init                    # Interactive setup
-wcdn upload file.jpg         # Upload to Walrus
-wcdn cache preload <blob-id> # Warm the cache
-wcdn status                  # Check health
-wcdn analytics               # View metrics
+walcache init                    # Interactive setup
+walcache upload file.jpg         # Upload to Walrus
+walcache deploy                  # Deploy static site to Walrus
+walcache cache preload <blob-id> # Warm the cache
+walcache status                  # Check health
+walcache analytics               # View metrics
 ```
 
 ## Architecture

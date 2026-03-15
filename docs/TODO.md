@@ -1,8 +1,8 @@
-# WCDN — Walrus Developer Platform Roadmap
+# Walcache — Walrus Developer Platform Roadmap
 
 Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 
-**Core insight:** WCDN is not a CDN. It's the **control plane for Walrus apps** — the developer platform that sits between raw Walrus storage and production applications.
+**Core insight:** Walcache is not a CDN. It's the **control plane for Walrus apps** — the developer platform that sits between raw Walrus storage and production applications.
 
 **Progress: 12/29 items complete (41%)**
 
@@ -20,8 +20,8 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 ## Phase 1: Platform Foundations (Month 1-2)
 
 ### Already Built
-- [x] **SDK** (`@wcdn/sdk`) — multi-chain client, one-line URLs, verification, uploads
-- [x] **CLI** (`@wcdn/cli`) — upload, cache, analytics, config, blockchain commands
+- [x] **SDK** (`@walcache/sdk`) — multi-chain client, one-line URLs, verification, uploads
+- [x] **CLI** (`@walcache/cli`) — upload, cache, analytics, config, blockchain commands
 - [x] **Pricing tiers** — Free ($0) → Starter ($29) → Professional ($99) → Enterprise ($299)
 - [x] **Epoch-aware caching** — `getEpochAwareTTL()` aligns TTL to Walrus epochs
 - [x] **Aggregator health monitoring** — `GET /api/health/endpoints` with health scores
@@ -34,11 +34,11 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 - [x] **Rate limiting + access control** — per-tier, per-token usage tracking
 
 ### To Build
-- [ ] `wcdn deploy` — upload static site to Walrus, instant hosting
-- [ ] `wcdn deploy --preview` — preview environments (like Vercel preview URLs)
+- [ ] `walcache deploy` — upload static site to Walrus, instant hosting
+- [ ] `walcache deploy --preview` — preview environments (like Vercel preview URLs)
 - [ ] **Signed URLs** — time-limited, token-gated access to Walrus content
-- [ ] Publish `@wcdn/sdk` to npm
-- [ ] Publish `@wcdn/cli` to npm
+- [ ] Publish `@walcache/sdk` to npm
+- [ ] Publish `@walcache/cli` to npm
 - [ ] Quickstart tutorial (5-min "hello world")
 
 ---
@@ -64,8 +64,8 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 ### SDK/CLI Improvements
 - [ ] React hooks package (`useWalrus`, `useUpload`, `useVerify`)
 - [ ] Next.js integration guide
-- [ ] `wcdn logs` — real-time log streaming
-- [ ] `wcdn analytics` — rich terminal output with charts
+- [ ] `walcache logs` — real-time log streaming
+- [ ] `walcache analytics` — rich terminal output with charts
 
 ---
 
@@ -90,14 +90,14 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 
 ## Competitive Positioning
 
-WCDN complements (not competes with) the Walrus stack:
+Walcache complements (not competes with) the Walrus stack:
 
 | Layer | Who | Role |
 |-------|-----|------|
 | Storage | **Walrus** | Erasure-coded blob storage |
 | Delivery | **Pipe Network** | 280K PoP nodes, sub-50ms CDN |
 | Uploads | **Tusky.io** | Upload management, vaults |
-| **Developer Platform** | **WCDN** | SDK, CLI, analytics, verification, deploy, access control |
+| **Developer Platform** | **Walcache** | SDK, CLI, analytics, verification, deploy, access control |
 
 Nobody else is building the control plane. Fleek and Pinata don't support Walrus. Pipe Network is delivery-only. Tusky is upload-only.
 
@@ -118,7 +118,7 @@ Nobody else is building the control plane. Fleek and Pinata don't support Walrus
 | Metric | Target |
 |--------|--------|
 | SDK npm downloads/week | 100+ |
-| Projects using WCDN | 10+ |
-| `wcdn deploy` sites hosted | 20+ |
+| Projects using Walcache | 10+ |
+| `walcache deploy` sites hosted | 20+ |
 | Cache hit rate | >90% |
 | Grant funding secured | $50K-$150K |

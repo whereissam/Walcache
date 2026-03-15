@@ -1,4 +1,4 @@
-# Walcache/WCDN Market Research & Strategic Assessment
+# Walcache/Walcache Market Research & Strategic Assessment
 
 **Date:** March 2026
 **Data sources:** Web search (March 2026) + strategic analysis
@@ -9,7 +9,7 @@
 
 **The product is strong. The positioning is wrong.**
 
-WCDN was framed as "Walrus is slow, use our cache." That narrative collapsed when Walrus integrated Pipe Network (280K nodes, sub-50ms latency, August 2025). But the real assets — SDK, CLI, analytics, verification, aggregator failover — are **platform primitives**, not CDN features.
+Walcache was framed as "Walrus is slow, use our cache." That narrative collapsed when Walrus integrated Pipe Network (280K nodes, sub-50ms latency, August 2025). But the real assets — SDK, CLI, analytics, verification, aggregator failover — are **platform primitives**, not CDN features.
 
 **You accidentally built the control plane for Walrus apps.**
 
@@ -30,7 +30,7 @@ CDNs are rarely about speed anymore. They're about developer tooling and control
 | Supabase | Database | Backend platform |
 | Alchemy | Node provider | Developer platform |
 
-WCDN's mistake was positioning at the performance layer — the most fragile layer. Infrastructure always improves. Pipe Network proved that.
+Walcache's mistake was positioning at the performance layer — the most fragile layer. Infrastructure always improves. Pipe Network proved that.
 
 **Your real assets:**
 
@@ -57,7 +57,7 @@ Walrus storage (data plane)
    |
 Pipe Network (delivery plane)
    |
-WCDN platform (control plane)
+Walcache platform (control plane)
    |-- SDK
    |-- CLI
    |-- Deploy (wcdn deploy)
@@ -68,7 +68,7 @@ WCDN platform (control plane)
 ```
 
 Pipe = **delivers bytes**
-WCDN = **developer platform**
+Walcache = **developer platform**
 
 They complement each other. No competition.
 
@@ -131,11 +131,11 @@ Walrus ecosystem is still early (120 projects). You can become the **default dev
 
 ## 5. The Grant Strategy
 
-The Walrus Foundation launched an RFP program specifically to fund dev tooling, integrations, and new use cases. This is **perfect** for the repositioned WCDN.
+The Walrus Foundation launched an RFP program specifically to fund dev tooling, integrations, and new use cases. This is **perfect** for the repositioned Walcache.
 
 **How to frame the proposal:**
 
-> **WCDN — Walrus Developer Platform**
+> **Walcache — Walrus Developer Platform**
 >
 > Open-source developer toolkit for building on Walrus:
 > - TypeScript SDK for multi-chain Walrus integration
@@ -167,11 +167,11 @@ The Walrus Foundation launched an RFP program specifically to fund dev tooling, 
 
 As a **developer platform** (not CDN), the competitive map changes:
 
-| Competitor | What they are | Walrus support | WCDN advantage |
+| Competitor | What they are | Walrus support | Walcache advantage |
 |-----------|--------------|---------------|---------------|
 | **Pipe Network** | Delivery plane (data CDN) | Native (partner) | **Complementary, not competitive** |
-| **Tusky.io** | Upload/storage management | Walrus native | WCDN adds analytics + verification + caching |
-| **Walrus CLI** | Official CLI tool | Walrus native | WCDN adds deploy workflow + analytics |
+| **Tusky.io** | Upload/storage management | Walrus native | Walcache adds analytics + verification + caching |
+| **Walrus CLI** | Official CLI tool | Walrus native | Walcache adds deploy workflow + analytics |
 | **Fleek** | Web3 hosting platform | No Walrus | If they add Walrus, they compete directly |
 | **Pinata** | IPFS developer platform | No Walrus | The model to emulate ("Pinata for Walrus") |
 | **Alchemy** | Node + developer platform | No Walrus | Aspirational comp for positioning |
@@ -232,7 +232,7 @@ Most dev tooling grants start with **less than this**.
 
 ### Step 1: Rename positioning
 - Remove "CDN" from all messaging
-- New name options: WalrusKit, WalrusHub, Walrus Dev Platform, or keep WCDN but redefine what it stands for
+- New name options: WalrusKit, WalrusHub, Walrus Dev Platform, or keep Walcache but redefine what it stands for
 
 ### Step 2: Apply to Walrus Foundation RFP
 - Frame as developer platform / ecosystem tooling
