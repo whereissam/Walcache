@@ -4,7 +4,7 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 
 **Core insight:** Walcache is not a CDN. It's the **control plane for Walrus apps** — the developer platform that sits between raw Walrus storage and production applications.
 
-**Progress: 20/29 items complete (69%)**
+**Progress: 24/29 items complete (83%)**
 
 ---
 
@@ -56,10 +56,10 @@ Based on [Market Research & Strategic Assessment](./MARKET_RESEARCH.md).
 - [x] Time-limited signed URLs with HMAC verification — `POST /api/signed-url` generates tokens, `GET /api/signed-url/verify` validates. IP restriction, custom metadata, configurable expiry (60s–7d). 11 tests.
 
 ### Analytics & Observability
-- [ ] Cost tracking per blob/project (storage epochs + bandwidth)
-- [ ] Error monitoring and alerting
-- [ ] SLA monitoring and uptime reporting
-- [ ] Usage dashboards per API token
+- [x] Cost tracking per blob/project — `GET /v1/observability/costs?hours=24` with per-blob breakdown, bandwidth, cache hit/miss, estimated USD cost ($0.05/GB + $0.0001/miss)
+- [x] Error monitoring and alerting — `GET /v1/observability/errors` with error rate, by-type/endpoint/status breakdown, recent errors list
+- [x] SLA monitoring and uptime reporting — `GET /v1/observability/sla` with uptime %, p95/p99 latency, incident detection from health check history
+- [x] Usage dashboards per API token — `GET /v1/observability/tokens/usage` and `GET /v1/observability/tokens/:id/usage` with per-token bandwidth, errors, top blobs, cost. Full dashboard at `GET /v1/observability/dashboard`
 
 ### SDK/CLI Improvements
 - [x] React hooks package — `useUpload`, `useBatchUpload`, `useVerifyCrossChain`, `useAccessCheck` + existing `useStats`, `useWalrus`, `useVaults`. Barrel export at `src/hooks/api/index.ts`.

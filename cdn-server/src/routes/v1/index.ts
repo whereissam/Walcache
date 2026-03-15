@@ -8,6 +8,7 @@ import { analyticsRoutes } from './analytics.js'
 import { enhancedAnalyticsRoutes } from './enhanced-analytics.js'
 import { deployRoutes } from './deploy.js'
 import { accessGateRoutes } from './access-gate.js'
+import { observabilityRoutes } from './observability.js'
 import type { FastifyInstance } from 'fastify'
 
 export async function v1Routes(fastify: FastifyInstance) {
@@ -21,4 +22,5 @@ export async function v1Routes(fastify: FastifyInstance) {
   await fastify.register(webhookRoutes, { prefix: '/webhooks' })
   await fastify.register(deployRoutes, { prefix: '/deploys' })
   await fastify.register(accessGateRoutes, { prefix: '/access-gates' })
+  await fastify.register(observabilityRoutes, { prefix: '/observability' })
 }
