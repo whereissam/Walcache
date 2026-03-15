@@ -482,7 +482,8 @@ export function createSecurityMiddleware(): SecurityMiddleware {
     enableCsrf: appConfig.env === 'production' || appConfig.env === 'staging',
     enableRequestSigning: appConfig.env === 'production',
     maxRequestSize: 10 * 1024 * 1024, // 10MB
-    blockedUserAgents: ['curl', 'wget', 'python-requests'],
+    blockedUserAgents:
+      appConfig.env === 'production' ? ['python-requests'] : [],
     enableDDoSProtection: true,
     enableBruteForceProtection: true,
   }
