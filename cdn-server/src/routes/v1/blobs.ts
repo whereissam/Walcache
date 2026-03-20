@@ -40,7 +40,7 @@ export async function blobRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    controller.retrieve.bind(controller),
+    controller.retrieve.bind(controller) as any,
   )
 
   // POST /v1/blobs/:id/pin - Pin a blob to cache
@@ -58,7 +58,7 @@ export async function blobRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    controller.pin.bind(controller),
+    controller.pin.bind(controller) as any,
   )
 
   // DELETE /v1/blobs/:id/pin - Unpin a blob
@@ -76,7 +76,7 @@ export async function blobRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    controller.unpin.bind(controller),
+    controller.unpin.bind(controller) as any,
   )
 
   // DELETE /v1/blobs/:id - Delete blob from cache
@@ -94,6 +94,6 @@ export async function blobRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    controller.delete.bind(controller),
+    controller.delete.bind(controller) as any,
   )
 }

@@ -6,6 +6,20 @@
 // TODO: Add ethers dependency
 // import { ethers } from 'ethers';
 import crypto from 'node:crypto'
+
+// Minimal ethers stubs to satisfy type checking until the ethers package is added
+declare namespace ethers {
+  class JsonRpcProvider {
+    constructor(url: string)
+    getBlockNumber(): Promise<number>
+  }
+  class Contract {
+    constructor(address: string, abi: Array<any>, provider: JsonRpcProvider)
+    [method: string]: any
+  }
+  function keccak256(data: Uint8Array): string
+  function toUtf8Bytes(text: string): Uint8Array
+}
 import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client'
 import { z } from 'zod'
 
@@ -133,7 +147,7 @@ export class OnChainVerificationService {
       } catch (error) {
         console.warn(
           `Failed to fetch content from ${contentUrl}:`,
-          error.message,
+          (error as Error).message,
         )
       }
     }
@@ -153,7 +167,7 @@ export class OnChainVerificationService {
           chain,
           blobId,
           verified: false,
-          error: error.message,
+          error: (error as Error).message,
         } as VerificationResult
       }
     })
@@ -260,7 +274,7 @@ export class OnChainVerificationService {
           }
           onChainHash = fullMetadata.contentHash
         } catch (error) {
-          console.warn('Failed to fetch full metadata:', error.message)
+          console.warn('Failed to fetch full metadata:', (error as Error).message)
         }
       }
 
@@ -280,7 +294,7 @@ export class OnChainVerificationService {
             expectedBytes32,
           )
         } catch (error) {
-          console.warn('Hash verification failed:', error.message)
+          console.warn('Hash verification failed:', (error as Error).message)
           verified = false
         }
       }
@@ -304,7 +318,7 @@ export class OnChainVerificationService {
         chain: 'ethereum',
         blobId,
         verified: false,
-        error: error.message,
+        error: (error as Error).message,
       }
     }
   }
@@ -344,7 +358,7 @@ export class OnChainVerificationService {
         chain: 'sui',
         blobId,
         verified: false,
-        error: error.message,
+        error: (error as Error).message,
       }
     }
   }
@@ -505,7 +519,7 @@ export function createVerificationMiddleware(
       if (requireVerification) {
         return res.status(500).json({
           error: 'Verification service error',
-          message: error.message,
+          message: (error as Error).message,
         })
       }
 

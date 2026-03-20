@@ -70,7 +70,7 @@ export async function verificationRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({
         error: {
           type: 'validation_error',
-          message: error.message,
+          message: (error as Error).message,
         },
       })
     }
@@ -104,7 +104,7 @@ export async function verificationRoutes(fastify: FastifyInstance) {
         blobId,
         content: contentBuffer,
         contentUrl,
-        chains,
+        chains: chains as any,
         includeMetadata,
         computeHash: true,
       })
@@ -118,7 +118,7 @@ export async function verificationRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({
         error: {
           type: 'validation_error',
-          message: error.message,
+          message: (error as Error).message,
         },
       })
     }
@@ -152,7 +152,7 @@ export async function verificationRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({
         error: {
           type: 'validation_error',
-          message: error.message,
+          message: (error as Error).message,
         },
       })
     }
@@ -199,7 +199,7 @@ export async function verificationRoutes(fastify: FastifyInstance) {
         blobId: blob.blobId,
         content: blob.content ? Buffer.from(blob.content, 'base64') : undefined,
         contentUrl: blob.contentUrl,
-        chains,
+        chains: chains as any,
         includeMetadata,
         computeHash: !!(blob.content || blob.contentUrl),
       }))
@@ -225,7 +225,7 @@ export async function verificationRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({
         error: {
           type: 'validation_error',
-          message: error.message,
+          message: (error as Error).message,
         },
       })
     }
@@ -249,7 +249,7 @@ export async function verificationRoutes(fastify: FastifyInstance) {
       return reply.status(500).send({
         error: {
           type: 'api_error',
-          message: error.message,
+          message: (error as Error).message,
         },
       })
     }
@@ -323,7 +323,7 @@ export async function verificationRoutes(fastify: FastifyInstance) {
         health.chains[chain] = {
           status: 'unhealthy',
           available: true,
-          error: error.message,
+          error: (error as Error).message,
         }
         health.status = 'degraded'
       }

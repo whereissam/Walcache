@@ -1,29 +1,24 @@
 /**
  * Access gating service for NFT-gated and allowlist-based content access.
  * Verifies ownership on-chain before granting access to protected blobs.
+ * Persisted to SQLite via Drizzle ORM.
  */
 
 import axios from 'axios'
+import { eq } from 'drizzle-orm'
 import { config } from '../config/index.js'
+import { db, schema } from '../db/index.js'
 
 export type GateType = 'nft' | 'allowlist' | 'public'
 
 export interface AccessGate {
-  /** Unique gate ID */
   id: string
-  /** CID(s) this gate protects */
   cids: Array<string>
-  /** Gate type */
   type: GateType
-  /** For NFT gates: contract address */
   contractAddress?: string
-  /** For NFT gates: chain */
   chain?: 'sui' | 'ethereum'
-  /** For NFT gates: minimum token count required */
   minTokens?: number
-  /** For allowlist gates: allowed wallet addresses */
   allowlist?: Array<string>
-  /** Creator of this gate */
   createdBy: string
   createdAt: string
 }
@@ -34,72 +29,100 @@ export interface AccessCheckResult {
   gate?: AccessGate
 }
 
+function rowToGate(row: typeof schema.accessGates.$inferSelect): AccessGate {
+  return {
+    id: row.id,
+    cids: row.cids as string[],
+    type: row.type as GateType,
+    contractAddress: row.contractAddress || undefined,
+    chain: (row.chain as 'sui' | 'ethereum') || undefined,
+    minTokens: row.minTokens || undefined,
+    allowlist: (row.allowlist as string[]) || undefined,
+    createdBy: row.createdBy,
+    createdAt: row.createdAt,
+  }
+}
+
 export class AccessGateService {
-  private gates = new Map<string, AccessGate>()
-  /** CID → gate ID mapping for fast lookup */
-  private cidToGate = new Map<string, string>()
-
-  /**
-   * Create an access gate for one or more CIDs.
-   */
-  createGate(
-    gate: Omit<AccessGate, 'id' | 'createdAt'>,
-  ): AccessGate {
+  createGate(gate: Omit<AccessGate, 'id' | 'createdAt'>): AccessGate {
     const id = `gate_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-    const created: AccessGate = {
-      ...gate,
-      id,
-      createdAt: new Date().toISOString(),
+    const now = new Date().toISOString()
+
+    db.insert(schema.accessGates)
+      .values({
+        id,
+        cids: gate.cids,
+        type: gate.type,
+        contractAddress: gate.contractAddress,
+        chain: gate.chain,
+        minTokens: gate.minTokens,
+        allowlist: gate.allowlist,
+        createdBy: gate.createdBy,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run()
+
+    // Update CID → gate mappings
+    for (const cid of gate.cids) {
+      db.insert(schema.cidGateMapping)
+        .values({ cid, gateId: id, createdAt: now })
+        .onConflictDoUpdate({
+          target: schema.cidGateMapping.cid,
+          set: { gateId: id, createdAt: now },
+        })
+        .run()
     }
 
-    this.gates.set(id, created)
-    for (const cid of created.cids) {
-      this.cidToGate.set(cid, id)
-    }
-
-    return created
+    return { ...gate, id, createdAt: now }
   }
 
-  /**
-   * Remove an access gate.
-   */
   removeGate(gateId: string): boolean {
-    const gate = this.gates.get(gateId)
+    const gate = db
+      .select()
+      .from(schema.accessGates)
+      .where(eq(schema.accessGates.id, gateId))
+      .get()
+
     if (!gate) return false
 
-    for (const cid of gate.cids) {
-      this.cidToGate.delete(cid)
-    }
-    this.gates.delete(gateId)
+    // CID mappings cascade-deleted via FK
+    db.delete(schema.accessGates)
+      .where(eq(schema.accessGates.id, gateId))
+      .run()
+
     return true
   }
 
-  /**
-   * Get the gate protecting a CID (if any).
-   */
   getGateForCid(cid: string): AccessGate | null {
-    const gateId = this.cidToGate.get(cid)
-    if (!gateId) return null
-    return this.gates.get(gateId) || null
+    const mapping = db
+      .select()
+      .from(schema.cidGateMapping)
+      .where(eq(schema.cidGateMapping.cid, cid))
+      .get()
+
+    if (!mapping) return null
+
+    const gate = db
+      .select()
+      .from(schema.accessGates)
+      .where(eq(schema.accessGates.id, mapping.gateId))
+      .get()
+
+    return gate ? rowToGate(gate) : null
   }
 
-  /**
-   * List all gates.
-   */
   listGates(): Array<AccessGate> {
-    return Array.from(this.gates.values())
+    const rows = db.select().from(schema.accessGates).all()
+    return rows.map(rowToGate)
   }
 
-  /**
-   * Check if a wallet address has access to a gated CID.
-   */
   async checkAccess(
     cid: string,
     walletAddress?: string,
   ): Promise<AccessCheckResult> {
     const gate = this.getGateForCid(cid)
 
-    // No gate = public access
     if (!gate) {
       return { granted: true, reason: 'public' }
     }
@@ -123,9 +146,6 @@ export class AccessGateService {
     return { granted: false, reason: 'unknown_gate_type', gate }
   }
 
-  /**
-   * Check allowlist access.
-   */
   private checkAllowlist(
     gate: AccessGate,
     walletAddress: string,
@@ -140,10 +160,6 @@ export class AccessGateService {
     return { granted: false, reason: 'not_in_allowlist', gate }
   }
 
-  /**
-   * Check NFT ownership via on-chain query.
-   * Supports Sui and Ethereum.
-   */
   private async checkNftOwnership(
     gate: AccessGate,
     walletAddress: string,
@@ -166,9 +182,6 @@ export class AccessGateService {
     }
   }
 
-  /**
-   * Check Sui NFT ownership via Sui RPC.
-   */
   private async checkSuiNft(
     gate: AccessGate,
     walletAddress: string,
@@ -184,13 +197,9 @@ export class AccessGateService {
       method: 'suix_getOwnedObjects',
       params: [
         walletAddress,
-        {
-          filter: {
-            Package: gate.contractAddress,
-          },
-        },
+        { filter: { Package: gate.contractAddress } },
         null,
-        1, // Only need to find one
+        1,
       ],
     })
 
@@ -204,27 +213,22 @@ export class AccessGateService {
     return { granted: false, reason: 'nft_not_owned', gate }
   }
 
-  /**
-   * Check Ethereum NFT ownership via eth_call (ERC-721 balanceOf).
-   */
   private async checkEthNft(
     gate: AccessGate,
     walletAddress: string,
   ): Promise<AccessCheckResult> {
     const rpcUrl = 'https://eth.llamarpc.com'
-
-    // ERC-721 balanceOf(address) selector: 0x70a08231
-    const paddedAddress = walletAddress.toLowerCase().replace('0x', '').padStart(64, '0')
+    const paddedAddress = walletAddress
+      .toLowerCase()
+      .replace('0x', '')
+      .padStart(64, '0')
     const data = `0x70a08231${paddedAddress}`
 
     const response = await axios.post(rpcUrl, {
       jsonrpc: '2.0',
       id: 1,
       method: 'eth_call',
-      params: [
-        { to: gate.contractAddress, data },
-        'latest',
-      ],
+      params: [{ to: gate.contractAddress, data }, 'latest'],
     })
 
     const balance = parseInt(response.data?.result || '0x0', 16)
@@ -237,33 +241,53 @@ export class AccessGateService {
     return { granted: false, reason: 'nft_not_owned', gate }
   }
 
-  /**
-   * Add a wallet to an allowlist gate.
-   */
   addToAllowlist(gateId: string, walletAddress: string): boolean {
-    const gate = this.gates.get(gateId)
-    if (!gate || gate.type !== 'allowlist') return false
+    const row = db
+      .select()
+      .from(schema.accessGates)
+      .where(eq(schema.accessGates.id, gateId))
+      .get()
 
-    if (!gate.allowlist) gate.allowlist = []
+    if (!row || row.type !== 'allowlist') return false
+
+    const allowlist = (row.allowlist as string[]) || []
     const normalized = walletAddress.toLowerCase()
 
-    if (!gate.allowlist.some((a) => a.toLowerCase() === normalized)) {
-      gate.allowlist.push(walletAddress)
+    if (!allowlist.some((a) => a.toLowerCase() === normalized)) {
+      allowlist.push(walletAddress)
+      db.update(schema.accessGates)
+        .set({
+          allowlist,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(schema.accessGates.id, gateId))
+        .run()
     }
+
     return true
   }
 
-  /**
-   * Remove a wallet from an allowlist gate.
-   */
   removeFromAllowlist(gateId: string, walletAddress: string): boolean {
-    const gate = this.gates.get(gateId)
-    if (!gate || gate.type !== 'allowlist' || !gate.allowlist) return false
+    const row = db
+      .select()
+      .from(schema.accessGates)
+      .where(eq(schema.accessGates.id, gateId))
+      .get()
 
+    if (!row || row.type !== 'allowlist' || !row.allowlist) return false
+
+    const allowlist = row.allowlist as string[]
     const normalized = walletAddress.toLowerCase()
-    gate.allowlist = gate.allowlist.filter(
-      (a) => a.toLowerCase() !== normalized,
-    )
+    const filtered = allowlist.filter((a) => a.toLowerCase() !== normalized)
+
+    db.update(schema.accessGates)
+      .set({
+        allowlist: filtered,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(schema.accessGates.id, gateId))
+      .run()
+
     return true
   }
 }

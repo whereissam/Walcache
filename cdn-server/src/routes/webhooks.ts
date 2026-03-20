@@ -2,7 +2,7 @@
  * Webhook Management API Routes
  */
 
-import { FastifyReply, FastifyRequest } from 'fastify'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import { WebhookService } from '../services/webhook.js'
 import { requireAuth } from '../middleware/auth.js'
 import type { FastifyInstance } from 'fastify'
@@ -96,7 +96,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       } catch (error) {
         return reply.status(400).send({
           success: false,
-          error: error.message,
+          error: (error as Error).message,
         })
       }
     },
@@ -115,7 +115,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
     } catch (error) {
       return reply.status(500).send({
         success: false,
-        error: error.message,
+        error: (error as Error).message,
       })
     }
   })
@@ -142,7 +142,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       } catch (error) {
         return reply.status(500).send({
           success: false,
-          error: error.message,
+          error: (error as Error).message,
         })
       }
     },
@@ -177,7 +177,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       } catch (error) {
         return reply.status(400).send({
           success: false,
-          error: error.message,
+          error: (error as Error).message,
         })
       }
     },
@@ -198,7 +198,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       } catch (error) {
         return reply.status(404).send({
           success: false,
-          error: error.message,
+          error: (error as Error).message,
         })
       }
     },
@@ -223,7 +223,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       } catch (error) {
         return reply.status(500).send({
           success: false,
-          error: error.message,
+          error: (error as Error).message,
         })
       }
     },
@@ -249,7 +249,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
     } catch (error) {
       return reply.status(500).send({
         success: false,
-        error: error.message,
+        error: (error as Error).message,
       })
     }
   })
@@ -274,7 +274,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
     } catch (error) {
       return reply.status(500).send({
         success: false,
-        error: error.message,
+        error: (error as Error).message,
       })
     }
   })
@@ -312,7 +312,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
     } catch (error) {
       return reply.status(500).send({
         success: false,
-        error: error.message,
+        error: (error as Error).message,
       })
     }
   })

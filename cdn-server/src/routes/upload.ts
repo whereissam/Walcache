@@ -120,7 +120,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                 size: buffer.length,
                 fileName,
                 contentType,
-                cdnUrl: `${request.protocol}://${request.hostname}:${config.server.port}/cdn/${blobId}`,
+                cdnUrl: `${request.protocol}://${request.hostname}:${config.PORT}/cdn/${blobId}`,
                 directUrl: `${config.WALRUS_AGGREGATOR}/v1/blobs/${blobId}`,
                 cached: true,
                 publisherUsed: publisherUrl,
@@ -211,8 +211,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
           success: true,
           file: {
             ...tuskyFile,
-            cdnUrl: `${request.protocol}://${request.hostname}:${config.server.port}/cdn/${tuskyFile.blobId}`,
-            downloadUrl: `${request.protocol}://${request.hostname}:${config.server.port}/upload/files/${tuskyFile.id}/download`,
+            cdnUrl: `${request.protocol}://${request.hostname}:${config.PORT}/cdn/${tuskyFile.blobId}`,
+            downloadUrl: `${request.protocol}://${request.hostname}:${config.PORT}/upload/files/${tuskyFile.id}/download`,
           },
           cached: true,
         })

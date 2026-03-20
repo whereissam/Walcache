@@ -3,6 +3,7 @@ import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
 import helmet from '@fastify/helmet'
 import { appConfig, config } from './config/index.js'
+import { initializeDatabase, closeDatabase } from './db/index.js'
 import { cdnRoutes } from './routes/cdn.js'
 import { apiRoutes } from './routes/api.js'
 import { uploadRoutes } from './routes/upload.js'
@@ -11,10 +12,10 @@ import { v1Routes } from './routes/v1/index.js'
 import { sealRoutes } from './routes/seal.js'
 import { registerSwagger } from './routes/swagger.js'
 import { serviceContainer } from './container/service-container.js'
-import { CacheService } from './services/cache.js'
-import { AnalyticsService } from './services/analytics.js'
-import { EndpointHealthService } from './services/endpoint-health.js'
-import { WalrusService } from './services/walrus.js'
+import { cacheService } from './services/cache.js'
+import { analyticsService } from './services/analytics.js'
+import { endpointHealthService } from './services/endpoint-health.js'
+import { walrusService } from './services/walrus.js'
 import { tuskyService } from './services/tusky.js'
 import { userService } from './services/user.js'
 import { registerErrorHandler } from './middleware/error-handler.js'
@@ -99,7 +100,6 @@ async function buildServer() {
   await fastify.register(sealRoutes, { prefix: '/seal' })
 
   fastify.get('/health', async (request, reply) => {
-    const cacheService = await serviceContainer.get<CacheService>('cache')
     const cacheStatus = await cacheService.healthCheck()
     return {
       status: 'ok',
@@ -114,28 +114,21 @@ async function buildServer() {
 
 async function start() {
   try {
-    // Register services in container
-    serviceContainer.register('cache', () => new CacheService())
-    serviceContainer.register('analytics', () => new AnalyticsService())
-    serviceContainer.register(
-      'endpointHealth',
-      () => new EndpointHealthService(),
-    )
-    serviceContainer.register('walrus', () => new WalrusService())
+    // Initialize SQLite database (creates tables if needed)
+    initializeDatabase()
+
+    // Register module-level singletons in container (same instances used by routes)
+    serviceContainer.register('cache', () => cacheService)
+    serviceContainer.register('analytics', () => analyticsService)
+    serviceContainer.register('endpointHealth', () => endpointHealthService)
+    serviceContainer.register('walrus', () => walrusService)
     serviceContainer.register('tusky', () => tuskyService)
     serviceContainer.register('user', () => userService)
 
-    // Initialize all services
+    // Initialize all services (resolves factories in container)
     await serviceContainer.initialize()
 
     // Initialize individual services
-    const cacheService = await serviceContainer.get<CacheService>('cache')
-    const analyticsService =
-      await serviceContainer.get<AnalyticsService>('analytics')
-    const endpointHealthService =
-      await serviceContainer.get<EndpointHealthService>('endpointHealth')
-    const walrusService = await serviceContainer.get<WalrusService>('walrus')
-
     await cacheService.initialize()
     await analyticsService.initialize()
     await endpointHealthService.initialize()
@@ -161,8 +154,9 @@ async function start() {
 
     // Graceful shutdown
     process.on('SIGINT', async () => {
-      console.log('🛑 Gracefully shutting down...')
+      console.log('Gracefully shutting down...')
       await serviceContainer.shutdown()
+      closeDatabase()
       process.exit(0)
     })
   } catch (error) {

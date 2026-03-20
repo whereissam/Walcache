@@ -66,7 +66,7 @@ export async function enhancedVerificationMiddleware(
     reply.status(500).send({
       error: {
         type: 'verification_error',
-        message: error.message,
+        message: (error as Error).message,
       },
     })
   }

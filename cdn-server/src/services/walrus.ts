@@ -3,6 +3,7 @@ import { config } from '../config/index.js'
 import { WALRUS_ERROR_CODES, WalrusError } from '../types/walrus.js'
 import type { WalrusBlob } from '../types/walrus.js'
 import type { IEndpointHealthService } from './endpoint-health.js'
+import { CircuitBreaker } from '../utils/circuit-breaker.js'
 
 export interface IWalrusService {
   initialize: (endpointHealthService: IEndpointHealthService) => Promise<void>
@@ -38,12 +39,20 @@ export class WalrusService implements IWalrusService {
   private enableIpfsFallback: boolean
 
   private endpointHealthService?: IEndpointHealthService
+  private circuitBreaker: CircuitBreaker
 
   constructor() {
     this.primaryPublisher = config.WALRUS_ENDPOINT
     this.primaryAggregator = config.WALRUS_AGGREGATOR
     this.ipfsGateway = config.IPFS_GATEWAY
     this.enableIpfsFallback = config.ENABLE_IPFS_FALLBACK
+    this.circuitBreaker = new CircuitBreaker('walrus-aggregator', {
+      failureThreshold: 5,
+      recoveryTimeout: 30000, // 30 seconds before trying again
+      monitoringPeriod: 60000, // 1 minute monitoring window
+      expectedErrors: (error) =>
+        error instanceof WalrusError && error.statusCode === 404,
+    })
   }
 
   async initialize(
@@ -76,6 +85,10 @@ export class WalrusService implements IWalrusService {
   }
 
   async fetchBlob(cid: string): Promise<WalrusBlob | null> {
+    return this.circuitBreaker.execute(() => this.fetchBlobInternal(cid))
+  }
+
+  private async fetchBlobInternal(cid: string): Promise<WalrusBlob | null> {
     const healthyAggregators = this.getAllHealthyAggregators()
 
     // Try each healthy aggregator in order

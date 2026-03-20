@@ -207,6 +207,11 @@ export class SecurityMiddleware {
     request: FastifyRequest,
     reply: FastifyReply,
   ): Promise<void> {
+    // Skip aggressive DDoS limiting for CDN read paths (the primary serving path)
+    if (request.url.startsWith('/cdn/') && request.method === 'GET') {
+      return
+    }
+
     const clientIP = this.getClientIP(request)
     const now = Date.now()
     const windowMs = 60000 // 1 minute window
@@ -220,8 +225,8 @@ export class SecurityMiddleware {
 
     entry.count++
 
-    if (entry.count > 200) {
-      // 200 requests per minute threshold for a CDN
+    if (entry.count > 1000) {
+      // 1000 requests per minute threshold for API endpoints
       this.blockedIPs.add(clientIP)
       metricsService.counter('security.ddos.blocked', 1, { clientIP })
 

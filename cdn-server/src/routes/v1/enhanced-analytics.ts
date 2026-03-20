@@ -99,7 +99,7 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({
         error: {
           type: 'validation_error',
-          message: error.message,
+          message: (error as Error).message,
         },
       })
     }
@@ -197,7 +197,7 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({
         error: {
           type: 'validation_error',
-          message: error.message,
+          message: (error as Error).message,
         },
       })
     }
@@ -246,7 +246,7 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({
         error: {
           type: 'validation_error',
-          message: error.message,
+          message: (error as Error).message,
         },
       })
     }
@@ -470,7 +470,7 @@ export async function enhancedAnalyticsRoutes(fastify: FastifyInstance) {
       return reply.status(500).send({
         error: {
           type: 'api_error',
-          message: error.message,
+          message: (error as Error).message,
         },
       })
     }

@@ -1,11 +1,23 @@
+/**
+ * walcacheStore — Backward-compatible facade.
+ *
+ * This store delegates to domain-specific stores:
+ *   - useBlobStore: v1 API blob/cache/analytics operations
+ *   - useBlockchainStore: blockchain registration & verification
+ *   - useUploadStore: Tusky vault/file CRUD
+ *   - useStatsStore: legacy analytics
+ *   - useCacheStore: legacy cache operations
+ *
+ * New code should import from the domain stores directly.
+ * This facade exists so existing components don't break.
+ */
+
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { WalrusCDNClient } from '../../packages/sdk/src/index.js'
-import {
-  BlockchainIntegrator,
-  PRESET_CONFIGS,
-  WALRUS_BLOB_REGISTRY_ABI,
-} from '../../packages/sdk/src/blockchain.js'
+import { WALCACHE_BASE_URL, WALCACHE_API_URL } from '@/config/env'
+import { useAuthStore } from './authStore'
+import { useBlobStore, getCDNClient } from './blobStore'
+import { useBlockchainStore } from './blockchainStore'
 import type {
   BlobResource,
   UploadResource,
@@ -13,16 +25,17 @@ import type {
   AnalyticsResource,
   GlobalAnalytics,
   CacheStats,
-  PaginatedList,
   WalrusCDNError,
   SupportedChain,
-  // Legacy types for backward compatibility
   CIDStats,
   CIDInfo,
-  GlobalMetrics,
 } from '../../packages/sdk/src/types.js'
 
-// Legacy interface adapters for backward compatibility
+// Re-export domain stores for gradual migration
+export { useBlobStore } from './blobStore'
+export { useBlockchainStore } from './blockchainStore'
+
+// Legacy interface adapters
 interface LegacyGlobalStats {
   totalRequests: number
   totalHits: number
@@ -31,20 +44,6 @@ interface LegacyGlobalStats {
   avgLatency: number
   uniqueCIDs: number
   geographic?: Array<{ region: string; requests: number; percentage: number }>
-}
-
-interface LegacyCacheStats {
-  memory: {
-    keys: number
-    hits: number
-    misses: number
-    hitRate: number
-  }
-  redis: {
-    keys: number
-    memory: number
-  }
-  using: 'redis' | 'memory'
 }
 
 interface TuskyVault {
@@ -95,25 +94,36 @@ interface UploadProgress {
   error?: string
 }
 
-interface BlockchainVerificationResult {
-  blobId: string
-  chain: SupportedChain
-  verified: boolean
-  transactionHash?: string
-  uploader?: string
-  timestamp?: string
-  error?: string
+const API_BASE = WALCACHE_API_URL
+
+const getAuthToken = () => {
+  return useAuthStore.getState().token || ''
 }
 
-interface MultiChainStatus {
-  blobId: string
-  chains: Record<SupportedChain, BlockchainVerificationResult>
-  consensus: 'none' | 'minority' | 'majority' | 'unanimous'
-  trustedChains: Array<SupportedChain>
-}
+// Walrus aggregators for verification
+const WALRUS_AGGREGATORS = [
+  {
+    url: 'https://aggregator.walrus-testnet.walrus.space',
+    network: 'testnet' as const,
+  },
+  {
+    url: 'https://aggregator.testnet.walrus.atalma.io',
+    network: 'testnet' as const,
+  },
+  {
+    url: 'https://sui-walrus-tn-aggregator.bwarelabs.com',
+    network: 'testnet' as const,
+  },
+  {
+    url: 'https://aggregator.walrus-mainnet.walrus.space',
+    network: 'mainnet' as const,
+  },
+  { url: 'https://aggregator.walrus.atalma.io', network: 'mainnet' as const },
+  { url: 'https://walrus.globalstake.io', network: 'mainnet' as const },
+]
 
 interface WalcacheState {
-  // v1 API Data
+  // Delegated state (reads from domain stores)
   blobs: Record<string, BlobResource>
   uploads: Record<string, UploadResource>
   cacheEntries: Record<string, CacheResource>
@@ -121,31 +131,24 @@ interface WalcacheState {
   globalAnalytics: GlobalAnalytics | null
   cacheStats: CacheStats | null
 
-  // Legacy Data (for backward compatibility)
+  // Legacy state
   cidStats: Record<string, CIDStats>
   globalStats: LegacyGlobalStats | null
   topCIDs: Array<CIDStats>
   cidInfo: CIDInfo | null
 
-  // Upload Data (Tusky integration)
+  // Upload state (local to this store for backward compat)
   vaults: Array<TuskyVault>
   files: Array<TuskyFile>
   uploadProgress: Record<string, UploadProgress | UploadResource>
 
-  // Blockchain Integration State
-  blockchainIntegrator: BlockchainIntegrator | null
+  // Blockchain state (delegated)
+  blockchainIntegrator: any
   supportedChains: Array<SupportedChain>
-  verificationResults: Record<string, MultiChainStatus>
-  registrationProgress: Record<
-    string,
-    {
-      chain: SupportedChain
-      status: 'pending' | 'completed' | 'failed'
-      txHash?: string
-    }
-  >
+  verificationResults: Record<string, any>
+  registrationProgress: Record<string, any>
 
-  // Pagination State
+  // Pagination
   pagination: {
     blobs: { has_more: boolean; starting_after?: string }
     uploads: { has_more: boolean; starting_after?: string }
@@ -158,27 +161,16 @@ interface WalcacheState {
   error: WalrusCDNError | string | null
   currentCID: string
 
-  // Basic Actions
+  // UI Actions
   setCurrentCID: (cid: string) => void
   setError: (error: WalrusCDNError | string | null) => void
   setLoading: (loading: boolean) => void
 
-  // v1 API Actions
+  // v1 API Actions (delegated to blobStore)
   fetchBlob: (blobId: string) => Promise<BlobResource>
-  listBlobs: (params?: {
-    limit?: number
-    cached?: boolean
-    pinned?: boolean
-  }) => Promise<Array<BlobResource>>
-  createUpload: (
-    file: File,
-    options?: { vault_id?: string; parent_id?: string },
-  ) => Promise<UploadResource>
-  listUploads: (params?: {
-    limit?: number
-    vault_id?: string
-    status?: string
-  }) => Promise<Array<UploadResource>>
+  listBlobs: (params?: any) => Promise<Array<BlobResource>>
+  createUpload: (file: File, options?: any) => Promise<UploadResource>
+  listUploads: (params?: any) => Promise<Array<UploadResource>>
   preloadBlobs: (blobIds: Array<string>) => Promise<void>
   pinBlob: (blobId: string) => Promise<BlobResource>
   unpinBlob: (blobId: string) => Promise<BlobResource>
@@ -186,31 +178,24 @@ interface WalcacheState {
   fetchGlobalAnalytics: () => Promise<void>
   fetchCacheStatistics: () => Promise<void>
 
-  // Legacy API Actions (backward compatibility)
+  // Legacy API Actions
   fetchCIDStats: (cid: string) => Promise<void>
   fetchGlobalStats: () => Promise<void>
+  fetchCacheStats: () => Promise<void>
   preloadCIDs: (cids: Array<string>) => Promise<void>
   pinCID: (cid: string) => Promise<void>
   unpinCID: (cid: string) => Promise<void>
   clearCache: () => Promise<void>
 
-  // Upload Actions (Tusky integration)
+  // Upload Actions
   fetchVaults: () => Promise<void>
   createVault: (name: string, description?: string) => Promise<void>
   fetchFiles: (vaultId?: string) => Promise<void>
   uploadFile: (file: File, vaultId?: string) => Promise<TuskyFile>
   deleteFile: (fileId: string) => Promise<void>
 
-  // Direct Walrus Upload (official API)
-  uploadToWalrus: (file: File) => Promise<{
-    blobId: string
-    suiRef: string
-    status: string
-    size: number
-    fileName: string
-    cdnUrl: string
-    directUrl: string
-  }>
+  // Direct Walrus Upload
+  uploadToWalrus: (file: File) => Promise<any>
 
   // Walrus Blob Verification
   checkBlobOnWalrus: (blobId: string) => Promise<{
@@ -226,7 +211,7 @@ interface WalcacheState {
     file: File,
   ) => Promise<{ upload: any; verified: boolean; network?: string }>
 
-  // Blockchain Integration Actions
+  // Blockchain Actions (delegated to blockchainStore)
   initializeBlockchainIntegrator: (configs: Record<SupportedChain, any>) => void
   registerBlobOnChain: (
     blobId: string,
@@ -237,14 +222,11 @@ interface WalcacheState {
     blobs: Array<{ blobId: string; metadata: any }>,
     chain: SupportedChain,
   ) => Promise<string>
-  verifyBlobOnChain: (
-    blobId: string,
-    chain: SupportedChain,
-  ) => Promise<BlockchainVerificationResult>
+  verifyBlobOnChain: (blobId: string, chain: SupportedChain) => Promise<any>
   verifyMultiChain: (
     blobId: string,
     chains?: Array<SupportedChain>,
-  ) => Promise<MultiChainStatus>
+  ) => Promise<any>
   getBlobRegistrationStatus: (
     blobId: string,
     chain: SupportedChain,
@@ -253,65 +235,13 @@ interface WalcacheState {
     file: File,
     chain: SupportedChain,
     vaultId?: string,
-  ) => Promise<{
-    upload: UploadResource
-    txHash: string
-    verified: boolean
-    cdnUrl: string
-  }>
+  ) => Promise<any>
 }
-
-const API_BASE = 'http://localhost:4500/api'
-
-// Helper function to get authentication token
-const getAuthToken = () => {
-  const authStore = JSON.parse(localStorage.getItem('auth-storage') || '{}')
-  return authStore.state?.token || ''
-}
-
-// Initialize SDK client with proper API key
-let cdnClient = new WalrusCDNClient({
-  baseUrl: 'http://localhost:4500',
-  apiKey: getAuthToken(),
-})
-
-// Function to reinitialize client with updated API key
-const updateClientApiKey = () => {
-  cdnClient = new WalrusCDNClient({
-    baseUrl: 'http://localhost:4500',
-    apiKey: getAuthToken(),
-  })
-}
-
-// Walrus aggregators for verification
-const WALRUS_AGGREGATORS = [
-  // Testnet first
-  {
-    url: 'https://aggregator.walrus-testnet.walrus.space',
-    network: 'testnet' as const,
-  },
-  {
-    url: 'https://aggregator.testnet.walrus.atalma.io',
-    network: 'testnet' as const,
-  },
-  {
-    url: 'https://sui-walrus-tn-aggregator.bwarelabs.com',
-    network: 'testnet' as const,
-  },
-
-  // Mainnet
-  {
-    url: 'https://aggregator.walrus-mainnet.walrus.space',
-    network: 'mainnet' as const,
-  },
-  { url: 'https://aggregator.walrus.atalma.io', network: 'mainnet' as const },
-  { url: 'https://walrus.globalstake.io', network: 'mainnet' as const },
-]
 
 export const useWalcacheStore = create<WalcacheState>()(
   devtools(
     (set, get) => ({
-      // v1 API state
+      // v1 API state (synced from blobStore)
       blobs: {},
       uploads: {},
       cacheEntries: {},
@@ -319,7 +249,7 @@ export const useWalcacheStore = create<WalcacheState>()(
       globalAnalytics: null,
       cacheStats: null,
 
-      // Legacy state (backward compatibility)
+      // Legacy state
       cidStats: {},
       globalStats: null,
       topCIDs: [],
@@ -330,13 +260,12 @@ export const useWalcacheStore = create<WalcacheState>()(
       files: [],
       uploadProgress: {},
 
-      // Blockchain Integration state
+      // Blockchain state (reads from blockchainStore)
       blockchainIntegrator: null,
       supportedChains: ['ethereum', 'sui'] as Array<SupportedChain>,
       verificationResults: {},
       registrationProgress: {},
 
-      // Pagination state
       pagination: {
         blobs: { has_more: false },
         uploads: { has_more: false },
@@ -349,210 +278,69 @@ export const useWalcacheStore = create<WalcacheState>()(
       currentCID: '',
 
       // UI Actions
-      setCurrentCID: (cid: string) => set({ currentCID: cid }),
-      setError: (error: WalrusCDNError | string | null) => set({ error }),
-      setLoading: (loading: boolean) => set({ isLoading: loading }),
+      setCurrentCID: (cid) => set({ currentCID: cid }),
+      setError: (error) => set({ error }),
+      setLoading: (loading) => set({ isLoading: loading }),
 
-      // v1 API Actions
-      fetchBlob: async (blobId: string): Promise<BlobResource> => {
-        set({ isLoading: true, error: null })
-        updateClientApiKey() // Ensure client has latest API key
-        try {
-          const blob = await cdnClient.getBlob(blobId)
-          set((state) => ({
-            blobs: { ...state.blobs, [blobId]: blob },
-            isLoading: false,
-          }))
-          return blob
-        } catch (error) {
-          const err = error as WalrusCDNError
-          set({ error: err, isLoading: false })
-          throw err
-        }
+      // ========== v1 API Actions (delegate to blobStore) ==========
+      fetchBlob: async (blobId) => {
+        const blob = await useBlobStore.getState().fetchBlob(blobId)
+        set((state) => ({ blobs: { ...state.blobs, [blobId]: blob } }))
+        return blob
       },
-
-      listBlobs: async (params = {}): Promise<Array<BlobResource>> => {
-        set({ isLoading: true, error: null })
-        updateClientApiKey()
-        try {
-          const result = await cdnClient.listBlobs(params)
-          const blobsMap = result.data.reduce(
-            (acc, blob) => {
-              acc[blob.id] = blob
-              return acc
-            },
-            {} as Record<string, BlobResource>,
-          )
-
-          set((state) => ({
-            blobs: { ...state.blobs, ...blobsMap },
-            pagination: {
-              ...state.pagination,
-              blobs: {
-                has_more: result.has_more,
-                starting_after:
-                  result.data.length > 0
-                    ? result.data[result.data.length - 1].id
-                    : undefined,
-              },
-            },
-            isLoading: false,
-          }))
-          return result.data
-        } catch (error) {
-          const err = error as WalrusCDNError
-          set({ error: err, isLoading: false })
-          throw err
-        }
+      listBlobs: async (params?) => {
+        const blobs = await useBlobStore.getState().listBlobs(params)
+        const blobsMap = blobs.reduce(
+          (acc, b) => { acc[b.id] = b; return acc },
+          {} as Record<string, BlobResource>,
+        )
+        set((state) => ({ blobs: { ...state.blobs, ...blobsMap } }))
+        return blobs
       },
-
-      createUpload: async (
-        file: File,
-        options = {},
-      ): Promise<UploadResource> => {
-        set({ isLoading: true, error: null })
-        updateClientApiKey()
-        try {
-          const upload = await cdnClient.createUpload(file, options)
-          set((state) => ({
-            uploads: { ...state.uploads, [upload.id]: upload },
-            isLoading: false,
-          }))
-          return upload
-        } catch (error) {
-          const err = error as WalrusCDNError
-          set({ error: err, isLoading: false })
-          throw err
-        }
+      createUpload: async (file, options?) => {
+        const upload = await useBlobStore.getState().createUpload(file, options)
+        set((state) => ({ uploads: { ...state.uploads, [upload.id]: upload } }))
+        return upload
       },
-
-      listUploads: async (params = {}): Promise<Array<UploadResource>> => {
-        set({ isLoading: true, error: null })
-        try {
-          const result = await cdnClient.listUploads(params)
-          const uploadsMap = result.data.reduce(
-            (acc, upload) => {
-              acc[upload.id] = upload
-              return acc
-            },
-            {} as Record<string, UploadResource>,
-          )
-
-          set((state) => ({
-            uploads: { ...state.uploads, ...uploadsMap },
-            pagination: {
-              ...state.pagination,
-              uploads: {
-                has_more: result.has_more,
-                starting_after:
-                  result.data.length > 0
-                    ? result.data[result.data.length - 1].id
-                    : undefined,
-              },
-            },
-            isLoading: false,
-          }))
-          return result.data
-        } catch (error) {
-          const err = error as WalrusCDNError
-          set({ error: err, isLoading: false })
-          throw err
-        }
+      listUploads: async (params?) => {
+        return useBlobStore.getState().listUploads(params)
       },
-
-      preloadBlobs: async (blobIds: Array<string>) => {
-        set({ isLoading: true, error: null })
-        try {
-          await cdnClient.preloadBlobs(blobIds)
-          set({ isLoading: false })
-        } catch (error) {
-          const err = error as WalrusCDNError
-          set({ error: err, isLoading: false })
-          throw err
-        }
+      preloadBlobs: async (blobIds) => {
+        return useBlobStore.getState().preloadBlobs(blobIds)
       },
-
-      pinBlob: async (blobId: string): Promise<BlobResource> => {
-        set({ isLoading: true, error: null })
-        try {
-          const blob = await cdnClient.pinBlob(blobId)
-          set((state) => ({
-            blobs: { ...state.blobs, [blobId]: blob },
-            isLoading: false,
-          }))
-          return blob
-        } catch (error) {
-          const err = error as WalrusCDNError
-          set({ error: err, isLoading: false })
-          throw err
-        }
+      pinBlob: async (blobId) => {
+        const blob = await useBlobStore.getState().pinBlob(blobId)
+        set((state) => ({ blobs: { ...state.blobs, [blobId]: blob } }))
+        return blob
       },
-
-      unpinBlob: async (blobId: string): Promise<BlobResource> => {
-        set({ isLoading: true, error: null })
-        try {
-          const blob = await cdnClient.unpinBlob(blobId)
-          set((state) => ({
-            blobs: { ...state.blobs, [blobId]: blob },
-            isLoading: false,
-          }))
-          return blob
-        } catch (error) {
-          const err = error as WalrusCDNError
-          set({ error: err, isLoading: false })
-          throw err
-        }
+      unpinBlob: async (blobId) => {
+        const blob = await useBlobStore.getState().unpinBlob(blobId)
+        set((state) => ({ blobs: { ...state.blobs, [blobId]: blob } }))
+        return blob
       },
-
-      clearCacheEntries: async (blobIds?: Array<string>) => {
-        set({ isLoading: true, error: null })
-        try {
-          await cdnClient.clearCache(blobIds)
-          set({ isLoading: false })
-        } catch (error) {
-          const err = error as WalrusCDNError
-          set({ error: err, isLoading: false })
-          throw err
-        }
+      clearCacheEntries: async (blobIds?) => {
+        return useBlobStore.getState().clearCacheEntries(blobIds)
       },
-
       fetchGlobalAnalytics: async () => {
-        set({ isLoading: true, error: null })
-        try {
-          const analytics = await cdnClient.getGlobalAnalytics()
-          set({ globalAnalytics: analytics, isLoading: false })
-        } catch (error) {
-          const err = error as WalrusCDNError
-          set({ error: err, isLoading: false })
-          throw err
-        }
+        await useBlobStore.getState().fetchGlobalAnalytics()
+        set({ globalAnalytics: useBlobStore.getState().globalAnalytics })
       },
-
       fetchCacheStatistics: async () => {
-        try {
-          const stats = await cdnClient.getCacheStats()
-          set({ cacheStats: stats })
-        } catch (error) {
-          const err = error as WalrusCDNError
-          set({ error: err })
-          throw err
-        }
+        await useBlobStore.getState().fetchCacheStatistics()
+        set({ cacheStats: useBlobStore.getState().cacheStats })
       },
 
-      // Legacy API Actions (backward compatibility)
-      fetchCIDStats: async (cid: string) => {
+      // ========== Legacy API Actions ==========
+      fetchCIDStats: async (cid) => {
         set({ isLoading: true, error: null })
         try {
           const response = await fetch(`${API_BASE}/stats/${cid}`, {
-            headers: {
-              'X-API-Key': getAuthToken(),
-            },
+            headers: { 'X-API-Key': getAuthToken() },
           })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
           const data = await response.json()
-
           set((state) => ({
             cidStats: { ...state.cidStats, [cid]: data.stats },
             cidInfo: data,
@@ -560,10 +348,7 @@ export const useWalcacheStore = create<WalcacheState>()(
           }))
         } catch (error) {
           set({
-            error:
-              error instanceof Error
-                ? error.message
-                : 'Failed to fetch CID stats',
+            error: error instanceof Error ? error.message : 'Failed to fetch CID stats',
             isLoading: false,
           })
         }
@@ -573,15 +358,12 @@ export const useWalcacheStore = create<WalcacheState>()(
         set({ isLoading: true, error: null })
         try {
           const response = await fetch(`${API_BASE}/metrics`, {
-            headers: {
-              'X-API-Key': getAuthToken(),
-            },
+            headers: { 'X-API-Key': getAuthToken() },
           })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
           const data = await response.json()
-
           set({
             globalStats: data.global,
             cacheStats: data.cache,
@@ -590,10 +372,7 @@ export const useWalcacheStore = create<WalcacheState>()(
           })
         } catch (error) {
           set({
-            error:
-              error instanceof Error
-                ? error.message
-                : 'Failed to fetch global stats',
+            error: error instanceof Error ? error.message : 'Failed to fetch global stats',
             isLoading: false,
           })
         }
@@ -606,19 +385,15 @@ export const useWalcacheStore = create<WalcacheState>()(
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
           const data = await response.json()
-
           set({ cacheStats: data })
         } catch (error) {
           set({
-            error:
-              error instanceof Error
-                ? error.message
-                : 'Failed to fetch cache stats',
+            error: error instanceof Error ? error.message : 'Failed to fetch cache stats',
           })
         }
       },
 
-      preloadCIDs: async (cids: Array<string>) => {
+      preloadCIDs: async (cids) => {
         set({ isLoading: true, error: null })
         try {
           const response = await fetch(`${API_BASE}/preload`, {
@@ -626,50 +401,35 @@ export const useWalcacheStore = create<WalcacheState>()(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cids }),
           })
-
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
-
           const data = await response.json()
-
           if (data.errors > 0) {
             set({
               error: `Preloaded ${data.cached}/${data.total} CIDs. ${data.errors} errors.`,
               isLoading: false,
             })
           } else {
-            set({
-              error: null,
-              isLoading: false,
-            })
+            set({ error: null, isLoading: false })
           }
-
-          // Refresh global stats
           get().fetchGlobalStats()
         } catch (error) {
           set({
-            error:
-              error instanceof Error ? error.message : 'Failed to preload CIDs',
+            error: error instanceof Error ? error.message : 'Failed to preload CIDs',
             isLoading: false,
           })
         }
       },
 
-      pinCID: async (cid: string) => {
+      pinCID: async (cid) => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch(`${API_BASE}/pin/${cid}`, {
-            method: 'POST',
-          })
-
+          const response = await fetch(`${API_BASE}/pin/${cid}`, { method: 'POST' })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
-
           set({ isLoading: false })
-
-          // Refresh CID info
           get().fetchCIDStats(cid)
         } catch (error) {
           set({
@@ -679,25 +439,18 @@ export const useWalcacheStore = create<WalcacheState>()(
         }
       },
 
-      unpinCID: async (cid: string) => {
+      unpinCID: async (cid) => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch(`${API_BASE}/pin/${cid}`, {
-            method: 'DELETE',
-          })
-
+          const response = await fetch(`${API_BASE}/pin/${cid}`, { method: 'DELETE' })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
-
           set({ isLoading: false })
-
-          // Refresh CID info
           get().fetchCIDStats(cid)
         } catch (error) {
           set({
-            error:
-              error instanceof Error ? error.message : 'Failed to unpin CID',
+            error: error instanceof Error ? error.message : 'Failed to unpin CID',
             isLoading: false,
           })
         }
@@ -706,14 +459,10 @@ export const useWalcacheStore = create<WalcacheState>()(
       clearCache: async () => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch(`${API_BASE}/cache/clear`, {
-            method: 'POST',
-          })
-
+          const response = await fetch(`${API_BASE}/cache/clear`, { method: 'POST' })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
-
           set({
             cidStats: {},
             globalStats: null,
@@ -722,119 +471,84 @@ export const useWalcacheStore = create<WalcacheState>()(
             cidInfo: null,
             isLoading: false,
           })
-
-          // Refresh stats
           get().fetchGlobalStats()
         } catch (error) {
           set({
-            error:
-              error instanceof Error ? error.message : 'Failed to clear cache',
+            error: error instanceof Error ? error.message : 'Failed to clear cache',
             isLoading: false,
           })
         }
       },
 
-      // Upload Actions
+      // ========== Upload Actions ==========
       fetchVaults: async () => {
         set({ isLoading: true, error: null })
         try {
-          // Add timestamp to prevent caching
           const timestamp = Date.now()
           const response = await fetch(
-            `${API_BASE.replace('/api', '')}/upload/vaults?t=${timestamp}`,
-            {
-              cache: 'no-cache',
-              headers: {
-                'Cache-Control': 'no-cache',
-              },
-            },
+            `${WALCACHE_BASE_URL}/upload/vaults?t=${timestamp}`,
+            { cache: 'no-cache', headers: { 'Cache-Control': 'no-cache' } },
           )
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
           const data = await response.json()
-
-          set({
-            vaults: data.vaults,
-            isLoading: false,
-          })
+          set({ vaults: data.vaults, isLoading: false })
         } catch (error) {
           set({
-            error:
-              error instanceof Error ? error.message : 'Failed to fetch vaults',
+            error: error instanceof Error ? error.message : 'Failed to fetch vaults',
             isLoading: false,
           })
         }
       },
 
-      createVault: async (name: string, description?: string) => {
+      createVault: async (name, description?) => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch(
-            `${API_BASE.replace('/api', '')}/upload/vaults`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-API-Key': getAuthToken(),
-              },
-              body: JSON.stringify({ name, description }),
+          const response = await fetch(`${WALCACHE_BASE_URL}/upload/vaults`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Key': getAuthToken(),
             },
-          )
-
+            body: JSON.stringify({ name, description }),
+          })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
-
           const data = await response.json()
-
           set((state) => ({
             vaults: [...state.vaults, data.vault],
             isLoading: false,
           }))
         } catch (error) {
           set({
-            error:
-              error instanceof Error ? error.message : 'Failed to create vault',
+            error: error instanceof Error ? error.message : 'Failed to create vault',
             isLoading: false,
           })
         }
       },
 
-      fetchFiles: async (vaultId?: string) => {
+      fetchFiles: async (vaultId?) => {
         set({ isLoading: true, error: null })
         try {
           const params = vaultId ? `?vaultId=${vaultId}` : ''
-          const response = await fetch(
-            `${API_BASE.replace('/api', '')}/upload/files${params}`,
-          )
-
+          const response = await fetch(`${WALCACHE_BASE_URL}/upload/files${params}`)
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
-
           const data = await response.json()
-
-          set({
-            files: data.files,
-            isLoading: false,
-          })
+          set({ files: data.files, isLoading: false })
         } catch (error) {
           set({
-            error:
-              error instanceof Error ? error.message : 'Failed to fetch files',
+            error: error instanceof Error ? error.message : 'Failed to fetch files',
             isLoading: false,
           })
         }
       },
 
-      uploadFile: async (
-        file: File,
-        vaultId?: string,
-        existingUploadId?: string,
-      ): Promise<TuskyFile> => {
-        const uploadId =
-          existingUploadId || Math.random().toString(36).substring(2)
+      uploadFile: async (file, vaultId?) => {
+        const uploadId = Math.random().toString(36).substring(2)
 
         set((state) => ({
           uploadProgress: {
@@ -856,24 +570,19 @@ export const useWalcacheStore = create<WalcacheState>()(
         try {
           const formData = new FormData()
           formData.append('file', file)
-
           const params = vaultId ? `?vaultId=${vaultId}` : ''
           const response = await fetch(
-            `${API_BASE.replace('/api', '')}/upload/file${params}`,
+            `${WALCACHE_BASE_URL}/upload/file${params}`,
             {
               method: 'POST',
-              headers: {
-                'X-API-Key': getAuthToken(),
-              },
+              headers: { 'X-API-Key': getAuthToken() },
               body: formData,
             },
           )
-
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}))
             throw new Error(
-              errorData.message ||
-                `HTTP ${response.status}: ${response.statusText}`,
+              errorData.message || `HTTP ${response.status}: ${response.statusText}`,
             )
           }
 
@@ -898,7 +607,6 @@ export const useWalcacheStore = create<WalcacheState>()(
             files: [...state.files, data.file],
           }))
 
-          // Remove upload after 3 seconds
           setTimeout(() => {
             set((state) => {
               const newUploads = { ...state.uploadProgress }
@@ -930,560 +638,126 @@ export const useWalcacheStore = create<WalcacheState>()(
         }
       },
 
-      deleteFile: async (fileId: string) => {
+      deleteFile: async (fileId) => {
         set({ isLoading: true, error: null })
         try {
           const response = await fetch(
-            `${API_BASE.replace('/api', '')}/upload/files/${fileId}`,
+            `${WALCACHE_BASE_URL}/upload/files/${fileId}`,
             {
               method: 'DELETE',
-              headers: {
-                'X-API-Key': getAuthToken(),
-              },
+              headers: { 'X-API-Key': getAuthToken() },
             },
           )
-
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}))
             throw new Error(
-              errorData.message ||
-                `HTTP ${response.status}: ${response.statusText}`,
+              errorData.message || `HTTP ${response.status}: ${response.statusText}`,
             )
           }
-
-          // Remove file from local state
           set((state) => ({
             files: state.files.filter((f) => f.id !== fileId),
             isLoading: false,
           }))
-
-          // Refresh vaults to update file counts
           await get().fetchVaults()
         } catch (error) {
           set({
-            error:
-              error instanceof Error ? error.message : 'Failed to delete file',
+            error: error instanceof Error ? error.message : 'Failed to delete file',
             isLoading: false,
           })
-          throw error // Re-throw so the UI can handle it
+          throw error
         }
       },
 
-      // Check if blob is available on Walrus aggregators
-      checkBlobOnWalrus: async (blobId: string) => {
+      // ========== Walrus Verification ==========
+      checkBlobOnWalrus: async (blobId) => {
         for (const aggregator of WALRUS_AGGREGATORS) {
           try {
             const response = await fetch(
               `${aggregator.url}/v1/blobs/${blobId}`,
-              {
-                method: 'HEAD',
-                signal: AbortSignal.timeout(8000), // 8 second timeout
-              },
+              { method: 'HEAD', signal: AbortSignal.timeout(8000) },
             )
-
             if (response.ok) {
-              console.log(
-                `✓ Blob ${blobId} found on ${aggregator.network}: ${aggregator.url}`,
-              )
               return {
                 available: true,
                 network: aggregator.network,
                 aggregator: aggregator.url,
               }
             }
-          } catch (error) {
-            console.log(`✗ Failed to check ${aggregator.url}:`, error)
+          } catch {
+            // Try next aggregator
           }
         }
-
-        console.log(`✗ Blob ${blobId} not found on any aggregator`)
         return { available: false }
       },
 
-      // Upload file and verify it's available on Walrus
-      uploadAndVerify: async (file: File, vaultId?: string) => {
-        try {
-          // Step 1: Upload file (this creates its own progress tracking)
-          console.log(`📤 Uploading ${file.name}...`)
-          const uploadedFile = await get().uploadFile(file, vaultId)
-          const uploadId = Math.random().toString(36).substring(2)
-
-          // Step 2: Update progress to show verifying
-          set((state) => ({
-            uploads: {
-              ...state.uploads,
-              [uploadId]: {
-                fileName: file.name,
-                progress: 80,
-                status: 'uploading', // Still uploading, now verifying
-              },
-            },
-          }))
-
-          // Step 3: Verify blob is available on Walrus
-          console.log(`🔍 Verifying blob ${uploadedFile.blobId} on Walrus...`)
-
-          // Wait a bit for potential sync
-          await new Promise((resolve) => setTimeout(resolve, 2000))
-
-          const verification = await get().checkBlobOnWalrus(
-            uploadedFile.blobId,
-          )
-
-          // Step 4: Complete with verification result
-          set((state) => ({
-            uploads: {
-              ...state.uploads,
-              [uploadId]: {
-                fileName: file.name,
-                progress: 100,
-                status: verification.available ? 'completed' : 'error',
-                error: verification.available
-                  ? undefined
-                  : 'Blob not available on Walrus (may still be syncing)',
-              },
-            },
-          }))
-
-          // Remove upload tracking after delay
-          setTimeout(
-            () => {
-              set((state) => {
-                const newUploads = { ...state.uploadProgress }
-                delete newUploads[uploadId]
-                return { uploadProgress: newUploads }
-              })
-            },
-            verification.available ? 3000 : 10000,
-          ) // Keep error visible longer
-
-          return {
-            file: uploadedFile,
-            verified: verification.available,
-            network: verification.network,
-          }
-        } catch (error) {
-          set((state) => ({
-            uploadProgress: {
-              ...state.uploadProgress,
-              [uploadId]: {
-                id: uploadId,
-                object: 'upload_progress',
-                created: Math.floor(Date.now() / 1000),
-                fileName: file.name,
-                filename: file.name,
-                progress: 0,
-                status: 'error',
-                size: file.size,
-                content_type: file.type,
-                error: error instanceof Error ? error.message : 'Upload failed',
-              },
-            },
-          }))
-          throw error
+      uploadAndVerify: async (file, vaultId?) => {
+        const uploadedFile = await get().uploadFile(file, vaultId)
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+        const verification = await get().checkBlobOnWalrus(uploadedFile.blobId)
+        return {
+          file: uploadedFile,
+          verified: verification.available,
+          network: verification.network,
         }
       },
 
-      // Direct upload to Walrus using official API
-      uploadToWalrus: async (file: File) => {
+      uploadToWalrus: async (file) => {
         const formData = new FormData()
         formData.append('file', file)
-
-        const response = await fetch(
-          `${API_BASE.replace('/api', '')}/upload/walrus`,
-          {
-            method: 'POST',
-            body: formData,
-          },
-        )
-
+        const response = await fetch(`${WALCACHE_BASE_URL}/upload/walrus`, {
+          method: 'POST',
+          body: formData,
+        })
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
           throw new Error(
-            errorData.message ||
-              `HTTP ${response.status}: ${response.statusText}`,
+            errorData.message || `HTTP ${response.status}: ${response.statusText}`,
           )
         }
-
-        const data = await response.json()
-        return data
+        return response.json()
       },
 
-      // Upload to Walrus and verify it's immediately available
-      uploadToWalrusAndVerify: async (file: File) => {
-        const uploadId = Math.random().toString(36).substring(2)
-
-        // Start upload progress tracking
-        set((state) => ({
-          uploadProgress: {
-            ...state.uploadProgress,
-            [uploadId]: {
-              id: uploadId,
-              object: 'upload_progress',
-              created: Math.floor(Date.now() / 1000),
-              fileName: file.name,
-              progress: 0,
-              status: 'uploading',
-            },
-          },
-        }))
-
-        try {
-          // Step 1: Upload directly to Walrus
-          console.log(`📤 Uploading ${file.name} directly to Walrus...`)
-
-          set((state) => ({
-            uploadProgress: {
-              ...state.uploadProgress,
-              [uploadId]: {
-                id: uploadId,
-                object: 'upload_progress',
-                created: Math.floor(Date.now() / 1000),
-                fileName: file.name,
-                filename: file.name,
-                progress: 50,
-                status: 'uploading',
-                size: file.size,
-                content_type: file.type,
-              },
-            },
-          }))
-
-          const uploadResult = await get().uploadToWalrus(file)
-
-          // Step 2: Update progress to show verifying
-          set((state) => ({
-            uploadProgress: {
-              ...state.uploadProgress,
-              [uploadId]: {
-                id: uploadId,
-                object: 'upload_progress',
-                created: Math.floor(Date.now() / 1000),
-                fileName: file.name,
-                filename: file.name,
-                progress: 80,
-                status: 'uploading', // Now verifying
-                size: file.size,
-                content_type: file.type,
-              },
-            },
-          }))
-
-          // Step 3: Verify blob is available on Walrus
-          console.log(`🔍 Verifying blob ${uploadResult.blobId} on Walrus...`)
-
-          // Wait a moment for potential sync
-          await new Promise((resolve) => setTimeout(resolve, 3000))
-
-          const verification = await get().checkBlobOnWalrus(
-            uploadResult.blobId,
-          )
-
-          // Step 4: Complete with verification result
-          set((state) => ({
-            uploadProgress: {
-              ...state.uploadProgress,
-              [uploadId]: {
-                id: uploadId,
-                object: 'upload_progress',
-                created: Math.floor(Date.now() / 1000),
-                fileName: file.name,
-                filename: file.name,
-                progress: 100,
-                status: verification.available ? 'completed' : 'error',
-                size: file.size,
-                content_type: file.type,
-                error: verification.available
-                  ? undefined
-                  : 'Blob uploaded but not yet available on aggregators (still syncing)',
-              },
-            },
-          }))
-
-          // Remove upload tracking after delay
-          setTimeout(
-            () => {
-              set((state) => {
-                const newUploads = { ...state.uploadProgress }
-                delete newUploads[uploadId]
-                return { uploadProgress: newUploads }
-              })
-            },
-            verification.available ? 3000 : 15000,
-          ) // Keep sync errors visible longer
-
-          return {
-            upload: uploadResult,
-            verified: verification.available,
-            network: verification.network,
-          }
-        } catch (error) {
-          set((state) => ({
-            uploadProgress: {
-              ...state.uploadProgress,
-              [uploadId]: {
-                id: uploadId,
-                object: 'upload_progress',
-                created: Math.floor(Date.now() / 1000),
-                fileName: file.name,
-                filename: file.name,
-                progress: 0,
-                status: 'error',
-                size: file.size,
-                content_type: file.type,
-                error: error instanceof Error ? error.message : 'Upload failed',
-              },
-            },
-          }))
-          throw error
+      uploadToWalrusAndVerify: async (file) => {
+        const uploadResult = await get().uploadToWalrus(file)
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        const verification = await get().checkBlobOnWalrus(uploadResult.blobId)
+        return {
+          upload: uploadResult,
+          verified: verification.available,
+          network: verification.network,
         }
       },
 
-      // Blockchain Integration Actions
-      initializeBlockchainIntegrator: (
-        configs: Record<SupportedChain, any>,
-      ) => {
-        try {
-          const integrator = new BlockchainIntegrator(configs)
-          set({ blockchainIntegrator: integrator })
-          console.log(
-            '✅ Blockchain integrator initialized with chains:',
-            Object.keys(configs),
-          )
-        } catch (error) {
-          set({
-            error: `Failed to initialize blockchain integrator: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          })
-        }
+      // ========== Blockchain Actions (delegate to blockchainStore) ==========
+      initializeBlockchainIntegrator: (configs) => {
+        useBlockchainStore.getState().initializeBlockchainIntegrator(configs)
       },
-
-      registerBlobOnChain: async (
-        blobId: string,
-        metadata: any,
-        chain: SupportedChain,
-      ): Promise<string> => {
-        const { blockchainIntegrator } = get()
-        if (!blockchainIntegrator) {
-          throw new Error('Blockchain integrator not initialized')
-        }
-
-        const registrationId = `${blobId}-${chain}`
-        set((state) => ({
-          registrationProgress: {
-            ...state.registrationProgress,
-            [registrationId]: { chain, status: 'pending' },
-          },
-        }))
-
-        try {
-          const txHash = await blockchainIntegrator.registerBlob(
-            blobId,
-            metadata,
-            chain,
-          )
-
-          set((state) => ({
-            registrationProgress: {
-              ...state.registrationProgress,
-              [registrationId]: { chain, status: 'completed', txHash },
-            },
-          }))
-
-          console.log(`✅ Blob ${blobId} registered on ${chain}: ${txHash}`)
-          return txHash
-        } catch (error) {
-          set((state) => ({
-            registrationProgress: {
-              ...state.registrationProgress,
-              [registrationId]: { chain, status: 'failed' },
-            },
-          }))
-          throw error
-        }
+      registerBlobOnChain: (blobId, metadata, chain) => {
+        return useBlockchainStore.getState().registerBlobOnChain(blobId, metadata, chain)
       },
-
-      registerBlobBatch: async (
-        blobs: Array<{ blobId: string; metadata: any }>,
-        chain: SupportedChain,
-      ): Promise<string> => {
-        const { blockchainIntegrator } = get()
-        if (!blockchainIntegrator) {
-          throw new Error('Blockchain integrator not initialized')
-        }
-
-        try {
-          const txHash = await blockchainIntegrator.registerBlobBatch(
-            blobs.map((b) => b.blobId),
-            blobs.map((b) => b.metadata),
-            chain,
-          )
-
-          console.log(
-            `✅ Batch of ${blobs.length} blobs registered on ${chain}: ${txHash}`,
-          )
-          return txHash
-        } catch (error) {
-          console.error(`❌ Batch registration failed on ${chain}:`, error)
-          throw error
-        }
+      registerBlobBatch: (blobs, chain) => {
+        return useBlockchainStore.getState().registerBlobBatch(blobs, chain)
       },
-
-      verifyBlobOnChain: async (
-        blobId: string,
-        chain: SupportedChain,
-      ): Promise<BlockchainVerificationResult> => {
-        const { blockchainIntegrator } = get()
-        if (!blockchainIntegrator) {
-          throw new Error('Blockchain integrator not initialized')
-        }
-
-        try {
-          const result = await blockchainIntegrator.verifyBlob(blobId, chain)
-
-          const verificationResult: BlockchainVerificationResult = {
-            blobId,
-            chain,
-            verified: result.verified,
-            transactionHash: result.transactionHash,
-            uploader: result.uploader,
-            timestamp: result.timestamp,
-          }
-
-          return verificationResult
-        } catch (error) {
-          return {
-            blobId,
-            chain,
-            verified: false,
-            error:
-              error instanceof Error ? error.message : 'Verification failed',
-          }
-        }
+      verifyBlobOnChain: (blobId, chain) => {
+        return useBlockchainStore.getState().verifyBlobOnChain(blobId, chain)
       },
-
-      verifyMultiChain: async (
-        blobId: string,
-        chains?: Array<SupportedChain>,
-      ): Promise<MultiChainStatus> => {
-        const { supportedChains } = get()
-        const targetChains = chains || supportedChains
-
-        const verificationPromises = targetChains.map((chain) =>
-          get().verifyBlobOnChain(blobId, chain),
-        )
-
-        const results = await Promise.all(verificationPromises)
-        const chainResults: Record<
-          SupportedChain,
-          BlockchainVerificationResult
-        > = {}
-
-        results.forEach((result) => {
-          chainResults[result.chain] = result
-        })
-
-        const verifiedChains = results
-          .filter((r) => r.verified)
-          .map((r) => r.chain)
-        const totalChains = targetChains.length
-        const verifiedCount = verifiedChains.length
-
-        let consensus: 'none' | 'minority' | 'majority' | 'unanimous'
-        if (verifiedCount === 0) consensus = 'none'
-        else if (verifiedCount < totalChains / 2) consensus = 'minority'
-        else if (verifiedCount < totalChains) consensus = 'majority'
-        else consensus = 'unanimous'
-
-        const multiChainStatus: MultiChainStatus = {
-          blobId,
-          chains: chainResults,
-          consensus,
-          trustedChains: verifiedChains,
-        }
-
+      verifyMultiChain: async (blobId, chains?) => {
+        const result = await useBlockchainStore.getState().verifyMultiChain(blobId, chains)
         set((state) => ({
           verificationResults: {
             ...state.verificationResults,
-            [blobId]: multiChainStatus,
+            [blobId]: result,
           },
         }))
-
-        return multiChainStatus
+        return result
       },
-
-      getBlobRegistrationStatus: async (
-        blobId: string,
-        chain: SupportedChain,
-      ) => {
-        const { blockchainIntegrator } = get()
-        if (!blockchainIntegrator) {
-          throw new Error('Blockchain integrator not initialized')
-        }
-
-        try {
-          const result = await blockchainIntegrator.verifyBlob(blobId, chain)
-          return {
-            registered: result.verified,
-            txHash: result.transactionHash,
-          }
-        } catch (error) {
-          return { registered: false }
-        }
+      getBlobRegistrationStatus: (blobId, chain) => {
+        return useBlockchainStore.getState().getBlobRegistrationStatus(blobId, chain)
       },
-
-      uploadAndRegisterOnChain: async (
-        file: File,
-        chain: SupportedChain,
-        vaultId?: string,
-      ) => {
-        set({ isLoading: true, error: null })
-
-        try {
-          // Step 1: Upload file using existing upload function
-          const upload = await get().createUpload(file, { vault_id: vaultId })
-
-          // Step 2: Register on blockchain
-          const metadata = {
-            size: upload.size,
-            contentType: upload.content_type,
-            cdnUrl: cdnClient.getCDNUrl(upload.blob_id),
-            contentHash: upload.blob_id, // In practice, compute actual hash
-          }
-
-          const txHash = await get().registerBlobOnChain(
-            upload.blob_id,
-            metadata,
-            chain,
-          )
-
-          // Step 3: Verify registration
-          const verification = await get().verifyBlobOnChain(
-            upload.blob_id,
-            chain,
-          )
-
-          set({ isLoading: false })
-
-          return {
-            upload,
-            txHash,
-            verified: verification.verified,
-            cdnUrl: cdnClient.getCDNUrl(upload.blob_id),
-          }
-        } catch (error) {
-          set({
-            error:
-              error instanceof Error
-                ? error.message
-                : 'Upload and registration failed',
-            isLoading: false,
-          })
-          throw error
-        }
+      uploadAndRegisterOnChain: (file, chain, vaultId?) => {
+        return useBlockchainStore.getState().uploadAndRegisterOnChain(file, chain, vaultId)
       },
     }),
-    {
-      name: 'wcdn-store',
-    },
+    { name: 'wcdn-store' },
   ),
 )

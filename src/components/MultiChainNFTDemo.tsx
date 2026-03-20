@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { WALCACHE_BASE_URL } from '@/config/env'
 import {
   Activity,
   AlertTriangle,
@@ -26,7 +27,7 @@ import { ChainSelector } from './ChainSelector'
 import type { SupportedChain } from './ChainSelector'
 
 // Real SDK integration
-const WCDN_API_BASE = 'http://localhost:4500'
+const WCDN_API_BASE = WALCACHE_BASE_URL
 
 // Real SDK function - same as in our SDK
 function getWalrusCDNUrl(

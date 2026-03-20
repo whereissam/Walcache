@@ -66,7 +66,7 @@ export class SealService {
 
       // Create Seal client with key servers
       this.sealClient = new SealClient({
-        suiClient: this.suiClient,
+        suiClient: this.suiClient as any,
         serverConfigs: this.keyServerIds.map((id) => ({
           objectId: id,
           weight: 1, // Equal weight for all servers
@@ -98,21 +98,11 @@ export class SealService {
       const threshold =
         options.threshold || Math.ceil(this.keyServerIds.length / 2) // Default to majority
 
-      // Convert hex string to Uint8Array if needed
-      const packageIdBytes = options.packageId.startsWith('0x')
-        ? this.hexToUint8Array(options.packageId)
-        : new TextEncoder().encode(options.packageId)
-
-      const idBytes =
-        typeof options.id === 'string'
-          ? this.hexToUint8Array(options.id)
-          : options.id
-
       // Encrypt the data
       const result = await this.sealClient.encrypt({
         threshold,
-        packageId: packageIdBytes,
-        id: idBytes,
+        packageId: options.packageId,
+        id: options.id,
         data: new Uint8Array(data),
       })
 

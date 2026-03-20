@@ -1,4 +1,5 @@
 import React from 'react'
+import { WALCACHE_API_URL } from '@/config/env'
 import { useWalcacheStore } from '../store/walcacheStore'
 import { useAuthStore } from '../store/authStore'
 
@@ -48,7 +49,7 @@ export class RealtimeService {
 
     // Create EventSource for real-time updates
     const eventSource = new EventSource(
-      `http://localhost:4500/api/realtime?token=${authStore.token}`,
+      `${WALCACHE_API_URL}/realtime?token=${authStore.token}`,
     )
 
     eventSource.onopen = () => {

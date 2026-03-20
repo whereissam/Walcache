@@ -42,7 +42,7 @@ export async function cacheRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    controller.retrieve.bind(controller),
+    controller.retrieve.bind(controller) as any,
   )
 
   // POST /v1/cache/preload - Preload blobs into cache
@@ -104,6 +104,6 @@ export async function cacheRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    controller.delete.bind(controller),
+    controller.delete.bind(controller) as any,
   )
 }

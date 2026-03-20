@@ -118,25 +118,38 @@ export class AnalyticsService implements IAnalyticsService {
 
     if (existing) {
       existing.requests++
+      existing.totalRequests = existing.requests
       existing.hits += hit ? 1 : 0
+      existing.cacheHits = existing.hits
       existing.misses += hit ? 0 : 1
+      existing.cacheMisses = existing.misses
       existing.hitRate = existing.hits / existing.requests
       existing.avgLatency =
         (existing.avgLatency * (existing.requests - 1) + latency) /
         existing.requests
       existing.lastAccess = new Date()
-      if (size) existing.totalSize = (existing.totalSize || 0) + size
+      existing.lastAccessed = existing.lastAccess
+      if (size) {
+        existing.totalSize = (existing.totalSize || 0) + size
+        existing.totalBytesServed = (existing.totalBytesServed || 0) + size
+      }
     } else {
+      const now = new Date()
       this.stats.set(cid, {
         cid,
         requests: 1,
+        totalRequests: 1,
         hits: hit ? 1 : 0,
+        cacheHits: hit ? 1 : 0,
         misses: hit ? 0 : 1,
+        cacheMisses: hit ? 0 : 1,
         hitRate: hit ? 1 : 0,
         avgLatency: latency,
-        firstAccess: new Date(),
-        lastAccess: new Date(),
+        firstAccess: now,
+        lastAccess: now,
+        lastAccessed: now,
         totalSize: size || 0,
+        totalBytesServed: size || 0,
       })
     }
   }

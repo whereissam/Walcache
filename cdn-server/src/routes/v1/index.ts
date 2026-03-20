@@ -18,7 +18,7 @@ export async function v1Routes(fastify: FastifyInstance) {
   await fastify.register(analyticsRoutes, { prefix: '/analytics' })
   // TODO: Fix ethers dependency before enabling
   // await fastify.register(verificationRoutes, { prefix: '/verification' })
-  await fastify.register(enhancedAnalyticsRoutes, { prefix: '/analytics' })
+  await fastify.register(enhancedAnalyticsRoutes)
   await fastify.register(webhookRoutes, { prefix: '/webhooks' })
   await fastify.register(deployRoutes, { prefix: '/deploys' })
   await fastify.register(accessGateRoutes, { prefix: '/access-gates' })

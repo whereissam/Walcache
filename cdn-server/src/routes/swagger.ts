@@ -23,7 +23,7 @@ export async function registerSwagger(fastify: FastifyInstance) {
       document: swaggerDoc,
     },
     exposeRoute: true,
-  })
+  } as any)
 
   // Simple Swagger UI using CDN
   fastify.get('/docs', async (request, reply) => {

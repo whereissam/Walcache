@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { WALCACHE_BASE_URL } from '@/config/env'
 import {
   Activity,
   Clock,
@@ -373,7 +374,7 @@ export function CIDExplorer() {
                       size="sm"
                       onClick={() =>
                         window.open(
-                          `http://localhost:4500/cdn/${cidInfo.cid}`,
+                          `${WALCACHE_BASE_URL}/cdn/${cidInfo.cid}`,
                           '_blank',
                         )
                       }
@@ -387,7 +388,7 @@ export function CIDExplorer() {
                       size="sm"
                       onClick={() =>
                         copyToClipboard(
-                          `http://localhost:4500/cdn/${cidInfo.cid}`,
+                          `${WALCACHE_BASE_URL}/cdn/${cidInfo.cid}`,
                         )
                       }
                       className="w-full"

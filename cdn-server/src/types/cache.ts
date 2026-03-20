@@ -31,4 +31,10 @@ export interface CacheStats {
     persistedBlobs: number
     directory: string
   }
+  // Flat convenience properties used by controllers
+  totalEntries: number
+  totalSizeBytes: number
+  pinnedEntries: number
+  memoryUsage: number
+  redisConnected: boolean
 }

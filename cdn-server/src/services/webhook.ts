@@ -261,7 +261,7 @@ export class WebhookService {
     } catch (error) {
       console.error(
         `Webhook delivery failed for ${endpoint.id}:`,
-        error.message,
+        (error as Error).message,
       )
       this.scheduleRetry(delivery)
     }

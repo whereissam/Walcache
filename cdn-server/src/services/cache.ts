@@ -163,11 +163,31 @@ export class CacheService implements ICacheService {
   }
 
   async get(cid: string): Promise<CachedBlob | null> {
-    const key = `blob:${cid}`
+    const dataKey = `blob:data:${cid}`
+    const metaKey = `blob:meta:${cid}`
+    const legacyKey = `blob:${cid}`
 
     if (this.useRedis && this.redis) {
       try {
-        const cached = await this.redis.get(key)
+        // Try new split-key format first (binary data stored separately)
+        const [metaRaw, dataRaw] = await Promise.all([
+          this.redis.get(metaKey),
+          this.redis.getBuffer(dataKey),
+        ])
+
+        if (metaRaw && dataRaw) {
+          const meta = JSON.parse(metaRaw)
+          if (typeof meta.timestamp === 'string') {
+            meta.timestamp = new Date(meta.timestamp)
+          }
+          if (typeof meta.cached === 'string') {
+            meta.cached = new Date(meta.cached)
+          }
+          return { ...meta, data: dataRaw }
+        }
+
+        // Fall back to legacy single-key format for backward compatibility
+        const cached = await this.redis.get(legacyKey)
         if (cached) {
           const parsed = JSON.parse(cached)
           if (
@@ -190,7 +210,7 @@ export class CacheService implements ICacheService {
       }
     }
 
-    const memResult = this.memoryCache.get<CachedBlob>(key) || null
+    const memResult = this.memoryCache.get<CachedBlob>(legacyKey) || null
     if (memResult) return memResult
 
     // Fall back to persistent storage for pinned blobs
@@ -198,7 +218,7 @@ export class CacheService implements ICacheService {
       const persisted = await this.loadFromDisk(cid)
       if (persisted) {
         // Re-hydrate into memory cache
-        this.memoryCache.set(key, persisted, persisted.pinned ? 0 : config.CACHE_TTL)
+        this.memoryCache.set(legacyKey, persisted, persisted.pinned ? 0 : config.CACHE_TTL)
         return persisted
       }
     }
@@ -207,25 +227,39 @@ export class CacheService implements ICacheService {
   }
 
   async set(cid: string, blob: CachedBlob, ttl?: number): Promise<void> {
-    const key = `blob:${cid}`
-    const value = JSON.stringify(blob)
+    const dataKey = `blob:data:${cid}`
+    const metaKey = `blob:meta:${cid}`
+    const legacyKey = `blob:${cid}`
 
     // Use epoch-aware TTL unless explicitly overridden with 0 (pinned)
     const cacheTTL = ttl === 0 ? 0 : this.getEpochAwareTTL(ttl)
 
     if (this.useRedis && this.redis) {
       try {
+        // Store metadata and binary data separately for efficiency
+        const { data, ...meta } = blob
+        const metaValue = JSON.stringify(meta)
+        const blobData = Buffer.isBuffer(data) ? data : Buffer.from(data)
+
+        const pipeline = this.redis.pipeline()
+        // Remove legacy single-key entry if it exists
+        pipeline.del(legacyKey)
+
         if (cacheTTL === 0) {
-          await this.redis.set(key, value)
+          pipeline.set(metaKey, metaValue)
+          pipeline.set(dataKey, blobData)
         } else {
-          await this.redis.setex(key, cacheTTL, value)
+          pipeline.setex(metaKey, cacheTTL, metaValue)
+          pipeline.setex(dataKey, cacheTTL, blobData)
         }
+
+        await pipeline.exec()
       } catch (error) {
         console.warn('Redis set error, falling back to memory:', error)
       }
     }
 
-    this.memoryCache.set(key, blob, cacheTTL)
+    this.memoryCache.set(legacyKey, blob, cacheTTL)
 
     // Persist pinned blobs to disk
     if (this.enablePersistence && blob.pinned) {
@@ -259,23 +293,28 @@ export class CacheService implements ICacheService {
   }
 
   async unpin(cid: string): Promise<void> {
-    const key = `blob:${cid}`
+    const legacyKey = `blob:${cid}`
+    const dataKey = `blob:data:${cid}`
+    const metaKey = `blob:meta:${cid}`
     const pinKey = `pin:${cid}`
     const epochTTL = this.getEpochAwareTTL()
 
     if (this.useRedis && this.redis) {
       try {
         await this.redis.del(pinKey)
-        await this.redis.expire(key, epochTTL)
+        // Expire both legacy and new keys
+        await this.redis.expire(legacyKey, epochTTL)
+        await this.redis.expire(dataKey, epochTTL)
+        await this.redis.expire(metaKey, epochTTL)
       } catch (error) {
         console.warn('Redis unpin error:', error)
       }
     }
 
-    const cached = this.memoryCache.get<CachedBlob>(key)
+    const cached = this.memoryCache.get<CachedBlob>(legacyKey)
     if (cached) {
       cached.pinned = false
-      this.memoryCache.set(key, cached, epochTTL)
+      this.memoryCache.set(legacyKey, cached, epochTTL)
     }
 
     // Remove from persistence
@@ -306,18 +345,20 @@ export class CacheService implements ICacheService {
   }
 
   async delete(cid: string): Promise<void> {
-    const key = `blob:${cid}`
+    const legacyKey = `blob:${cid}`
+    const dataKey = `blob:data:${cid}`
+    const metaKey = `blob:meta:${cid}`
     const pinKey = `pin:${cid}`
 
     if (this.useRedis && this.redis) {
       try {
-        await this.redis.del(key, pinKey)
+        await this.redis.del(legacyKey, dataKey, metaKey, pinKey)
       } catch (error) {
         console.warn('Redis delete error:', error)
       }
     }
 
-    this.memoryCache.del(key)
+    this.memoryCache.del(legacyKey)
 
     // Remove from persistence
     if (this.enablePersistence) {
@@ -370,6 +411,8 @@ export class CacheService implements ICacheService {
       }
     }
 
+    const memUsage = process.memoryUsage()
+
     return {
       memory: {
         keys: memoryStats.keys,
@@ -399,6 +442,11 @@ export class CacheService implements ICacheService {
         persistedBlobs: persistedCount,
         directory: this.persistenceDir,
       },
+      totalEntries: this.useRedis ? redisStats.keys : memoryStats.keys,
+      totalSizeBytes: redisStats.memory || memUsage.heapUsed,
+      pinnedEntries: persistedCount,
+      memoryUsage: memUsage.heapUsed,
+      redisConnected: this.useRedis && this.redis !== null,
     }
   }
 
@@ -661,18 +709,27 @@ export class CacheService implements ICacheService {
             pinned: meta.pinned,
           }
 
-          const key = `blob:${meta.cid}`
-          this.memoryCache.set(key, blob, meta.pinned ? 0 : config.CACHE_TTL)
+          const legacyKey = `blob:${meta.cid}`
+          const dataKey = `blob:data:${meta.cid}`
+          const metaKey = `blob:meta:${meta.cid}`
+          this.memoryCache.set(legacyKey, blob, meta.pinned ? 0 : config.CACHE_TTL)
 
-          // Also restore to Redis if available
+          // Also restore to Redis if available (using new split-key format)
           if (this.useRedis && this.redis) {
-            const value = JSON.stringify(blob)
+            const { data: blobData, ...blobMeta } = blob
+            const metaValue = JSON.stringify(blobMeta)
+            const pipeline = this.redis.pipeline()
+
             if (meta.pinned) {
-              await this.redis.set(key, value)
-              await this.redis.set(`pin:${meta.cid}`, '1')
+              pipeline.set(metaKey, metaValue)
+              pipeline.set(dataKey, Buffer.isBuffer(blobData) ? blobData : Buffer.from(blobData))
+              pipeline.set(`pin:${meta.cid}`, '1')
             } else {
-              await this.redis.setex(key, config.CACHE_TTL, value)
+              pipeline.setex(metaKey, config.CACHE_TTL, metaValue)
+              pipeline.setex(dataKey, config.CACHE_TTL, Buffer.isBuffer(blobData) ? blobData : Buffer.from(blobData))
             }
+
+            await pipeline.exec()
           }
 
           restored++

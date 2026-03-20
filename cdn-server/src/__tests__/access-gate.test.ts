@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { clearTestDb } from './setup-db-mock.js'
 
 vi.mock('../config/index.js', () => ({
   config: {
@@ -18,6 +19,7 @@ describe('AccessGateService', () => {
   let service: AccessGateService
 
   beforeEach(() => {
+    clearTestDb()
     service = new AccessGateService()
   })
 

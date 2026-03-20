@@ -1,5 +1,7 @@
 import crypto from 'node:crypto'
 import bcrypt from 'bcrypt'
+import { eq } from 'drizzle-orm'
+import { db, schema } from '../db/index.js'
 import { SubscriptionStatus, SubscriptionTier } from '../types/user.js'
 import { BaseError, ErrorCode } from '../errors/base-error.js'
 import { metricsService } from './metrics.js'
@@ -41,15 +43,29 @@ export interface IUserService {
   checkUsageLimits: (token: ApiToken) => Promise<boolean>
 }
 
+// Helper to convert DB row → User domain object
+function rowToUser(row: typeof schema.users.$inferSelect): User {
+  return {
+    id: row.id,
+    email: row.email,
+    username: row.username,
+    hashedPassword: row.hashedPassword,
+    subscriptionTier: row.subscriptionTier as SubscriptionTier,
+    subscriptionStatus: row.subscriptionStatus as SubscriptionStatus,
+    subscriptionExpires: new Date(row.subscriptionExpires),
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+    lastLogin: row.lastLogin ? new Date(row.lastLogin) : undefined,
+    isActive: row.isActive,
+  }
+}
+
 export class UserService implements IUserService {
-  private users = new Map<string, User>()
-  private tokens = new Map<string, ApiToken>()
-  private tokensByUser = new Map<string, Set<string>>()
   private subscriptionPlans: Array<SubscriptionPlan> = []
 
   async initialize(): Promise<void> {
     this.initializeSubscriptionPlans()
-    console.log('👤 User service initialized')
+    console.log('User service initialized (SQLite)')
   }
 
   private initializeSubscriptionPlans(): void {
@@ -64,9 +80,9 @@ export class UserService implements IUserService {
           requestsPerMinute: 10,
           requestsPerDay: 1000,
           requestsPerMonth: 10000,
-          bandwidthPerMonth: 1024 * 1024 * 1024, // 1GB
-          maxStorageSize: 100 * 1024 * 1024, // 100MB
-          maxUploadSize: 10 * 1024 * 1024, // 10MB
+          bandwidthPerMonth: 1024 * 1024 * 1024,
+          maxStorageSize: 100 * 1024 * 1024,
+          maxUploadSize: 10 * 1024 * 1024,
           maxConcurrentConnections: 5,
           allowedFeatures: ['read_cdn', 'upload_files'],
         },
@@ -83,9 +99,9 @@ export class UserService implements IUserService {
           requestsPerMinute: 100,
           requestsPerDay: 50000,
           requestsPerMonth: 1000000,
-          bandwidthPerMonth: 10 * 1024 * 1024 * 1024, // 10GB
-          maxStorageSize: 1024 * 1024 * 1024, // 1GB
-          maxUploadSize: 100 * 1024 * 1024, // 100MB
+          bandwidthPerMonth: 10 * 1024 * 1024 * 1024,
+          maxStorageSize: 1024 * 1024 * 1024,
+          maxUploadSize: 100 * 1024 * 1024,
           maxConcurrentConnections: 20,
           allowedFeatures: [
             'read_cdn',
@@ -112,9 +128,9 @@ export class UserService implements IUserService {
           requestsPerMinute: 1000,
           requestsPerDay: 1000000,
           requestsPerMonth: 10000000,
-          bandwidthPerMonth: 100 * 1024 * 1024 * 1024, // 100GB
-          maxStorageSize: 10 * 1024 * 1024 * 1024, // 10GB
-          maxUploadSize: 1024 * 1024 * 1024, // 1GB
+          bandwidthPerMonth: 100 * 1024 * 1024 * 1024,
+          maxStorageSize: 10 * 1024 * 1024 * 1024,
+          maxUploadSize: 1024 * 1024 * 1024,
           maxConcurrentConnections: 100,
           allowedFeatures: [
             'read_cdn',
@@ -142,9 +158,9 @@ export class UserService implements IUserService {
           requestsPerMinute: 10000,
           requestsPerDay: 10000000,
           requestsPerMonth: 100000000,
-          bandwidthPerMonth: 1024 * 1024 * 1024 * 1024, // 1TB
-          maxStorageSize: 100 * 1024 * 1024 * 1024, // 100GB
-          maxUploadSize: 10 * 1024 * 1024 * 1024, // 10GB
+          bandwidthPerMonth: 1024 * 1024 * 1024 * 1024,
+          maxStorageSize: 100 * 1024 * 1024 * 1024,
+          maxUploadSize: 10 * 1024 * 1024 * 1024,
           maxConcurrentConnections: 500,
           allowedFeatures: [
             'read_cdn',
@@ -177,25 +193,33 @@ export class UserService implements IUserService {
     }
 
     const hashedPassword = await bcrypt.hash(registration.password, 12)
-    const user: User = {
-      id: this.generateId(),
-      email: registration.email,
-      username: registration.username,
-      hashedPassword,
-      subscriptionTier: registration.subscriptionTier || SubscriptionTier.FREE,
-      subscriptionStatus: SubscriptionStatus.ACTIVE,
-      subscriptionExpires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      isActive: true,
-    }
+    const now = new Date().toISOString()
+    const id = this.generateId()
+    const tier =
+      registration.subscriptionTier || SubscriptionTier.FREE
+    const expires = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ).toISOString()
 
-    this.users.set(user.id, user)
-    metricsService.counter('users.registered', 1, {
-      tier: user.subscriptionTier,
-    })
+    db.insert(schema.users)
+      .values({
+        id,
+        email: registration.email,
+        username: registration.username,
+        hashedPassword,
+        subscriptionTier: tier,
+        subscriptionStatus: SubscriptionStatus.ACTIVE,
+        subscriptionExpires: expires,
+        createdAt: now,
+        updatedAt: now,
+        isActive: true,
+      })
+      .run()
 
-    return user
+    metricsService.counter('users.registered', 1, { tier })
+
+    const user = await this.getUserById(id)
+    return user!
   }
 
   async loginUser(credentials: LoginCredentials): Promise<AuthenticatedUser> {
@@ -229,8 +253,11 @@ export class UserService implements IUserService {
     }
 
     // Update last login
-    user.lastLogin = new Date()
-    this.users.set(user.id, user)
+    const now = new Date().toISOString()
+    db.update(schema.users)
+      .set({ lastLogin: now, updatedAt: now })
+      .where(eq(schema.users.id, user.id))
+      .run()
 
     const plan = this.getSubscriptionPlans().find(
       (p) => p.tier === user.subscriptionTier,
@@ -251,16 +278,21 @@ export class UserService implements IUserService {
   }
 
   async getUserById(id: string): Promise<User | null> {
-    return this.users.get(id) || null
+    const row = db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.id, id))
+      .get()
+    return row ? rowToUser(row) : null
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
-    for (const user of this.users.values()) {
-      if (user.email === email) {
-        return user
-      }
-    }
-    return null
+    const row = db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.email, email))
+      .get()
+    return row ? rowToUser(row) : null
   }
 
   async updateUserSubscription(
@@ -272,15 +304,24 @@ export class UserService implements IUserService {
       throw new BaseError('User not found', ErrorCode.VALIDATION_FAILED, 404)
     }
 
-    user.subscriptionTier = tier
-    user.subscriptionStatus = SubscriptionStatus.ACTIVE
-    user.subscriptionExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    user.updatedAt = new Date()
+    const now = new Date().toISOString()
+    const expires = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ).toISOString()
 
-    this.users.set(userId, user)
+    db.update(schema.users)
+      .set({
+        subscriptionTier: tier,
+        subscriptionStatus: SubscriptionStatus.ACTIVE,
+        subscriptionExpires: expires,
+        updatedAt: now,
+      })
+      .where(eq(schema.users.id, userId))
+      .run()
+
     metricsService.counter('users.subscription_updated', 1, { tier })
 
-    return user
+    return (await this.getUserById(userId))!
   }
 
   async createApiToken(
@@ -303,54 +344,67 @@ export class UserService implements IUserService {
       )
     }
 
-    // Generate secure token
     const tokenString = this.generateToken()
     const tokenHash = crypto
       .createHash('sha256')
       .update(tokenString)
       .digest('hex')
 
-    const token: ApiToken = {
-      id: this.generateId(),
-      userId,
-      token: tokenString,
-      tokenHash,
-      name: tokenRequest.name,
-      permissions: tokenRequest.permissions.filter((p) =>
-        plan.limits.allowedFeatures.includes(p),
-      ),
-      usage: {
-        totalRequests: 0,
-        monthlyRequests: 0,
-        dailyRequests: 0,
-        totalBandwidth: 0,
-        monthlyBandwidth: 0,
-        dailyBandwidth: 0,
-        cacheHits: 0,
-        cacheMisses: 0,
-        uploadCount: 0,
-        storageUsed: 0,
-        lastResetDate: new Date(),
-      },
-      limits: plan.limits,
-      createdAt: new Date(),
-      expiresAt: tokenRequest.expiresAt,
-      isActive: true,
-    }
+    const tokenId = this.generateId()
+    const usageId = this.generateId()
+    const limitsId = this.generateId()
+    const now = new Date().toISOString()
+    const permissions = tokenRequest.permissions.filter((p) =>
+      plan.limits.allowedFeatures.includes(p),
+    )
 
-    this.tokens.set(token.id, token)
+    // Insert token
+    db.insert(schema.apiTokens)
+      .values({
+        id: tokenId,
+        userId,
+        tokenHash,
+        name: tokenRequest.name,
+        permissions,
+        createdAt: now,
+        expiresAt: tokenRequest.expiresAt?.toISOString(),
+        isActive: true,
+      })
+      .run()
 
-    // Track tokens by user
-    if (!this.tokensByUser.has(userId)) {
-      this.tokensByUser.set(userId, new Set())
-    }
-    this.tokensByUser.get(userId)!.add(token.id)
+    // Insert usage tracker
+    db.insert(schema.tokenUsage)
+      .values({
+        id: usageId,
+        tokenId,
+        lastResetDate: now,
+        updatedAt: now,
+      })
+      .run()
+
+    // Insert limits
+    db.insert(schema.tokenLimits)
+      .values({
+        id: limitsId,
+        tokenId,
+        requestsPerMinute: plan.limits.requestsPerMinute,
+        requestsPerDay: plan.limits.requestsPerDay,
+        requestsPerMonth: plan.limits.requestsPerMonth,
+        bandwidthPerMonth: plan.limits.bandwidthPerMonth,
+        maxStorageSize: plan.limits.maxStorageSize,
+        maxUploadSize: plan.limits.maxUploadSize,
+        maxConcurrentConnections: plan.limits.maxConcurrentConnections,
+        allowedFeatures: plan.limits.allowedFeatures,
+      })
+      .run()
 
     metricsService.counter('api_tokens.created', 1, {
       tier: user.subscriptionTier,
     })
 
-    return token
+    // Return full token object (just inserted, guaranteed to exist)
+    const result = await this.buildApiToken(tokenId, tokenString)
+    return result!
   }
 
   async validateApiToken(
@@ -361,60 +415,72 @@ export class UserService implements IUserService {
       .update(tokenString)
       .digest('hex')
 
-    for (const token of this.tokens.values()) {
-      if (token.tokenHash === tokenHash && token.isActive) {
-        // Check if token is expired
-        if (token.expiresAt && token.expiresAt < new Date()) {
-          token.isActive = false
-          this.tokens.set(token.id, token)
-          continue
-        }
+    const tokenRow = db
+      .select()
+      .from(schema.apiTokens)
+      .where(eq(schema.apiTokens.tokenHash, tokenHash))
+      .get()
 
-        const user = await this.getUserById(token.userId)
-        if (!user || !user.isActive) {
-          continue
-        }
-
-        // Update last used
-        token.lastUsed = new Date()
-        this.tokens.set(token.id, token)
-
-        return {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          subscriptionTier: user.subscriptionTier,
-          subscriptionStatus: user.subscriptionStatus,
-          token,
-          permissions: token.permissions,
-        }
-      }
+    if (!tokenRow || !tokenRow.isActive) {
+      return null
     }
 
-    return null
+    // Check expiry
+    if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
+      db.update(schema.apiTokens)
+        .set({ isActive: false })
+        .where(eq(schema.apiTokens.id, tokenRow.id))
+        .run()
+      return null
+    }
+
+    const user = await this.getUserById(tokenRow.userId)
+    if (!user || !user.isActive) {
+      return null
+    }
+
+    // Update last used
+    db.update(schema.apiTokens)
+      .set({ lastUsed: new Date().toISOString() })
+      .where(eq(schema.apiTokens.id, tokenRow.id))
+      .run()
+
+    const token = await this.buildApiToken(tokenRow.id, tokenString)
+
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      subscriptionTier: user.subscriptionTier,
+      subscriptionStatus: user.subscriptionStatus,
+      token: token || undefined,
+      permissions: tokenRow.permissions as ApiPermission[],
+    }
   }
 
   async revokeApiToken(tokenId: string): Promise<void> {
-    const token = this.tokens.get(tokenId)
-    if (token) {
-      token.isActive = false
-      this.tokens.set(tokenId, token)
-      metricsService.counter('api_tokens.revoked', 1)
-    }
+    db.update(schema.apiTokens)
+      .set({ isActive: false })
+      .where(eq(schema.apiTokens.id, tokenId))
+      .run()
+    metricsService.counter('api_tokens.revoked', 1)
   }
 
   async getUserTokens(userId: string): Promise<Array<ApiToken>> {
-    const tokenIds = this.tokensByUser.get(userId) || new Set()
-    const tokens: Array<ApiToken> = []
+    const rows = db
+      .select()
+      .from(schema.apiTokens)
+      .where(eq(schema.apiTokens.userId, userId))
+      .all()
 
-    for (const tokenId of tokenIds) {
-      const token = this.tokens.get(tokenId)
-      if (token && token.isActive) {
-        // Don't return the actual token string for security
-        tokens.push({
-          ...token,
-          token: `${token.token.slice(0, 8)}...`,
-        })
+    const tokens: Array<ApiToken> = []
+    for (const row of rows) {
+      if (!row.isActive) continue
+      const token = await this.buildApiToken(row.id)
+      if (token) {
+        // Mask the token string for security
+        token.token = `${token.token.slice(0, 8)}...`
+        tokens.push(token)
       }
     }
 
@@ -425,11 +491,36 @@ export class UserService implements IUserService {
     tokenId: string,
     usage: Partial<TokenUsage>,
   ): Promise<void> {
-    const token = this.tokens.get(tokenId)
-    if (token) {
-      token.usage = { ...token.usage, ...usage }
-      this.tokens.set(tokenId, token)
-    }
+    const existing = db
+      .select()
+      .from(schema.tokenUsage)
+      .where(eq(schema.tokenUsage.tokenId, tokenId))
+      .get()
+
+    if (!existing) return
+
+    const updates: Record<string, any> = { updatedAt: new Date().toISOString() }
+    if (usage.totalRequests !== undefined)
+      updates.totalRequests = usage.totalRequests
+    if (usage.monthlyRequests !== undefined)
+      updates.monthlyRequests = usage.monthlyRequests
+    if (usage.dailyRequests !== undefined)
+      updates.dailyRequests = usage.dailyRequests
+    if (usage.totalBandwidth !== undefined)
+      updates.totalBandwidth = usage.totalBandwidth
+    if (usage.monthlyBandwidth !== undefined)
+      updates.monthlyBandwidth = usage.monthlyBandwidth
+    if (usage.dailyBandwidth !== undefined)
+      updates.dailyBandwidth = usage.dailyBandwidth
+    if (usage.cacheHits !== undefined) updates.cacheHits = usage.cacheHits
+    if (usage.cacheMisses !== undefined) updates.cacheMisses = usage.cacheMisses
+    if (usage.uploadCount !== undefined) updates.uploadCount = usage.uploadCount
+    if (usage.storageUsed !== undefined) updates.storageUsed = usage.storageUsed
+
+    db.update(schema.tokenUsage)
+      .set(updates)
+      .where(eq(schema.tokenUsage.tokenId, tokenId))
+      .run()
   }
 
   getSubscriptionPlans(): Array<SubscriptionPlan> {
@@ -441,26 +532,105 @@ export class UserService implements IUserService {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-    // Reset daily usage if needed
+    // Reset daily/monthly usage if needed
     if (token.usage.lastResetDate < today) {
       token.usage.dailyRequests = 0
       token.usage.dailyBandwidth = 0
       token.usage.lastResetDate = today
     }
-
-    // Reset monthly usage if needed
     if (token.usage.lastResetDate < thisMonth) {
       token.usage.monthlyRequests = 0
       token.usage.monthlyBandwidth = 0
     }
 
-    // Check limits
     const limits = token.limits
     if (token.usage.dailyRequests >= limits.requestsPerDay) return false
     if (token.usage.monthlyRequests >= limits.requestsPerMonth) return false
     if (token.usage.monthlyBandwidth >= limits.bandwidthPerMonth) return false
 
     return true
+  }
+
+  // Build a full ApiToken domain object from DB rows
+  private async buildApiToken(
+    tokenId: string,
+    rawToken?: string,
+  ): Promise<ApiToken | null> {
+    const tokenRow = db
+      .select()
+      .from(schema.apiTokens)
+      .where(eq(schema.apiTokens.id, tokenId))
+      .get()
+
+    if (!tokenRow) return null
+
+    const usageRow = db
+      .select()
+      .from(schema.tokenUsage)
+      .where(eq(schema.tokenUsage.tokenId, tokenId))
+      .get()
+
+    const limitsRow = db
+      .select()
+      .from(schema.tokenLimits)
+      .where(eq(schema.tokenLimits.tokenId, tokenId))
+      .get()
+
+    const usage: TokenUsage = usageRow
+      ? {
+          totalRequests: usageRow.totalRequests,
+          monthlyRequests: usageRow.monthlyRequests,
+          dailyRequests: usageRow.dailyRequests,
+          totalBandwidth: usageRow.totalBandwidth,
+          monthlyBandwidth: usageRow.monthlyBandwidth,
+          dailyBandwidth: usageRow.dailyBandwidth,
+          cacheHits: usageRow.cacheHits,
+          cacheMisses: usageRow.cacheMisses,
+          uploadCount: usageRow.uploadCount,
+          storageUsed: usageRow.storageUsed,
+          lastResetDate: new Date(usageRow.lastResetDate),
+        }
+      : {
+          totalRequests: 0,
+          monthlyRequests: 0,
+          dailyRequests: 0,
+          totalBandwidth: 0,
+          monthlyBandwidth: 0,
+          dailyBandwidth: 0,
+          cacheHits: 0,
+          cacheMisses: 0,
+          uploadCount: 0,
+          storageUsed: 0,
+          lastResetDate: new Date(),
+        }
+
+    const limits: TokenLimits = limitsRow
+      ? {
+          requestsPerMinute: limitsRow.requestsPerMinute,
+          requestsPerDay: limitsRow.requestsPerDay,
+          requestsPerMonth: limitsRow.requestsPerMonth,
+          bandwidthPerMonth: limitsRow.bandwidthPerMonth,
+          maxStorageSize: limitsRow.maxStorageSize,
+          maxUploadSize: limitsRow.maxUploadSize,
+          maxConcurrentConnections: limitsRow.maxConcurrentConnections,
+          allowedFeatures: limitsRow.allowedFeatures as string[],
+        }
+      : this.subscriptionPlans[0].limits
+
+    return {
+      id: tokenRow.id,
+      userId: tokenRow.userId,
+      token: rawToken || '(redacted)',
+      tokenHash: tokenRow.tokenHash,
+      name: tokenRow.name,
+      permissions: tokenRow.permissions as ApiPermission[],
+      usage,
+      limits,
+      createdAt: new Date(tokenRow.createdAt),
+      expiresAt: tokenRow.expiresAt ? new Date(tokenRow.expiresAt) : undefined,
+      lastUsed: tokenRow.lastUsed ? new Date(tokenRow.lastUsed) : undefined,
+      isActive: tokenRow.isActive,
+    }
   }
 
   private generateId(): string {
@@ -472,9 +642,7 @@ export class UserService implements IUserService {
   }
 
   async destroy(): Promise<void> {
-    this.users.clear()
-    this.tokens.clear()
-    this.tokensByUser.clear()
+    // No-op — database handles persistence
   }
 }
 

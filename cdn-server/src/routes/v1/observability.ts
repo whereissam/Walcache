@@ -41,7 +41,7 @@ export async function observabilityRoutes(fastify: FastifyInstance) {
   fastify.get(
     '/tokens/:tokenId/usage',
     { preHandler: requireAuth },
-    async (
+    (async (
       request: FastifyRequest<{ Params: { tokenId: string } }>,
       reply: FastifyReply,
     ) => {
@@ -51,7 +51,7 @@ export async function observabilityRoutes(fastify: FastifyInstance) {
       return reply.send(
         observabilityService.getTokenUsage(tokenId, periodHours),
       )
-    },
+    }) as any,
   )
 
   // All tokens usage

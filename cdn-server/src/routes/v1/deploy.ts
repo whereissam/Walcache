@@ -9,7 +9,7 @@ export async function deployRoutes(fastify: FastifyInstance) {
   fastify.post(
     '/',
     { preHandler: requireAuth },
-    async (request: AuthenticatedRequest, reply: FastifyReply) => {
+    (async (request: AuthenticatedRequest, reply: FastifyReply) => {
       const schema = z.object({
         site: z.string().min(1),
         version: z.string().min(1),
@@ -39,14 +39,14 @@ export async function deployRoutes(fastify: FastifyInstance) {
         }
         throw error
       }
-    },
+    }) as any,
   )
 
   // List deployments for a site
   fastify.get(
     '/:site',
     { preHandler: requireAuth },
-    async (
+    (async (
       request: FastifyRequest<{ Params: { site: string } }>,
       reply: FastifyReply,
     ) => {
@@ -54,24 +54,24 @@ export async function deployRoutes(fastify: FastifyInstance) {
       const { limit } = request.query as { limit?: string }
       const deploys = deployLogService.list(site, limit ? parseInt(limit) : 20)
       return reply.send({ site, deploys, total: deploys.length })
-    },
+    }) as any,
   )
 
   // List all sites
   fastify.get(
     '/',
     { preHandler: requireAuth },
-    async (request: AuthenticatedRequest, reply: FastifyReply) => {
+    (async (request: AuthenticatedRequest, reply: FastifyReply) => {
       const sites = deployLogService.listSites()
       return reply.send({ sites, total: sites.length })
-    },
+    }) as any,
   )
 
   // Rollback to a previous deployment
   fastify.post(
     '/:site/rollback',
     { preHandler: requireAuth },
-    async (
+    (async (
       request: AuthenticatedRequest<{ Params: { site: string } }>,
       reply: FastifyReply,
     ) => {
@@ -91,6 +91,6 @@ export async function deployRoutes(fastify: FastifyInstance) {
         status: 'rolled_back',
         deploy: result.deploy,
       })
-    },
+    }) as any,
   )
 }

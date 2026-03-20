@@ -21,6 +21,7 @@ interface UploadParams {
 
 interface UploadQueryParams extends PaginationParams {
   vault_id?: string
+  parent_id?: string
   status?: 'processing' | 'completed' | 'failed'
 }
 
@@ -79,8 +80,8 @@ export class UploadsController extends BaseController {
     options: UploadQueryParams,
   ): Promise<void> {
     try {
-      let blobId: string
-      let suiRef: string
+      let blobId: string = ''
+      let suiRef: string = ''
 
       if (tuskyService.isConfigured() && options.vault_id) {
         // Upload via Tusky

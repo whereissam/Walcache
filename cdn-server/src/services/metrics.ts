@@ -47,6 +47,10 @@ export interface SystemMetrics {
   eventLoop: {
     lag: number
   }
+  // Flat convenience properties used by controllers
+  memoryUsage: number
+  cpuUsage: number
+  uptime: number
 }
 
 export class MetricsService {
@@ -241,6 +245,8 @@ export class MetricsService {
     const memUsage = process.memoryUsage()
     const cpuUsage = process.cpuUsage()
 
+    const cpuSeconds = (cpuUsage.user + cpuUsage.system) / 1000000
+
     return {
       memory: {
         used: memUsage.rss,
@@ -251,7 +257,7 @@ export class MetricsService {
         },
       },
       cpu: {
-        usage: (cpuUsage.user + cpuUsage.system) / 1000000, // Convert to seconds
+        usage: cpuSeconds,
       },
       process: {
         uptime: process.uptime(),
@@ -260,6 +266,9 @@ export class MetricsService {
       eventLoop: {
         lag: this.gauges.get('system.eventloop.lag')?.value || 0,
       },
+      memoryUsage: memUsage.heapUsed,
+      cpuUsage: cpuSeconds,
+      uptime: process.uptime(),
     }
   }
 

@@ -28,7 +28,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    controller.create.bind(controller),
+    controller.create.bind(controller) as any,
   )
 
   // GET /v1/uploads - List uploads
@@ -51,7 +51,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    controller.list.bind(controller),
+    controller.list.bind(controller) as any,
   )
 
   // GET /v1/uploads/:id - Retrieve an upload
@@ -68,7 +68,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    controller.retrieve.bind(controller),
+    controller.retrieve.bind(controller) as any,
   )
 
   // DELETE /v1/uploads/:id - Delete an upload
@@ -86,6 +86,6 @@ export async function uploadRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    controller.delete.bind(controller),
+    controller.delete.bind(controller) as any,
   )
 }

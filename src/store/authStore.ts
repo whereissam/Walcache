@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
+import { WALCACHE_BASE_URL } from '@/config/env'
 
 export interface User {
   id: string
@@ -108,7 +109,7 @@ interface AuthState {
   setLoading: (loading: boolean) => void
 }
 
-const API_BASE_URL = 'http://localhost:4500'
+const API_BASE_URL = WALCACHE_BASE_URL
 
 export const useAuthStore = create<AuthState>()(
   devtools(

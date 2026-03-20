@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { WALCACHE_BASE_URL } from '@/config/env'
 import {
   Code,
   Copy,
@@ -33,36 +34,36 @@ export function APIGuide() {
     }
   }
 
-  const curlExample = `curl -X GET "http://localhost:4500/cdn/${exampleCID}" \\
+  const curlExample = `curl -X GET "${WALCACHE_BASE_URL}/cdn/${exampleCID}" \\
   -H "Accept: */*" \\
   -H "User-Agent: MyApp/1.0" \\
   --output downloaded-file`
 
   const jsExample = `// Using fetch API
-const response = await fetch('http://localhost:4500/cdn/${exampleCID}');
+const response = await fetch('${WALCACHE_BASE_URL}/cdn/${exampleCID}');
 const blob = await response.blob();
 
 // Using axios
 import axios from 'axios';
-const response = await axios.get('http://localhost:4500/cdn/${exampleCID}', {
+const response = await axios.get('${WALCACHE_BASE_URL}/cdn/${exampleCID}', {
   responseType: 'blob'
 });`
 
   const pythonExample = `import requests
 
 # Download content
-response = requests.get('http://localhost:4500/cdn/${exampleCID}')
+response = requests.get('${WALCACHE_BASE_URL}/cdn/${exampleCID}')
 if response.status_code == 200:
     with open('downloaded-file', 'wb') as f:
         f.write(response.content)
 
 # Check cache status
-stats = requests.get('http://localhost:4500/api/stats/${exampleCID}').json()
+stats = requests.get('${WALCACHE_BASE_URL}/api/stats/${exampleCID}').json()
 print(f"Cached: {stats['cached']}, Hit Rate: {stats['stats']['hitRate']}")`
 
   const phpExample = `<?php
 $cid = '${exampleCID}';
-$url = "http://localhost:4500/cdn/" . $cid;
+$url = "${WALCACHE_BASE_URL}/cdn/" . $cid;
 
 // Download content
 $content = file_get_contents($url);
@@ -71,7 +72,7 @@ if ($content !== false) {
 }
 
 // Check cache status
-$stats_url = "http://localhost:4500/api/stats/" . $cid;
+$stats_url = "${WALCACHE_BASE_URL}/api/stats/" . $cid;
 $stats = json_decode(file_get_contents($stats_url), true);
 echo "Cached: " . ($stats['cached'] ? 'Yes' : 'No');
 ?>`
@@ -80,12 +81,12 @@ echo "Cached: " . ($stats['cached'] ? 'Yes' : 'No');
 
 // Configure the SDK with your CDN base URL
 configure({ 
-  baseUrl: "http://localhost:4500" 
+  baseUrl: "${WALCACHE_BASE_URL}" 
 });
 
 // Get CDN URL for a CID
 const url = getCDNUrl("${exampleCID}");
-console.log(url); // http://localhost:4500/cdn/${exampleCID}
+console.log(url); // ${WALCACHE_BASE_URL}/cdn/${exampleCID}
 
 // Preload multiple CIDs for better performance
 await preloadCIDs([
@@ -132,7 +133,7 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
                   variant="outline"
                   onClick={() =>
                     window.open(
-                      `http://localhost:4500/cdn/${exampleCID}`,
+                      `${WALCACHE_BASE_URL}/cdn/${exampleCID}`,
                       '_blank',
                     )
                   }
@@ -146,14 +147,14 @@ console.log(\`Hit rate: \${info.stats?.hitRate}%\`);`
               <p className="text-sm">
                 <strong>CDN URL:</strong>
                 <code className="ml-2 px-2 py-1 bg-white dark:bg-gray-800 rounded text-xs">
-                  http://localhost:4500/cdn/{exampleCID}
+                  ${WALCACHE_BASE_URL}/cdn/{exampleCID}
                 </code>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() =>
                     copyToClipboard(
-                      `http://localhost:4500/cdn/${exampleCID}`,
+                      `${WALCACHE_BASE_URL}/cdn/${exampleCID}`,
                       'URL',
                     )
                   }

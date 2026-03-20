@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
+import { WALCACHE_API_URL } from '@/config/env'
+import { useAuthStore } from './authStore'
 
 interface CacheState {
   // UI State
@@ -17,12 +19,11 @@ interface CacheState {
   clearCache: () => Promise<void>
 }
 
-const API_BASE = 'http://localhost:4500/api'
+const API_BASE = WALCACHE_API_URL
 
-// Helper function to get authentication token
+// Helper function to get authentication token from the auth store
 const getAuthToken = () => {
-  const authStore = JSON.parse(localStorage.getItem('auth-storage') || '{}')
-  return authStore.state?.token || ''
+  return useAuthStore.getState().token || ''
 }
 
 export const useCacheStore = create<CacheState>()(

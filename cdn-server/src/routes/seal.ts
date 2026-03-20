@@ -77,7 +77,7 @@ export async function sealRoutes(fastify: FastifyInstance) {
     {
       preHandler: requireAuth,
     },
-    async (request: EncryptedFileRequest, reply: FastifyReply) => {
+    (async (request: EncryptedFileRequest, reply: FastifyReply) => {
       if (!sealService || !sealService.isReady()) {
         return reply.code(503).send({
           success: false,
@@ -149,55 +149,58 @@ export async function sealRoutes(fastify: FastifyInstance) {
         console.log(`✅ File encrypted successfully, uploading to Walrus...`)
 
         // Upload encrypted data to Walrus via Tusky
-        const tuskyResult = await tuskyService.uploadFile({
-          buffer: Buffer.from(encryptResult.encryptedObject),
-          filename: `encrypted_${filename}`,
-          mimetype: 'application/octet-stream', // Encrypted data is binary
-        })
+        const encryptedBuffer = Buffer.from(encryptResult.encryptedObject)
+        const tuskyFile = await tuskyService.uploadFile(
+          encryptedBuffer,
+          `encrypted_${filename}`,
+          'application/octet-stream',
+        )
 
-        if (!tuskyResult.success || !tuskyResult.data) {
-          throw new Error(`Walrus upload failed: ${tuskyResult.error}`)
-        }
-
-        const blobId = tuskyResult.data.id
-        const blobUrl = tuskyResult.data.url
+        const blobId = tuskyFile.blobId
+        const blobUrl = tuskyFile.ref
 
         // Store metadata in cache for later decryption
         // NOTE: backupKey is intentionally NOT stored in the shared cache for security
         const metadataKey = `seal:metadata:${blobId}`
+        const now = new Date()
         await cacheService.set(
           metadataKey,
           {
-            ...encryptResult.metadata,
-            originalFilename: filename,
-            originalMimetype: mimetype,
-            encryptedAt: new Date().toISOString(),
-            blobId,
+            cid: metadataKey,
+            data: Buffer.from(
+              JSON.stringify({
+                ...encryptResult.metadata,
+                originalFilename: filename,
+                originalMimetype: mimetype,
+                encryptedAt: now.toISOString(),
+                blobId,
+              }),
+            ),
+            contentType: 'application/json',
+            size: 0,
+            timestamp: now,
+            cached: now,
+            ttl: 86400 * 30,
+            pinned: false,
           },
           86400 * 30,
         ) // 30 days TTL
 
         // Cache the encrypted content for faster access
         const cdnUrl = `${request.protocol}://${request.hostname}:${config.server.port}/cdn/${blobId}`
-        await cacheService.set(
-          `cdn:${blobId}`,
-          Buffer.from(encryptResult.encryptedObject),
-        )
+        await cacheService.set(`cdn:${blobId}`, {
+          cid: blobId,
+          data: encryptedBuffer,
+          contentType: 'application/octet-stream',
+          size: encryptedBuffer.length,
+          timestamp: now,
+          cached: now,
+          ttl: 3600,
+          pinned: false,
+        })
 
         // Track analytics
-        analyticsService.trackRequest(
-          blobId,
-          request.ip || 'unknown',
-          'upload',
-          {
-            encrypted: true,
-            packageId,
-            contentId,
-            threshold,
-            originalSize: encryptResult.originalSize,
-            encryptedSize: encryptResult.encryptedObject.length,
-          },
-        )
+        analyticsService.recordFetch(blobId, false, 0, encryptedBuffer.length)
 
         console.log(`🎉 Encrypted upload completed: ${blobId}`)
 
@@ -230,7 +233,7 @@ export async function sealRoutes(fastify: FastifyInstance) {
           error: error instanceof Error ? error.message : 'Upload failed',
         })
       }
-    },
+    }) as any,
   )
 
   // Decrypt endpoint
@@ -239,7 +242,7 @@ export async function sealRoutes(fastify: FastifyInstance) {
     {
       preHandler: requireAuth,
     },
-    async (
+    (async (
       request: DecryptRequest & { params: { blobId: string } },
       reply: FastifyReply,
     ) => {
@@ -279,17 +282,21 @@ export async function sealRoutes(fastify: FastifyInstance) {
 
         // Get metadata from cache
         const metadataKey = `seal:metadata:${blobId}`
-        const metadata = await cacheService.get(metadataKey)
-        if (!metadata) {
+        const metadataBlob = await cacheService.get(metadataKey)
+        if (!metadataBlob) {
           return reply.code(404).send({
             success: false,
             error: 'Encrypted file metadata not found or expired',
           })
         }
+        const metadata = JSON.parse(metadataBlob.data.toString()) as Record<string, any>
 
         // Get encrypted data from cache or Walrus
-        let encryptedData = await cacheService.get(`cdn:${blobId}`)
-        if (!encryptedData) {
+        let encryptedDataBuffer: Buffer
+        const encryptedCached = await cacheService.get(`cdn:${blobId}`)
+        if (encryptedCached) {
+          encryptedDataBuffer = encryptedCached.data
+        } else {
           // Fallback: fetch from Walrus (this should be rare)
           const walrusResponse = await fetch(
             `https://aggregator.walrus-testnet.walrus.space/v1/${blobId}`,
@@ -299,46 +306,47 @@ export async function sealRoutes(fastify: FastifyInstance) {
               `Failed to fetch encrypted data from Walrus: ${walrusResponse.statusText}`,
             )
           }
-          encryptedData = Buffer.from(await walrusResponse.arrayBuffer())
+          encryptedDataBuffer = Buffer.from(await walrusResponse.arrayBuffer())
           // Cache for future use
-          await cacheService.set(`cdn:${blobId}`, encryptedData)
+          const now = new Date()
+          await cacheService.set(`cdn:${blobId}`, {
+            cid: blobId,
+            data: encryptedDataBuffer,
+            contentType: 'application/octet-stream',
+            size: encryptedDataBuffer.length,
+            timestamp: now,
+            cached: now,
+            ttl: 3600,
+            pinned: false,
+          })
         }
 
         console.log(`🔓 Decrypting file: ${blobId}`)
 
         // Decrypt the data
         const decryptedData = await sealService.decryptData({
-          encryptedData: new Uint8Array(encryptedData),
+          encryptedData: new Uint8Array(encryptedDataBuffer),
           txBytes: new Uint8Array(Buffer.from(txBytes, 'hex')),
           sessionKey,
         })
 
         // Track analytics
-        analyticsService.trackRequest(
-          blobId,
-          request.ip || 'unknown',
-          'decrypt',
-          {
-            packageId: metadata.packageId,
-            contentId: metadata.id,
-            decryptedSize: decryptedData.length,
-          },
-        )
+        analyticsService.recordFetch(blobId, true, 0, decryptedData.length)
 
         console.log(`✅ File decrypted successfully: ${blobId}`)
 
         // Return decrypted content with proper headers
         reply.header(
           'Content-Type',
-          metadata.originalMimetype || 'application/octet-stream',
+          metadata['originalMimetype'] || 'application/octet-stream',
         )
         reply.header('Content-Length', decryptedData.length)
-        const safeFilename = (metadata.originalFilename || 'file').replace(/[^a-zA-Z0-9._\- ]/g, '_')
+        const safeFilename = ((metadata['originalFilename'] as string) || 'file').replace(/[^a-zA-Z0-9._\- ]/g, '_')
         reply.header(
           'Content-Disposition',
           `inline; filename="${safeFilename}"`,
         )
-        reply.header('X-Original-Size', metadata.originalSize)
+        reply.header('X-Original-Size', metadata['originalSize'])
         reply.header('X-Encrypted-With', 'Seal')
 
         return reply.send(decryptedData)
@@ -349,7 +357,7 @@ export async function sealRoutes(fastify: FastifyInstance) {
           error: error instanceof Error ? error.message : 'Decryption failed',
         })
       }
-    },
+    }) as any,
   )
 
   // Get encrypted file metadata
@@ -358,24 +366,26 @@ export async function sealRoutes(fastify: FastifyInstance) {
     {
       preHandler: optionalAuth,
     },
-    async (
+    (async (
       request: FastifyRequest & { params: { blobId: string } },
       reply: FastifyReply,
     ) => {
       try {
         const { blobId } = request.params
         const metadataKey = `seal:metadata:${blobId}`
-        const metadata = await cacheService.get(metadataKey)
+        const metadataBlob = await cacheService.get(metadataKey)
 
-        if (!metadata) {
+        if (!metadataBlob) {
           return reply.code(404).send({
             success: false,
             error: 'Encrypted file metadata not found',
           })
         }
 
+        const parsedMetadata = JSON.parse(metadataBlob.data.toString()) as Record<string, any>
+
         // Don't expose backup key in public metadata
-        const { backupKey, ...publicMetadata } = metadata
+        const { backupKey, ...publicMetadata } = parsedMetadata
 
         return {
           success: true,
@@ -393,7 +403,7 @@ export async function sealRoutes(fastify: FastifyInstance) {
             error instanceof Error ? error.message : 'Failed to get metadata',
         })
       }
-    },
+    }) as any,
   )
 
   // Generate content ID endpoint

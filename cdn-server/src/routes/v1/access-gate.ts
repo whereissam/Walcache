@@ -80,7 +80,7 @@ export async function accessGateRoutes(fastify: FastifyInstance) {
   fastify.delete(
     '/:gateId',
     { preHandler: requireAuth },
-    async (
+    (async (
       request: AuthenticatedRequest<{ Params: { gateId: string } }>,
       reply: FastifyReply,
     ) => {
@@ -92,14 +92,14 @@ export async function accessGateRoutes(fastify: FastifyInstance) {
       }
 
       return reply.send({ status: 'deleted', gateId })
-    },
+    }) as any,
   )
 
   // Add wallet to allowlist gate
   fastify.post(
     '/:gateId/allowlist',
     { preHandler: requireAuth },
-    async (
+    (async (
       request: AuthenticatedRequest<{ Params: { gateId: string } }>,
       reply: FastifyReply,
     ) => {
@@ -116,14 +116,14 @@ export async function accessGateRoutes(fastify: FastifyInstance) {
       }
 
       return reply.send({ status: 'added', wallet })
-    },
+    }) as any,
   )
 
   // Remove wallet from allowlist gate
   fastify.delete(
     '/:gateId/allowlist/:wallet',
     { preHandler: requireAuth },
-    async (
+    (async (
       request: AuthenticatedRequest<{
         Params: { gateId: string; wallet: string }
       }>,
@@ -137,6 +137,6 @@ export async function accessGateRoutes(fastify: FastifyInstance) {
       }
 
       return reply.send({ status: 'removed', wallet })
-    },
+    }) as any,
   )
 }

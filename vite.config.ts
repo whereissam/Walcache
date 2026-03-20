@@ -38,16 +38,14 @@ export default defineConfig({
       },
     },
   },
+  // Vite natively exposes VITE_* env vars via import.meta.env
+  // Legacy REACT_APP_* vars are forwarded for backward compatibility
   define: {
-    // Make environment variables available in the browser
-    'process.env.NODE_ENV': JSON.stringify(
-      process.env.NODE_ENV || 'development',
+    'import.meta.env.REACT_APP_WALCACHE_URL': JSON.stringify(
+      process.env.REACT_APP_WALCACHE_URL || '',
     ),
-    'process.env.REACT_APP_WALCACHE_URL': JSON.stringify(
-      process.env.REACT_APP_WALCACHE_URL,
-    ),
-    'process.env.REACT_APP_WALCACHE_API_KEY': JSON.stringify(
-      process.env.REACT_APP_WALCACHE_API_KEY,
+    'import.meta.env.REACT_APP_WALCACHE_API_KEY': JSON.stringify(
+      process.env.REACT_APP_WALCACHE_API_KEY || '',
     ),
   },
 })
