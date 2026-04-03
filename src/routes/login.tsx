@@ -1,19 +1,11 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { useState } from 'react'
-import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../components/ui/card'
 import { Label } from '../components/ui/label'
-import { Alert, AlertDescription } from '../components/ui/alert'
 
 interface LoginForm {
   email: string
@@ -36,7 +28,6 @@ function LoginPage() {
     formState: { errors },
   } = useForm<LoginForm>()
 
-  // Redirect if already authenticated
   if (isAuthenticated) {
     navigate({ to: '/dashboard' })
     return null
@@ -46,130 +37,116 @@ function LoginPage() {
     try {
       await login(data.email, data.password)
       navigate({ to: '/dashboard' })
-    } catch (error) {
-      // Error is handled by the store
+    } catch {
+      // Error handled by store
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="w-full max-w-md">
-        <Card className="shadow-lg">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-              Welcome Back
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-300">
-              Sign in to your WCDN account
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+    <div className="min-h-[80vh] flex items-center justify-center">
+      <div className="w-full max-w-sm space-y-6">
+        {/* Header */}
+        <div className="space-y-1.5">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+            Sign in
+          </h1>
+          <p className="text-[14px] text-muted-foreground">
+            Enter your credentials to access your account.
+          </p>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2.5">
+            <p className="text-[13px] text-destructive">{error}</p>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-[13px]">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              className="h-9 text-[14px]"
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Invalid email address',
+                },
+              })}
+            />
+            {errors.email && (
+              <p className="text-[12px] text-destructive">{errors.email.message}</p>
             )}
+          </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  {...register('email', {
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address',
-                    },
-                  })}
-                  className={errors.email ? 'border-red-500' : ''}
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
-                    {...register('password', {
-                      required: 'Password is required',
-                      minLength: {
-                        value: 8,
-                        message: 'Password must be at least 8 characters',
-                      },
-                    })}
-                    className={errors.password ? 'border-red-500' : ''}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="text-sm text-red-500">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  id="rememberMe"
-                  type="checkbox"
-                  {...register('rememberMe')}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <Label htmlFor="rememberMe" className="text-sm">
-                  Remember me
-                </Label>
-              </div>
-
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign In'
-                )}
-              </Button>
-            </form>
-
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Don't have an account?{' '}
-                <button
-                  onClick={() => navigate({ to: '/register' })}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Sign up
-                </button>
-              </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-[13px]">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Enter your password"
+                className="h-9 text-[14px] pr-9"
+                {...register('password', {
+                  required: 'Password is required',
+                  minLength: {
+                    value: 8,
+                    message: 'Minimum 8 characters',
+                  },
+                })}
+              />
               <button
-                onClick={() => navigate({ to: '/forgot-password' })}
-                className="text-sm text-blue-600 hover:text-blue-700"
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                Forgot your password?
+                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
-          </CardContent>
-        </Card>
+            {errors.password && (
+              <p className="text-[12px] text-destructive">{errors.password.message}</p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              id="rememberMe"
+              type="checkbox"
+              {...register('rememberMe')}
+              className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
+            />
+            <Label htmlFor="rememberMe" className="text-[13px] text-muted-foreground">
+              Remember me
+            </Label>
+          </div>
+
+          <Button type="submit" disabled={loading} className="w-full h-9 text-[13px] font-medium">
+            {loading ? (
+              <>
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              'Sign in'
+            )}
+          </Button>
+        </form>
+
+        {/* Footer */}
+        <div className="text-center text-[13px] text-muted-foreground">
+          No account?{' '}
+          <button
+            onClick={() => navigate({ to: '/register' })}
+            className="text-primary hover:text-primary/80 font-medium"
+          >
+            Create one
+          </button>
+        </div>
       </div>
     </div>
   )

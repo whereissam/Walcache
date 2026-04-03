@@ -3,7 +3,6 @@ import { lazy } from 'react'
 import { LazyRoute } from '../components/LazyRoute'
 import { ValueProposition } from '../components/ValueProposition'
 
-// Lazy load the Dashboard component
 const Dashboard = lazy(() =>
   import('../components/Dashboard').then((module) => ({
     default: module.Dashboard,
@@ -13,9 +12,11 @@ const Dashboard = lazy(() =>
 export const Route = createFileRoute('/')({
   component: () => (
     <LazyRoute>
-      <div className="space-y-12">
+      <div className="space-y-16">
         <ValueProposition />
-        <Dashboard />
+        <div className="border-t border-border pt-8">
+          <Dashboard />
+        </div>
       </div>
     </LazyRoute>
   ),

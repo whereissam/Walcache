@@ -1,19 +1,11 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { useEffect, useState } from 'react'
-import { AlertCircle, Check, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../components/ui/card'
 import { Label } from '../components/ui/label'
-import { Alert, AlertDescription } from '../components/ui/alert'
 import {
   Select,
   SelectContent,
@@ -46,7 +38,6 @@ function RegisterPage() {
     loadSubscriptionPlans,
   } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const {
     register,
@@ -54,11 +45,7 @@ function RegisterPage() {
     formState: { errors },
     watch,
     setValue,
-  } = useForm<RegisterForm>({
-    defaultValues: {
-      subscriptionTier: 'free',
-    },
-  })
+  } = useForm<RegisterForm>({ defaultValues: { subscriptionTier: 'free' } })
 
   const watchPassword = watch('password')
 
@@ -66,17 +53,13 @@ function RegisterPage() {
     loadSubscriptionPlans()
   }, [loadSubscriptionPlans])
 
-  // Redirect if already authenticated
   if (isAuthenticated) {
     navigate({ to: '/dashboard' })
     return null
   }
 
   const onSubmit = async (data: RegisterForm) => {
-    if (data.password !== data.confirmPassword) {
-      return
-    }
-
+    if (data.password !== data.confirmPassword) return
     try {
       await registerUser({
         email: data.email,
@@ -85,288 +68,166 @@ function RegisterPage() {
         subscriptionTier: data.subscriptionTier,
       })
       navigate({ to: '/dashboard' })
-    } catch (error) {
-      // Error is handled by the store
+    } catch {
+      // handled by store
     }
   }
 
-  const getPasswordStrength = (password: string) => {
-    if (!password) return { strength: 0, text: '' }
-
-    let strength = 0
-    const checks = [
-      password.length >= 8,
-      /[a-z]/.test(password),
-      /[A-Z]/.test(password),
-      /[0-9]/.test(password),
-      /[^A-Za-z0-9]/.test(password),
-    ]
-
-    strength = checks.filter(Boolean).length
-
-    const strengthText = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'][
-      strength
-    ]
-
-    return { strength, text: strengthText }
+  const getStrength = (pw: string) => {
+    if (!pw) return 0
+    return [pw.length >= 8, /[a-z]/.test(pw), /[A-Z]/.test(pw), /[0-9]/.test(pw), /[^A-Za-z0-9]/.test(pw)].filter(Boolean).length
   }
 
-  const passwordStrength = getPasswordStrength(watchPassword)
+  const strength = getStrength(watchPassword)
+  const strengthLabel = ['', 'Weak', 'Weak', 'Fair', 'Good', 'Strong'][strength] || ''
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="w-full max-w-md">
-        <Card className="shadow-lg">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-              Create Account
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-300">
-              Join WCDN to start using our CDN services
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+    <div className="min-h-[80vh] flex items-center justify-center">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="space-y-1.5">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Create account</h1>
+          <p className="text-[14px] text-muted-foreground">
+            Start using the Walrus CDN in minutes.
+          </p>
+        </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  {...register('email', {
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address',
-                    },
-                  })}
-                  className={errors.email ? 'border-red-500' : ''}
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email.message}</p>
-                )}
-              </div>
+        {error && (
+          <div className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2.5">
+            <p className="text-[13px] text-destructive">{error}</p>
+          </div>
+        )}
 
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="Choose a username"
-                  {...register('username', {
-                    required: 'Username is required',
-                    minLength: {
-                      value: 3,
-                      message: 'Username must be at least 3 characters',
-                    },
-                    maxLength: {
-                      value: 50,
-                      message: 'Username must be less than 50 characters',
-                    },
-                    pattern: {
-                      value: /^[a-zA-Z0-9_-]+$/,
-                      message:
-                        'Username can only contain letters, numbers, hyphens, and underscores',
-                    },
-                  })}
-                  className={errors.username ? 'border-red-500' : ''}
-                />
-                {errors.username && (
-                  <p className="text-sm text-red-500">
-                    {errors.username.message}
-                  </p>
-                )}
-              </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-[13px]">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              className="h-9 text-[14px]"
+              {...register('email', {
+                required: 'Required',
+                pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Invalid email' },
+              })}
+            />
+            {errors.email && <p className="text-[12px] text-destructive">{errors.email.message}</p>}
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Create a password"
-                    {...register('password', {
-                      required: 'Password is required',
-                      minLength: {
-                        value: 8,
-                        message: 'Password must be at least 8 characters',
-                      },
-                    })}
-                    className={errors.password ? 'border-red-500' : ''}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {watchPassword && (
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            passwordStrength.strength <= 1
-                              ? 'bg-red-500'
-                              : passwordStrength.strength <= 3
-                                ? 'bg-yellow-500'
-                                : 'bg-green-500'
-                          }`}
-                          style={{
-                            width: `${(passwordStrength.strength / 5) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium">
-                        {passwordStrength.text}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                {errors.password && (
-                  <p className="text-sm text-red-500">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="username" className="text-[13px]">Username</Label>
+            <Input
+              id="username"
+              placeholder="your-username"
+              className="h-9 text-[14px]"
+              {...register('username', {
+                required: 'Required',
+                minLength: { value: 3, message: 'Min 3 characters' },
+                pattern: { value: /^[a-zA-Z0-9_-]+$/, message: 'Letters, numbers, hyphens, underscores only' },
+              })}
+            />
+            {errors.username && <p className="text-[12px] text-destructive">{errors.username.message}</p>}
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm your password"
-                    {...register('confirmPassword', {
-                      required: 'Please confirm your password',
-                      validate: (value) =>
-                        value === watchPassword || 'Passwords do not match',
-                    })}
-                    className={errors.confirmPassword ? 'border-red-500' : ''}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {errors.confirmPassword && (
-                  <p className="text-sm text-red-500">
-                    {errors.confirmPassword.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subscriptionTier">Subscription Plan</Label>
-                <Select
-                  onValueChange={(value) => setValue('subscriptionTier', value)}
-                  defaultValue="free"
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a plan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subscriptionPlans.map((plan) => (
-                      <SelectItem key={plan.tier} value={plan.tier}>
-                        <div className="flex items-center justify-between w-full">
-                          <div>
-                            <div className="font-medium">{plan.name}</div>
-                            <div className="text-sm text-gray-500">
-                              ${plan.price}/month
-                            </div>
-                          </div>
-                          {plan.tier === 'free' && (
-                            <Check className="h-4 w-4 text-green-500" />
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-gray-500">
-                  You can upgrade or downgrade your plan anytime
-                </p>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  id="acceptTerms"
-                  type="checkbox"
-                  {...register('acceptTerms', {
-                    required: 'You must accept the terms and conditions',
-                  })}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <Label htmlFor="acceptTerms" className="text-sm">
-                  I accept the{' '}
-                  <button
-                    type="button"
-                    className="text-blue-600 hover:text-blue-700"
-                    onClick={() => window.open('/terms', '_blank')}
-                  >
-                    Terms of Service
-                  </button>{' '}
-                  and{' '}
-                  <button
-                    type="button"
-                    className="text-blue-600 hover:text-blue-700"
-                    onClick={() => window.open('/privacy', '_blank')}
-                  >
-                    Privacy Policy
-                  </button>
-                </Label>
-              </div>
-              {errors.acceptTerms && (
-                <p className="text-sm text-red-500">
-                  {errors.acceptTerms.message}
-                </p>
-              )}
-
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Account...
-                  </>
-                ) : (
-                  'Create Account'
-                )}
-              </Button>
-            </form>
-
-            <div className="text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Already have an account?{' '}
-                <button
-                  onClick={() => navigate({ to: '/login' })}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Sign in
-                </button>
-              </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-[13px]">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Min 8 characters"
+                className="h-9 text-[14px] pr-9"
+                {...register('password', {
+                  required: 'Required',
+                  minLength: { value: 8, message: 'Min 8 characters' },
+                })}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              </button>
             </div>
-          </CardContent>
-        </Card>
+            {watchPassword && (
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      strength <= 2 ? 'bg-destructive' : strength <= 3 ? 'bg-chart-2' : 'bg-primary'
+                    }`}
+                    style={{ width: `${(strength / 5) * 100}%` }}
+                  />
+                </div>
+                <span className="text-[11px] text-muted-foreground">{strengthLabel}</span>
+              </div>
+            )}
+            {errors.password && <p className="text-[12px] text-destructive">{errors.password.message}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="confirmPassword" className="text-[13px]">Confirm password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Re-enter password"
+              className="h-9 text-[14px]"
+              {...register('confirmPassword', {
+                required: 'Required',
+                validate: (v) => v === watchPassword || 'Passwords don\'t match',
+              })}
+            />
+            {errors.confirmPassword && <p className="text-[12px] text-destructive">{errors.confirmPassword.message}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[13px]">Plan</Label>
+            <Select onValueChange={(v) => setValue('subscriptionTier', v)} defaultValue="free">
+              <SelectTrigger className="h-9 text-[14px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {subscriptionPlans.map((plan) => (
+                  <SelectItem key={plan.tier} value={plan.tier}>
+                    {plan.name} — ${plan.price}/mo
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">Change anytime</p>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              id="acceptTerms"
+              type="checkbox"
+              {...register('acceptTerms', { required: 'Required' })}
+              className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
+            />
+            <Label htmlFor="acceptTerms" className="text-[12px] text-muted-foreground">
+              I accept the Terms of Service and Privacy Policy
+            </Label>
+          </div>
+          {errors.acceptTerms && <p className="text-[12px] text-destructive">{errors.acceptTerms.message}</p>}
+
+          <Button type="submit" disabled={loading} className="w-full h-9 text-[13px] font-medium">
+            {loading ? (
+              <>
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              'Create account'
+            )}
+          </Button>
+        </form>
+
+        <div className="text-center text-[13px] text-muted-foreground">
+          Have an account?{' '}
+          <button onClick={() => navigate({ to: '/login' })} className="text-primary hover:text-primary/80 font-medium">
+            Sign in
+          </button>
+        </div>
       </div>
     </div>
   )
