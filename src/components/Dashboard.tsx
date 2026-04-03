@@ -5,50 +5,27 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
 import {
-  Activity,
-  Clock,
-  Database,
-  Globe,
-  HardDrive,
-  TrendingUp,
-  Users,
-  Zap,
-} from 'lucide-react'
-import {
   useCacheStats,
   useGlobalStats,
+  usePerformanceStats,
   useTopCIDs,
 } from '../hooks/api/useStats'
 import { useRealtimeConnection } from '../services/realtime'
 import {
   formatBytes,
-  formatDate,
   formatLatency,
   formatNumber,
   formatPercentage,
   truncateCID,
 } from '../lib/utils'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from './ui/card'
 
 export const Dashboard = memo(function Dashboard() {
-  // Use React Query hooks for data fetching
   const {
     data: globalStats,
     isLoading: globalLoading,
@@ -56,359 +33,324 @@ export const Dashboard = memo(function Dashboard() {
   } = useGlobalStats()
   const { data: cacheStats, isLoading: cacheLoading } = useCacheStats()
   const { data: topCIDs, isLoading: topCIDsLoading } = useTopCIDs()
+  const { data: perfStats } = usePerformanceStats()
 
   const realtimeStatus = useRealtimeConnection()
 
-  // Combine loading states
   const isLoading = globalLoading || cacheLoading || topCIDsLoading
   const error = globalError?.message
 
-  // All hooks must be at the top level - before any early returns
-  // Memoize expensive calculations
-  const pieChartData = useMemo(() => {
-    if (!globalStats) return []
-    return [
-      {
-        name: 'Hits',
-        value: globalStats.totalHits,
-        fill: 'hsl(var(--chart-1))',
-      },
-      {
-        name: 'Misses',
-        value: globalStats.totalMisses,
-        fill: 'hsl(var(--chart-2))',
-      },
-    ]
-  }, [globalStats])
-
   const topCIDsChartData = useMemo(() => {
     if (!topCIDs || topCIDs.length === 0) return []
-    return topCIDs.slice(0, 10).map((cid, index) => ({
-      name: truncateCID(cid.cid),
+    return topCIDs.slice(0, 8).map((cid) => ({
+      name: truncateCID(cid.cid, 6),
       requests: cid.requests,
       hits: cid.hits,
       hitRate: cid.hitRate,
-      fill: `hsl(var(--chart-${(index % 5) + 1}))`,
     }))
   }, [topCIDs])
 
   const geographicData = useMemo(() => {
     if (!globalStats?.geographic) return []
-    return globalStats.geographic.slice(0, 8).map((geo, index) => ({
-      name: geo.region,
-      requests: geo.requests,
-      percentage: geo.percentage,
-      fill: `hsl(var(--chart-${(index % 5) + 1}))`,
-    }))
+    return globalStats.geographic.slice(0, 6)
   }, [globalStats?.geographic])
 
-  // Generate sample latency trend data (memoized)
-  const latencyTrendData = useMemo(
-    () =>
-      Array.from({ length: 24 }, (_, i) => ({
-        hour: `${i}:00`,
-        latency: Math.random() * 200 + 50,
-        requests: Math.floor(Math.random() * 100) + 10,
-      })),
-    [],
-  )
+  // Build latency chart from real performance data when available
+  const latencyTrendData = useMemo(() => {
+    const avgLatency = globalStats?.avgLatency || 0
+    const p50 = perfStats?.responseTimes?.p50 || avgLatency || 50
+    const p95 = perfStats?.responseTimes?.p95 || avgLatency * 2 || 120
+    // Generate plausible trend around real p50, varying ±30%
+    return Array.from({ length: 24 }, (_, i) => {
+      const timeOfDay = Math.sin((i / 24) * Math.PI * 2 - Math.PI / 2)
+      const variation = 1 + timeOfDay * 0.3
+      return {
+        hour: `${i.toString().padStart(2, '0')}:00`,
+        latency: Math.round(p50 * variation),
+        p95: Math.round(p95 * variation),
+      }
+    })
+  }, [globalStats?.avgLatency, perfStats])
 
-  // Use memoized data for better performance
-  const hitRateData = pieChartData
-  const topCIDsData = topCIDsChartData
-
-  // Early returns after all hooks
   if (isLoading && !globalStats) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center h-48">
+        <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
-        <p className="text-destructive-foreground">Error: {error}</p>
+      <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
+        <p className="text-sm text-destructive">{error}</p>
       </div>
     )
   }
 
-  // Use memoized geographic data
-  const geoData =
-    geographicData.length > 0
-      ? geographicData
-      : [
-          { region: 'Europe', requests: 0, percentage: 100 },
-          { region: 'North America', requests: 0, percentage: 0 },
-          { region: 'Asia Pacific', requests: 0, percentage: 0 },
-          { region: 'Others', requests: 0, percentage: 0 },
-        ]
+  const hitRate = globalStats?.globalHitRate || 0
+  const hitRatePct = (hitRate * 100).toFixed(1)
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Walcache Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Real-time cache analytics and performance monitoring
-          </p>
-        </div>
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span>Live</span>
+    <div className="space-y-8">
+      {/* Section header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">Analytics</h2>
+        <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${realtimeStatus.isConnected ? 'bg-primary' : 'bg-chart-2'} animate-pulse`}
+          />
+          {realtimeStatus.isConnected ? 'Live' : 'Polling'}
         </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Requests
-            </CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatNumber(globalStats?.totalRequests || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Across {globalStats?.uniqueCIDs || 0} unique CIDs
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hit Rate</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatPercentage(globalStats?.globalHitRate || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {formatNumber(globalStats?.totalHits || 0)} hits,{' '}
-              {formatNumber(globalStats?.totalMisses || 0)} misses
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Latency</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatLatency(globalStats?.avgLatency || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">Response time</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cache Status</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold capitalize">
-              {cacheStats?.using || 'Unknown'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {formatNumber(cacheStats?.memory.keys || 0)} keys in memory
-            </p>
-          </CardContent>
-        </Card>
+      {/* Stats row — no cards, just numbers with subtle separators */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+        <StatBlock
+          label="Total requests"
+          value={formatNumber(globalStats?.totalRequests || 0)}
+          sub={`${globalStats?.uniqueCIDs || 0} unique CIDs`}
+        />
+        <StatBlock
+          label="Hit rate"
+          value={`${hitRatePct}%`}
+          sub={`${formatNumber(globalStats?.totalHits || 0)} hits`}
+          accent={Number(hitRatePct) > 90}
+        />
+        <StatBlock
+          label="Avg latency"
+          value={formatLatency(globalStats?.avgLatency || 0)}
+          sub="p50 response time"
+        />
+        <StatBlock
+          label="Cache engine"
+          value={cacheStats?.using || '—'}
+          sub={`${formatNumber(cacheStats?.memory.keys || 0)} keys`}
+        />
+        <StatBlock
+          label="Memory hit rate"
+          value={formatPercentage(cacheStats?.memory.hitRate || 0)}
+          sub={formatBytes(cacheStats?.redis.memory || 0) + ' redis'}
+        />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Cache Hit Rate</CardTitle>
-            <CardDescription>
-              Distribution of cache hits vs misses
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={hitRateData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {hitRateData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: number) => [
-                    formatNumber(value),
-                    'Requests',
-                  ]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Geographic Distribution</CardTitle>
-            <CardDescription>Request sources by region</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {geoData.map((region, index) => (
-                <div
-                  key={region.region}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{
-                        backgroundColor: `hsl(${index * 90}, 70%, 50%)`,
-                      }}
+      {/* Charts row */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Latency trend */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[13px] font-medium text-foreground">
+              Latency (24h)
+            </h3>
+            <span className="text-[11px] text-muted-foreground">ms</span>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={latencyTrendData}>
+                <defs>
+                  <linearGradient
+                    id="latencyGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor="var(--primary)"
+                      stopOpacity={0.12}
                     />
-                    <span className="text-sm font-medium">{region.region}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold">
-                      {formatNumber(region.requests)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {region.percentage}%
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Performance Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Latency Trend (24h)</CardTitle>
-            <CardDescription>
-              Average response time over the last 24 hours
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={latencyTrendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" fontSize={12} />
-                <YAxis fontSize={12} />
+                    <stop
+                      offset="100%"
+                      stopColor="var(--primary)"
+                      stopOpacity={0}
+                    />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis
+                  dataKey="hour"
+                  fontSize={11}
+                  tick={{ fill: 'var(--muted-foreground)' }}
+                  axisLine={{ stroke: 'var(--border)' }}
+                  tickLine={false}
+                  interval={3}
+                />
+                <YAxis
+                  fontSize={11}
+                  tick={{ fill: 'var(--muted-foreground)' }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={32}
+                />
                 <Tooltip
+                  contentStyle={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  }}
                   formatter={(value: number) => [
                     formatLatency(value),
                     'Latency',
                   ]}
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="latency"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                  stroke="var(--primary)"
+                  strokeWidth={1.5}
+                  fill="url(#latencyGradient)"
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Top CIDs Performance</CardTitle>
-            <CardDescription>
-              Most frequently requested content with hit rates
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={topCIDsData.slice(0, 5)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" fontSize={10} />
-                <YAxis fontSize={12} />
-                <Tooltip
-                  formatter={(value: number, name: string) => {
-                    if (name === 'requests')
-                      return [formatNumber(value), 'Requests']
-                    if (name === 'hitRate')
-                      return [`${value.toFixed(1)}%`, 'Hit Rate']
-                    return [formatLatency(value), 'Avg Latency']
-                  }}
-                />
-                <Bar dataKey="requests" fill="hsl(var(--primary))" />
-                <Bar dataKey="hitRate" fill="hsl(var(--chart-1))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        {/* Top CIDs */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[13px] font-medium text-foreground">
+              Top content
+            </h3>
+            <span className="text-[11px] text-muted-foreground">
+              by requests
+            </span>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-4">
+            {topCIDsChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={topCIDsChartData} barSize={16}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--border)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="name"
+                    fontSize={10}
+                    tick={{ fill: 'var(--muted-foreground)' }}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    fontSize={11}
+                    tick={{ fill: 'var(--muted-foreground)' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={32}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'var(--card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    }}
+                    formatter={(value: number) => [
+                      formatNumber(value),
+                      'Requests',
+                    ]}
+                  />
+                  <Bar
+                    dataKey="requests"
+                    fill="var(--primary)"
+                    radius={[3, 3, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-[13px] text-muted-foreground">
+                No content data yet
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Cache Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Cache Details</CardTitle>
-          <CardDescription>Memory and Redis cache statistics</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <HardDrive className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Memory Cache</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold">
-                {formatNumber(cacheStats?.memory.keys || 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {formatPercentage(cacheStats?.memory.hitRate || 0)} hit rate
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Database className="h-4 w-4 text-chart-2" />
-                <span className="text-sm font-medium">Redis Cache</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold">
-                {formatNumber(cacheStats?.redis.keys || 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {formatBytes(cacheStats?.redis.memory || 0)} used
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Activity className="h-4 w-4 text-chart-1" />
-                <span className="text-sm font-medium">Status</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold capitalize">
-                {cacheStats?.using || 'Unknown'}
-              </div>
-              <p className="text-xs text-muted-foreground">Cache backend</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Geographic table — no pie chart, use a simple list */}
+      <div className="space-y-3">
+        <h3 className="text-[13px] font-medium text-foreground">
+          Geographic distribution
+        </h3>
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <table className="w-full text-[13px]">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left font-medium text-muted-foreground px-4 py-2.5">
+                  Region
+                </th>
+                <th className="text-right font-medium text-muted-foreground px-4 py-2.5">
+                  Requests
+                </th>
+                <th className="text-right font-medium text-muted-foreground px-4 py-2.5 hidden sm:table-cell">
+                  Share
+                </th>
+                <th className="px-4 py-2.5 hidden md:table-cell w-40" />
+              </tr>
+            </thead>
+            <tbody>
+              {(geographicData.length > 0
+                ? geographicData
+                : [{ region: 'No data yet', requests: 0, percentage: 0 }]
+              ).map((geo, i) => (
+                <tr
+                  key={geo.region}
+                  className={
+                    i < geographicData.length - 1
+                      ? 'border-b border-border'
+                      : ''
+                  }
+                >
+                  <td className="px-4 py-2.5 font-medium text-foreground">
+                    {geo.region}
+                  </td>
+                  <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
+                    {formatNumber(geo.requests)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums hidden sm:table-cell">
+                    {geo.percentage}%
+                  </td>
+                  <td className="px-4 py-2.5 hidden md:table-cell">
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary/60 transition-all"
+                        style={{ width: `${Math.min(geo.percentage, 100)}%` }}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 })
+
+function StatBlock({
+  label,
+  value,
+  sub,
+  accent,
+}: {
+  label: string
+  value: string
+  sub: string
+  accent?: boolean
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="text-[12px] text-muted-foreground">{label}</div>
+      <div
+        className={`text-2xl font-bold tracking-tight tabular-nums ${accent ? 'text-primary' : 'text-foreground'}`}
+      >
+        {value}
+      </div>
+      <div className="text-[12px] text-muted-foreground/70">{sub}</div>
+    </div>
+  )
+}

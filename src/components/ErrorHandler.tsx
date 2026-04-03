@@ -61,7 +61,7 @@ const getErrorTitle = (type?: string, code?: string) => {
   }
 }
 
-const getErrorSuggestion = (type?: string, code?: string) => {
+const getErrorSuggestion = (type?: string, _code?: string) => {
   switch (type) {
     case 'validation_error':
       return 'Please check your input and try again.'
@@ -214,7 +214,7 @@ export const NetworkErrorHandler = memo(function NetworkErrorHandler({
 })
 
 export const RateLimitErrorHandler = memo(function RateLimitErrorHandler({
-  error,
+  error: _error,
   onDismiss,
   retryAfter = 60,
 }: Omit<ErrorHandlerProps, 'onRetry' | 'showRetry'> & { retryAfter?: number }) {

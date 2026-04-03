@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect } from 'react'
 import { AlertTriangle, Check, Copy, ExternalLink, Trash2 } from 'lucide-react'
 import { useDeleteFile, useFiles, useVaults } from '../hooks/api/useVaults'
 import { useCheckBlobOnWalrus } from '../hooks/api/useWalrus'
@@ -63,7 +63,7 @@ export const FilesList = memo(function FilesList({
 
   const checkWalrusStatus = async (
     blobId: string,
-    retryCount = 0,
+    _retryCount = 0,
   ): Promise<boolean | null> => {
     const existing = fileStatuses[blobId]
     const now = new Date()
@@ -263,9 +263,6 @@ export const FilesList = memo(function FilesList({
                         {walrusExists === null && (
                           <button
                             onClick={() => {
-                              // Reset status and retry
-                              const { [file.blobId]: removed, ...newStatuses } =
-                                fileStatuses
                               checkWalrusStatus(file.blobId)
                             }}
                             className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer"

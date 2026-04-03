@@ -133,21 +133,6 @@ export function SealUpload({ onUploadComplete }: SealUploadProps) {
     }
   }
 
-  const getAccessTypeIcon = (type: string) => {
-    switch (type) {
-      case 'owner-only':
-        return <Shield className="h-4 w-4" />
-      case 'allowlist':
-        return <Users className="h-4 w-4" />
-      case 'time-based':
-        return <Clock className="h-4 w-4" />
-      case 'public':
-        return <Globe className="h-4 w-4" />
-      default:
-        return <Key className="h-4 w-4" />
-    }
-  }
-
   return (
     <div className="space-y-6">
       <Card>
@@ -376,14 +361,17 @@ export function SealUpload({ onUploadComplete }: SealUploadProps) {
               <Label>CDN URL</Label>
               <div className="flex gap-2">
                 <Input
-                  value={result.data.cdnUrl}
+                  value={result.data?.cdnUrl ?? ''}
                   readOnly
                   className="font-mono text-xs"
                 />
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(result.data.cdnUrl, '_blank')}
+                  onClick={() =>
+                    result.data?.cdnUrl &&
+                    window.open(result.data.cdnUrl, '_blank')
+                  }
                 >
                   Open
                 </Button>

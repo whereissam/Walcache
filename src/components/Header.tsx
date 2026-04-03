@@ -4,7 +4,6 @@ import {
   BarChart3,
   ChevronDown,
   Code,
-  CreditCard,
   Globe,
   Key,
   LogIn,

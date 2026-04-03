@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react'
 import {
-  AlertTriangle,
   ArrowRight,
   Check,
   Clock,
@@ -27,12 +26,7 @@ import {
 } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from './ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { ChainSelector } from './ChainSelector'
 import type { SupportedChain } from './ChainSelector'
 
@@ -73,7 +67,7 @@ async function getSDKClient() {
 // Use real SDK for URL generation
 async function getWalrusCDNUrl(
   blobId: string,
-  options?: { chain?: string; customEndpoint?: string },
+  options?: { chain?: SupportedChain | string; customEndpoint?: string },
 ) {
   if (options?.customEndpoint) {
     return `${options.customEndpoint}/v1/blobs/${blobId}`
@@ -85,8 +79,8 @@ async function getWalrusCDNUrl(
       '../../packages/sdk/src/index.js'
     )
     return getSDKWalrusCDNUrl(blobId, {
-      chain: options?.chain ?? 'sui',
-      params: { cache: true, network: 'testnet' },
+      chain: (options?.chain ?? 'sui') as SupportedChain,
+      params: { cache: 'true', network: 'testnet' },
     })
   } catch (error) {
     console.warn('Failed to load SDK, using fallback URL generation:', error)

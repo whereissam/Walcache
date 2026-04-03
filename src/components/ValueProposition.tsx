@@ -1,323 +1,222 @@
-import { useEffect, useState } from 'react'
-import {
-  ArrowRight,
-  BarChart3,
-  CheckCircle,
-  Clock,
-  Code,
-  Database,
-  Globe,
-  PlayCircle,
-  Shield,
-  TrendingUp,
-  Users,
-  Zap,
-} from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from './ui/card'
+import { ArrowRight, Copy, Check } from 'lucide-react'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
-
-interface ApiMetric {
-  label: string
-  value: string
-  trend: 'up' | 'down' | 'stable'
-  icon: React.ReactNode
-}
+import { useState } from 'react'
 
 export function ValueProposition() {
-  const [metrics, setMetrics] = useState<Array<ApiMetric>>([
-    {
-      label: 'Response Time',
-      value: '< 50ms',
-      trend: 'up',
-      icon: <Zap className="h-4 w-4" />,
-    },
-    {
-      label: 'Cache Hit Rate',
-      value: '94.2%',
-      trend: 'up',
-      icon: <Database className="h-4 w-4" />,
-    },
-    {
-      label: 'Global CDN Nodes',
-      value: '25+',
-      trend: 'stable',
-      icon: <Globe className="h-4 w-4" />,
-    },
-    {
-      label: 'Monthly Requests',
-      value: '2.4M+',
-      trend: 'up',
-      icon: <BarChart3 className="h-4 w-4" />,
-    },
-  ])
+  const [copied, setCopied] = useState(false)
 
-  const features = [
-    {
-      icon: <Code className="h-6 w-6" />,
-      title: 'Stripe-Style API',
-      description:
-        'Professional, consistent API design with full TypeScript support and comprehensive documentation.',
-      example: 'client.listBlobs({ limit: 10, cached: true })',
-    },
-    {
-      icon: <Zap className="h-6 w-6" />,
-      title: 'Lightning Fast',
-      description:
-        'Global CDN with intelligent caching delivers content with sub-50ms latency worldwide.',
-      example: 'GET /v1/blobs/your-content → < 50ms',
-    },
-    {
-      icon: <Shield className="h-6 w-6" />,
-      title: 'Decentralized Storage',
-      description:
-        'Built on Walrus network for ultimate data integrity, availability, and censorship resistance.',
-      example: 'Multi-chain verification across Sui, Ethereum, Solana',
-    },
-    {
-      icon: <BarChart3 className="h-6 w-6" />,
-      title: 'Real-time Analytics',
-      description:
-        'Comprehensive metrics, performance monitoring, and usage analytics with Prometheus integration.',
-      example: 'client.getGlobalAnalytics() → detailed insights',
-    },
-  ]
+  const installCmd = 'npm install @walcache/sdk'
 
-  const useCases = [
-    {
-      title: 'NFT Marketplaces',
-      description:
-        'Store and serve NFT metadata and images with guaranteed availability',
-      benefits: ['Immutable storage', 'Global CDN', 'Sub-second loading'],
-    },
-    {
-      title: 'Web3 Applications',
-      description:
-        'Host dApp frontends with decentralized, censorship-resistant delivery',
-      benefits: [
-        'Zero downtime',
-        'Multi-chain support',
-        'Developer-friendly API',
-      ],
-    },
-    {
-      title: 'Content Creators',
-      description:
-        'Distribute media content with token-gated access and monetization',
-      benefits: ['Token gating', 'Analytics', 'Revenue streams'],
-    },
-    {
-      title: 'Enterprise Data',
-      description:
-        'Archive critical data with cryptographic proof of integrity',
-      benefits: ['Audit trails', 'Compliance ready', 'Enterprise SLA'],
-    },
-  ]
+  const copyInstall = async () => {
+    try {
+      await navigator.clipboard.writeText(installCmd)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Clipboard unavailable in insecure contexts
+    }
+  }
 
-  const apiPreview = {
-    request: `// Initialize WCDN Client
-const client = new WalrusCDNClient({
-  baseUrl: 'https://your-cdn.com',
+  return (
+    <div className="space-y-16">
+      {/* Hero — asymmetric, left-aligned */}
+      <div className="pt-4 sm:pt-8">
+        <div className="max-w-2xl space-y-5">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border text-[12px] font-medium text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            v1 API available
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-bold text-foreground leading-[1.1] tracking-tight">
+            CDN for
+            <br />
+            Walrus Storage
+          </h1>
+          <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
+            Serve decentralized content at the edge. Intelligent caching,
+            real-time analytics, and a developer-first API.
+          </p>
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Link to="/api-showcase">
+              <Button className="h-9 px-4 text-[13px] font-medium gap-1.5">
+                Try the API
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+            <button
+              onClick={copyInstall}
+              className="flex items-center gap-2 h-9 px-3.5 rounded-md border border-border bg-card text-[13px] font-mono text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
+            >
+              <span>{installCmd}</span>
+              {copied ? (
+                <Check className="h-3.5 w-3.5 text-primary" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Metrics strip — no cards, just numbers */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12 py-6 border-y border-border">
+        {[
+          { value: '< 50ms', label: 'Edge latency' },
+          { value: '94.2%', label: 'Cache hit rate' },
+          { value: '25+', label: 'CDN nodes' },
+          { value: '2.4M+', label: 'Monthly requests' },
+        ].map((metric) => (
+          <div key={metric.label}>
+            <div className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums tracking-tight">
+              {metric.value}
+            </div>
+            <div className="text-[13px] text-muted-foreground mt-1">
+              {metric.label}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Code preview — full width, no card wrapper */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-foreground">
+            Developer-first API
+          </h2>
+          <p className="text-[14px] text-muted-foreground leading-relaxed">
+            Consistent resource types, cursor pagination, typed responses. Built
+            for developers who ship fast.
+          </p>
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border">
+              <span className="h-2.5 w-2.5 rounded-full bg-destructive/40" />
+              <span className="h-2.5 w-2.5 rounded-full bg-chart-2/40" />
+              <span className="h-2.5 w-2.5 rounded-full bg-chart-4/40" />
+              <span className="ml-2 text-[11px] text-muted-foreground/60">
+                upload.ts
+              </span>
+            </div>
+            <pre className="p-4 text-[13px] leading-relaxed overflow-x-auto text-foreground/80">
+              <code>{`import { WalrusCDN } from '@walcache/sdk'
+
+const cdn = new WalrusCDN({
   apiKey: process.env.WCDN_API_KEY
 })
 
-// Upload and serve content
-const upload = await client.createUpload(file)
-const cdnUrl = client.getCDNUrl(upload.blob_id)
+const upload = await cdn.uploads.create(file)
+const url = cdn.blobs.url(upload.blob_id)
 
 // Real-time analytics
-const analytics = await client.getGlobalAnalytics()`,
-    response: `{
+const stats = await cdn.analytics.global()`}</code>
+            </pre>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-foreground">
+            Structured responses
+          </h2>
+          <p className="text-[14px] text-muted-foreground leading-relaxed">
+            Every response follows the same shape. No surprises.
+          </p>
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border">
+              <span className="h-2.5 w-2.5 rounded-full bg-destructive/40" />
+              <span className="h-2.5 w-2.5 rounded-full bg-chart-2/40" />
+              <span className="h-2.5 w-2.5 rounded-full bg-chart-4/40" />
+              <span className="ml-2 text-[11px] text-muted-foreground/60">
+                response.json
+              </span>
+            </div>
+            <pre className="p-4 text-[13px] leading-relaxed overflow-x-auto text-foreground/80">
+              <code>{`{
   "object": "upload",
   "id": "upload_abc123",
   "blob_id": "blob_xyz789",
   "status": "completed",
-  "created": 1703123456
-}`,
-  }
-
-  return (
-    <div className="space-y-12">
-      {/* Hero Section */}
-      <div className="text-center space-y-6">
-        <div className="space-y-3">
-          <Badge variant="secondary" className="px-3 py-1">
-            <Zap className="h-3 w-3 mr-1" />
-            v1 API Now Available
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Walrus CDN for Developers
-          </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            The first professional CDN for decentralized storage. Stripe-style
-            API, global performance, Web3 native features.
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/api-showcase">
-            <Button size="lg" className="gap-2">
-              <PlayCircle className="h-5 w-5" />
-              Try Live API
-            </Button>
-          </Link>
-          <Button variant="outline" size="lg" className="gap-2">
-            <Code className="h-5 w-5" />
-            View Documentation
-          </Button>
-        </div>
-      </div>
-
-      {/* Live Metrics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Live API Metrics
-          </CardTitle>
-          <CardDescription>
-            Real-time performance data from our global CDN network
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {metrics.map((metric, index) => (
-              <div
-                key={index}
-                className="text-center p-4 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  {metric.icon}
-                  <span className="text-2xl font-bold">{metric.value}</span>
-                </div>
-                <p className="text-sm text-gray-600">{metric.label}</p>
-              </div>
-            ))}
+  "size": 2048576,
+  "content_type": "image/png",
+  "created": 1703123456,
+  "cdn_url": "https://cdn.walcache.io/blob_xyz789"
+}`}</code>
+            </pre>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* API Preview */}
-      <div className="grid md:grid-cols-2 gap-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Developer Experience</CardTitle>
-            <CardDescription>
-              Stripe-style API that developers love
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-              <pre>{apiPreview.request}</pre>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Structured Responses</CardTitle>
-            <CardDescription>Consistent, typed API responses</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-              <pre>{apiPreview.response}</pre>
-            </div>
-          </CardContent>
-        </Card>
+        </div>
       </div>
 
-      {/* Key Features */}
-      <div>
-        <h2 className="text-3xl font-bold text-center mb-8">
-          Why Choose WCDN?
+      {/* Features — tight grid, no icons-above-headings pattern */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold text-foreground">
+          Built for Web3 infrastructure
         </h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {features.map((feature, index) => (
-            <Card key={index} className="relative overflow-hidden">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    {feature.icon}
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-gray-600">{feature.description}</p>
-                <div className="bg-gray-100 p-3 rounded-lg">
-                  <code className="text-sm text-gray-800">
-                    {feature.example}
-                  </code>
-                </div>
-              </CardContent>
-            </Card>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+          {[
+            {
+              title: 'Edge caching',
+              desc: 'Content served from the nearest node. Sub-50ms globally with automatic failover.',
+            },
+            {
+              title: 'Walrus native',
+              desc: 'Built on Walrus for immutable, censorship-resistant storage with Sui blockchain proofs.',
+            },
+            {
+              title: 'Real-time analytics',
+              desc: 'Request tracking, geographic distribution, latency percentiles, and Prometheus export.',
+            },
+            {
+              title: 'Access control',
+              desc: 'NFT-gated content, allowlists, signed URLs with time-limited access and IP restrictions.',
+            },
+            {
+              title: 'Webhooks',
+              desc: 'Event-driven notifications for uploads, cache events, and analytics thresholds.',
+            },
+            {
+              title: 'Multi-chain',
+              desc: 'Register and verify content across Sui, Ethereum, and Solana with cross-chain proofs.',
+            },
+          ].map((feature) => (
+            <div key={feature.title} className="space-y-1.5">
+              <h3 className="text-[14px] font-semibold text-foreground">
+                {feature.title}
+              </h3>
+              <p className="text-[13px] text-muted-foreground leading-relaxed">
+                {feature.desc}
+              </p>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Use Cases */}
-      <div>
-        <h2 className="text-3xl font-bold text-center mb-8">
-          Perfect For Your Use Case
-        </h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {useCases.map((useCase, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <CardTitle className="text-xl">{useCase.title}</CardTitle>
-                <CardDescription>{useCase.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {useCase.benefits.map((benefit, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">{benefit}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <Card className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-        <CardContent className="text-center py-12">
-          <h2 className="text-3xl font-bold mb-4">Ready to Build?</h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join developers building the future of decentralized content
-            delivery
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/api-showcase">
-              <Button size="lg" variant="secondary" className="gap-2">
-                <PlayCircle className="h-5 w-5" />
-                Try Live API Demo
-              </Button>
-            </Link>
+      {/* CTA — simple, not a gradient card */}
+      <div className="border-t border-border pt-10 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">
+              Start building
+            </h2>
+            <p className="text-[14px] text-muted-foreground mt-1">
+              Free tier includes 10K requests/month and 1GB bandwidth.
+            </p>
+          </div>
+          <div className="flex gap-3">
             <Link to="/register">
+              <Button className="h-9 px-4 text-[13px] font-medium gap-1.5">
+                Create account
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+            <Link to="/api">
               <Button
-                size="lg"
                 variant="outline"
-                className="gap-2 text-white border-white hover:bg-white hover:text-blue-600"
+                className="h-9 px-4 text-[13px] font-medium"
               >
-                <Users className="h-5 w-5" />
-                Start Building
-                <ArrowRight className="h-4 w-4" />
+                Read docs
               </Button>
             </Link>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

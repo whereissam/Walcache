@@ -19,7 +19,6 @@ interface FileUploaderProps {
 
 export const FileUploader = memo(function FileUploader({
   selectedVault,
-  onUploadSuccess,
   onFileUpload,
   onWalrusUpload,
 }: FileUploaderProps) {
@@ -122,28 +121,17 @@ export const FileUploader = memo(function FileUploader({
         {Object.entries(uploads).map(([id, upload]) => (
           <div key={id} className="mt-4 p-3 border rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">{upload.fileName}</span>
-              <span className="text-sm text-gray-500">
-                {upload.status === 'uploading' &&
-                  upload.progress < 80 &&
-                  `Uploading ${upload.progress}%`}
-                {upload.status === 'uploading' &&
-                  upload.progress >= 80 &&
-                  'Verifying on Walrus...'}
-                {upload.status === 'completed' && '✅ Uploaded & Verified'}
-                {upload.status === 'error' && '❌ Failed'}
+              <span className="text-sm font-medium">{upload.filename}</span>
+              <span className="text-sm text-muted-foreground">
+                {upload.status === 'processing' && 'Processing...'}
+                {upload.status === 'completed' && 'Uploaded'}
+                {upload.status === 'failed' && 'Failed'}
               </span>
             </div>
-            {upload.status === 'uploading' && (
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${upload.progress}%` }}
-                />
+            {upload.status === 'processing' && (
+              <div className="w-full bg-muted rounded-full h-1.5">
+                <div className="bg-primary h-1.5 rounded-full animate-pulse w-2/3" />
               </div>
-            )}
-            {upload.status === 'error' && upload.error && (
-              <p className="text-sm text-red-600">{upload.error}</p>
             )}
           </div>
         ))}

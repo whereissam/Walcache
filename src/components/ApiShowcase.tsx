@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   BarChart3,
   CheckCircle,
@@ -10,7 +10,6 @@ import {
   Loader2,
   Play,
   Settings,
-  Upload,
   XCircle,
   Zap,
 } from 'lucide-react'
@@ -47,13 +46,10 @@ export function ApiShowcase() {
   const {
     listBlobs,
     fetchBlob,
-    createUpload,
     fetchGlobalAnalytics,
     fetchCacheStatistics,
     preloadBlobs,
     pinBlob,
-    unpinBlob,
-    clearCacheEntries,
     error,
     setError,
     isLoading,

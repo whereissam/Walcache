@@ -1,6 +1,5 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import { useWalcacheStore } from '../store/walcacheStore'
-import { Card, CardContent } from './ui/card'
 import { VaultSelector } from './VaultSelector'
 import { FileUploader } from './FileUploader'
 import { FilesList } from './FilesList'
@@ -8,10 +7,10 @@ import { DirectUploads } from './DirectUploads'
 import { ErrorHandler, useErrorHandler } from './ErrorHandler'
 
 interface FileStatus {
-  walrusExists: boolean | null // true=可用, false=不存在/同步中, null=檢查失敗
-  foundOnNetwork?: 'testnet' | 'mainnet' // 在哪個網絡找到
-  workingAggregator?: string // 可用的 aggregator URL
-  suiObjectExists?: boolean // Sui 區塊鏈上是否有對應物件
+  walrusExists: boolean | null
+  foundOnNetwork?: 'testnet' | 'mainnet'
+  workingAggregator?: string
+  suiObjectExists?: boolean
   lastChecked?: Date
 }
 
@@ -43,9 +42,7 @@ export const UploadManager = memo(function UploadManager() {
     uploadToWalrusAndVerify,
     setError,
     error,
-    // v1 API methods
     createUpload,
-    listUploads,
     fetchBlob,
   } = useWalcacheStore()
 
@@ -53,8 +50,6 @@ export const UploadManager = memo(function UploadManager() {
 
   useEffect(() => {
     fetchVaults()
-
-    // Load direct uploads from localStorage
     const saved = localStorage.getItem('wcdn-direct-uploads')
     if (saved) {
       try {
@@ -69,193 +64,105 @@ export const UploadManager = memo(function UploadManager() {
           status: string
           suiRef?: string
         }>
-        // Convert date strings back to Date objects
-        const withDates = parsed.map((upload) => ({
-          ...upload,
-          uploadedAt: new Date(upload.uploadedAt),
-        }))
-        setDirectUploads(withDates)
-      } catch (error) {
-        console.warn('Failed to load direct uploads from localStorage:', error)
+        setDirectUploads(
+          parsed.map((u) => ({ ...u, uploadedAt: new Date(u.uploadedAt) })),
+        )
+      } catch {
+        // ignore
       }
     }
   }, [fetchVaults])
 
   useEffect(() => {
-    if (selectedVault) {
-      fetchFiles(selectedVault)
-    }
+    if (selectedVault) fetchFiles(selectedVault)
   }, [selectedVault, fetchFiles])
 
   useEffect(() => {
-    // Save direct uploads to localStorage
     localStorage.setItem('wcdn-direct-uploads', JSON.stringify(directUploads))
   }, [directUploads])
 
   const handleFileUpload = useCallback(
     async (fileList: FileList) => {
       if (fileList.length === 0) return
-
       if (!selectedVault) {
-        setError('Please select a vault before uploading')
+        setError('Select a vault before uploading')
         return
       }
-
       const file = fileList[0]
       try {
-        // Try v1 API first
         try {
-          const upload = await createUpload(file, {
-            vault_id: selectedVault,
-          })
-
-          // Get blob information
+          const upload = await createUpload(file, { vault_id: selectedVault })
           const blob = await fetchBlob(upload.blob_id)
-
-          console.log(`✅ File uploaded via v1 API:`, {
-            uploadId: upload.id,
-            blobId: blob.id,
-            cached: blob.cached,
-          })
-
           setFileStatuses((prev) => ({
             ...prev,
-            [blob.id]: {
-              walrusExists: blob.cached,
+            [blob.id]: { walrusExists: blob.cached, lastChecked: new Date() },
+          }))
+        } catch {
+          const result = await uploadAndVerify(file, selectedVault)
+          setFileStatuses((prev) => ({
+            ...prev,
+            [result.file.blobId]: {
+              walrusExists: result.verified,
+              foundOnNetwork: result.verified
+                ? (result.network as 'testnet' | 'mainnet')
+                : undefined,
               lastChecked: new Date(),
             },
           }))
-        } catch (v1Error) {
-          console.warn('v1 API upload failed, falling back to legacy method')
-
-          // Fallback to legacy uploadAndVerify
-          const result = await uploadAndVerify(file, selectedVault)
-
-          if (result.verified) {
-            console.log(`✅ File uploaded and verified on ${result.network}!`)
-            setFileStatuses((prev) => ({
-              ...prev,
-              [result.file.blobId]: {
-                walrusExists: true,
-                foundOnNetwork: result.network as 'testnet' | 'mainnet',
-                lastChecked: new Date(),
-              },
-            }))
-          } else {
-            console.log(
-              `⚠️ File uploaded to Vault but blob not yet available on Walrus`,
-            )
-            setFileStatuses((prev) => ({
-              ...prev,
-              [result.file.blobId]: {
-                walrusExists: false,
-                lastChecked: new Date(),
-              },
-            }))
-          }
         }
-      } catch (error) {
-        console.error('Upload failed:', error)
-        const processedError = handleError(error)
-        setError(processedError)
+      } catch (err) {
+        setError(handleError(err))
       }
     },
-    [selectedVault, createUpload, fetchBlob, uploadAndVerify, setError],
+    [
+      selectedVault,
+      createUpload,
+      fetchBlob,
+      uploadAndVerify,
+      setError,
+      handleError,
+    ],
   )
 
   const handleWalrusUpload = useCallback(
     async (fileList: FileList) => {
       if (fileList.length === 0) return
-
       const file = fileList[0]
-
-      // Check file size (10MB limit for Walrus)
       if (file.size > 10 * 1024 * 1024) {
         setError('File too large. Walrus has a 10MB limit.')
         return
       }
-
       try {
-        console.log(`🚀 Testing direct Walrus upload for ${file.name}...`)
         const result = await uploadToWalrusAndVerify(file)
-
-        if (result.verified) {
-          console.log(
-            `✅ Direct Walrus upload successful and verified on ${result.network}!`,
-          )
-          console.log('Upload result:', result.upload)
-
-          // Store the successful upload info for reference
-          setFileStatuses((prev) => ({
-            ...prev,
-            [result.upload.blobId]: {
-              walrusExists: true,
-              foundOnNetwork: result.network as 'testnet' | 'mainnet',
-              lastChecked: new Date(),
-            },
-          }))
-
-          // Add to direct uploads list for display
-          setDirectUploads((prev) => [
-            {
-              blobId: result.upload.blobId,
-              fileName: result.upload.fileName,
-              size: result.upload.size,
-              contentType: result.upload.contentType,
-              cdnUrl: result.upload.cdnUrl,
-              directUrl: result.upload.directUrl,
-              uploadedAt: new Date(),
-              status: result.upload.status,
-              suiRef: result.upload.suiRef,
-            },
-            ...prev,
-          ])
-
-          // Show success message with details
-          alert(
-            `✅ Success!\n\nBlob ID: ${result.upload.blobId}\nNetwork: ${result.network}\nStatus: ${result.upload.status}\nSui Ref: ${result.upload.suiRef}`,
-          )
-        } else {
-          console.log(
-            `⚠️ Direct Walrus upload completed but blob not yet available on aggregators`,
-          )
-          console.log('Upload result:', result.upload)
-
-          // Mark as uploaded but syncing
-          setFileStatuses((prev) => ({
-            ...prev,
-            [result.upload.blobId]: {
-              walrusExists: false,
-              lastChecked: new Date(),
-            },
-          }))
-
-          // Add to direct uploads list even if not verified yet
-          setDirectUploads((prev) => [
-            {
-              blobId: result.upload.blobId,
-              fileName: result.upload.fileName,
-              size: result.upload.size,
-              contentType: result.upload.contentType,
-              cdnUrl: result.upload.cdnUrl,
-              directUrl: result.upload.directUrl,
-              uploadedAt: new Date(),
-              status: result.upload.status + ' (syncing)',
-              suiRef: result.upload.suiRef,
-            },
-            ...prev,
-          ])
-
-          alert(
-            `⏳ Upload successful but still syncing\n\nBlob ID: ${result.upload.blobId}\nStatus: ${result.upload.status}\n\nThe blob may take a few minutes to appear on aggregators.`,
-          )
-        }
-      } catch (error) {
-        console.error('Direct Walrus upload failed:', error)
+        setFileStatuses((prev) => ({
+          ...prev,
+          [result.upload.blobId]: {
+            walrusExists: result.verified,
+            foundOnNetwork: result.verified
+              ? (result.network as 'testnet' | 'mainnet')
+              : undefined,
+            lastChecked: new Date(),
+          },
+        }))
+        setDirectUploads((prev) => [
+          {
+            blobId: result.upload.blobId,
+            fileName: result.upload.fileName,
+            size: result.upload.size,
+            contentType: result.upload.contentType,
+            cdnUrl: result.upload.cdnUrl,
+            directUrl: result.upload.directUrl,
+            uploadedAt: new Date(),
+            status: result.verified
+              ? result.upload.status
+              : result.upload.status + ' (syncing)',
+            suiRef: result.upload.suiRef,
+          },
+          ...prev,
+        ])
+      } catch (err) {
         setError(
-          error instanceof Error
-            ? error.message
-            : 'Direct Walrus upload failed',
+          err instanceof Error ? err.message : 'Direct Walrus upload failed',
         )
       }
     },
@@ -266,28 +173,18 @@ export const UploadManager = memo(function UploadManager() {
     url: string,
     type: 'cdn' | 'blobId' | 'aggregator' | 'download',
   ) => {
-    try {
-      await navigator.clipboard.writeText(url)
-      setCopiedUrl(type + ':' + url)
-      setTimeout(() => setCopiedUrl(null), 2000)
-    } catch (error) {
-      console.error('Failed to copy:', error)
-    }
-  }
-
-  const handleFileStatusChange = (blobId: string, status: FileStatus) => {
-    setFileStatuses((prev) => ({
-      ...prev,
-      [blobId]: status,
-    }))
+    await navigator.clipboard.writeText(url)
+    setCopiedUrl(type + ':' + url)
+    setTimeout(() => setCopiedUrl(null), 2000)
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Upload Manager</h1>
-        <p className="text-sm sm:text-base text-gray-600">
-          Upload files to Walrus via Tusky.io and access them through WCDN
+        <h1 className="text-2xl font-bold tracking-tight">Upload</h1>
+        <p className="text-[14px] text-muted-foreground mt-1">
+          Upload files to Walrus and serve them through the CDN.
         </p>
       </div>
 
@@ -308,7 +205,9 @@ export const UploadManager = memo(function UploadManager() {
       <FilesList
         selectedVault={selectedVault}
         fileStatuses={fileStatuses}
-        onFileStatusChange={handleFileStatusChange}
+        onFileStatusChange={(blobId, status) =>
+          setFileStatuses((prev) => ({ ...prev, [blobId]: status }))
+        }
         copiedUrl={copiedUrl}
         showingLinksFor={showingLinksFor}
         onCopyUrl={copyToClipboard}
@@ -325,18 +224,11 @@ export const UploadManager = memo(function UploadManager() {
         onToggleLinks={setShowingLinksFor}
       />
 
-      {/* Error Display with v1 API Error Handling */}
+      {/* Error */}
       {error && (
         <ErrorHandler
           error={error}
-          onRetry={
-            shouldShowRetry(error)
-              ? () => {
-                  // Retry last operation
-                  setError(null)
-                }
-              : undefined
-          }
+          onRetry={shouldShowRetry(error) ? () => setError(null) : undefined}
           onDismiss={() => setError(null)}
           showRetry={shouldShowRetry(error)}
         />

@@ -10,7 +10,7 @@ import {
 } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
-import type { ChainInfo, SupportedChain } from '../types/chains'
+import type { SupportedChain } from '../types/chains'
 
 // Re-export for convenience
 export type { SupportedChain }
@@ -63,7 +63,7 @@ export function ChainSelector({
 }: ChainSelectorProps) {
   const [blobStatuses, setBlobStatuses] = React.useState<
     Record<SupportedChain, ChainBlobStatus>
-  >({})
+  >({} as Record<SupportedChain, ChainBlobStatus>)
 
   React.useEffect(() => {
     if (showBlobStatus && blobId) {

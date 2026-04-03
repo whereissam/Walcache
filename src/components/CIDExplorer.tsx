@@ -1,14 +1,10 @@
 import { useState } from 'react'
 import { WALCACHE_BASE_URL } from '@/config/env'
 import {
-  Activity,
+  Check,
   Clock,
   Copy,
-  Download,
   ExternalLink,
-  FileText,
-  Globe,
-  HardDrive,
   Pin,
   PinOff,
   RefreshCw,
@@ -21,32 +17,31 @@ import {
   formatLatency,
   formatNumber,
   formatPercentage,
-  truncateCID,
 } from '../lib/utils'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from './ui/card'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 
 export function CIDExplorer() {
   const [searchCID, setSearchCID] = useState('')
-  const [copySuccess, setCopySuccess] = useState(false)
+  const [copySuccess, setCopySuccess] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
-  const [autoRetryTimer, setAutoRetryTimer] = useState<NodeJS.Timeout | null>(
-    null,
-  )
-  const { cidInfo, isLoading, error, fetchCIDStats, pinCID, unpinCID } =
-    useWalcacheStore()
+  const {
+    cidInfo,
+    isLoading,
+    error: rawError,
+    fetchCIDStats,
+    pinCID,
+    unpinCID,
+  } = useWalcacheStore()
+  const error = rawError
+    ? typeof rawError === 'string'
+      ? rawError
+      : rawError.message
+    : null
 
   const handleSearch = () => {
     if (searchCID.trim()) {
       setRetryCount(0)
-      clearAutoRetry()
       fetchCIDStats(searchCID.trim())
     }
   }
@@ -58,488 +53,291 @@ export function CIDExplorer() {
     }
   }
 
-  const startAutoRetry = (delaySeconds: number = 5) => {
-    clearAutoRetry()
-    const timer = setTimeout(() => {
-      handleRetry()
-    }, delaySeconds * 1000)
-    setAutoRetryTimer(timer)
-  }
+  const isNotSyncedError = (errorMsg: string) =>
+    errorMsg.includes('BLOB_NOT_AVAILABLE_YET') ||
+    errorMsg.includes('not yet synced')
 
-  const clearAutoRetry = () => {
-    if (autoRetryTimer) {
-      clearTimeout(autoRetryTimer)
-      setAutoRetryTimer(null)
-    }
-  }
-
-  const isNotSyncedError = (errorMsg: string) => {
-    return (
-      errorMsg.includes('BLOB_NOT_AVAILABLE_YET') ||
-      errorMsg.includes('尚未同步') ||
-      errorMsg.includes('not yet synced')
-    )
-  }
-
-  const handlePin = async () => {
-    if (cidInfo?.cid) {
-      await pinCID(cidInfo.cid)
-    }
-  }
-
-  const handleUnpin = async () => {
-    if (cidInfo?.cid) {
-      await unpinCID(cidInfo.cid)
-    }
-  }
-
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async (text: string, key: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      setCopySuccess(true)
-      setTimeout(() => setCopySuccess(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy: ', err)
+      setCopySuccess(key)
+      setTimeout(() => setCopySuccess(null), 2000)
+    } catch {
+      // Clipboard unavailable
     }
   }
 
-  const getSourceDisplayName = (source?: string, cid?: string) => {
-    // If source is provided, use it
-    if (source === 'walrus') return 'Walrus Network'
-    if (source === 'ipfs') return 'IPFS Gateway'
-
-    // Auto-detect from CID format if source is unknown
-    if (cid) {
-      if (cid.startsWith('bafkrei') || cid.startsWith('Qm')) {
-        return 'IPFS/Walrus'
-      }
-      if (/^[a-zA-Z0-9-_]{20,}={0,2}$/.test(cid)) {
-        return 'Walrus Network'
-      }
-    }
-
+  const getSourceLabel = (source?: string, cid?: string) => {
+    if (source === 'walrus') return 'Walrus'
+    if (source === 'ipfs') return 'IPFS'
+    if (cid?.startsWith('bafkrei') || cid?.startsWith('Qm'))
+      return 'IPFS/Walrus'
     return 'Unknown'
   }
 
-  const getSourceColor = (source?: string) => {
-    switch (source) {
-      case 'walrus':
-        return 'text-primary'
-      case 'ipfs':
-        return 'text-purple-600'
-      default:
-        return 'text-muted-foreground'
-    }
-  }
-
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">CID Explorer</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          Search and manage individual content by CID
+        <h1 className="text-2xl font-bold tracking-tight">Explorer</h1>
+        <p className="text-[14px] text-muted-foreground mt-1">
+          Look up any blob by CID to inspect cache status and analytics.
         </p>
       </div>
 
       {/* Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Search CID</CardTitle>
-          <CardDescription>
-            Enter a Walrus CID to view its cache status and statistics
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-            <Input
-              placeholder="Enter CID (e.g., bafybeihabcxyz123...)"
-              value={searchCID}
-              onChange={(e) => setSearchCID(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              className="flex-1"
-            />
-            <Button
-              onClick={handleSearch}
-              disabled={isLoading}
-              className="w-full sm:w-auto"
-            >
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex gap-2">
+        <Input
+          placeholder="Enter blob ID or CID..."
+          value={searchCID}
+          onChange={(e) => setSearchCID(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          className="h-9 text-[14px] font-mono flex-1"
+        />
+        <Button
+          onClick={handleSearch}
+          disabled={isLoading || !searchCID.trim()}
+          className="h-9 px-4 text-[13px]"
+        >
+          <Search className="h-3.5 w-3.5 mr-1.5" />
+          Search
+        </Button>
+      </div>
 
-      {/* Loading State */}
+      {/* Loading */}
       {isLoading && (
-        <Card>
-          <CardContent className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <Card>
-          <CardContent className="space-y-4">
-            {isNotSyncedError(error) ? (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-5 w-5 text-yellow-600" />
-                  <p className="text-yellow-800 font-medium">資料尚未同步</p>
-                </div>
-                <p className="text-sm text-yellow-700">
-                  此 blob 可能還未同步到 Walrus
-                  aggregator。這是正常現象，通常需要 1-2 分鐘完成同步。
-                </p>
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                  <Button
-                    onClick={handleRetry}
-                    disabled={isLoading}
-                    size="sm"
-                    className="w-full sm:w-auto"
-                  >
-                    <RefreshCw
-                      className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`}
-                    />
-                    重試 {retryCount > 0 && `(${retryCount})`}
-                  </Button>
-                  {!autoRetryTimer && !isLoading && (
-                    <Button
-                      onClick={() => startAutoRetry(10)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full sm:w-auto"
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      10秒後自動重試
-                    </Button>
-                  )}
-                  {autoRetryTimer && (
-                    <Button
-                      onClick={clearAutoRetry}
-                      variant="outline"
-                      size="sm"
-                      className="w-full sm:w-auto"
-                    >
-                      取消自動重試
-                    </Button>
-                  )}
-                </div>
-                <div className="text-xs text-yellow-600 space-y-1">
-                  <p>
-                    💡 <strong>建議：</strong>
-                  </p>
-                  <ul className="list-disc list-inside space-y-1 ml-4">
-                    <li>等待 1-2 分鐘後重試</li>
-                    <li>確認 blob ID 是否正確</li>
-                    <li>檢查此內容是否剛上傳</li>
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 space-y-3">
-                <p className="text-destructive-foreground font-medium">
-                  錯誤: {error}
-                </p>
-                <div className="text-sm text-destructive space-y-2">
-                  <p className="font-medium">可能的原因：</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>此 blob ID 不存在於 Walrus 網路</li>
-                    <li>網路連線問題</li>
-                    <li>Walrus aggregator 服務異常</li>
-                  </ul>
-                </div>
-                <Button
-                  onClick={handleRetry}
-                  disabled={isLoading}
-                  size="sm"
-                  variant="outline"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`}
-                  />
-                  重試
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* CID Information */}
-      {cidInfo && !isLoading && (
-        <div className="space-y-6">
-          {/* Overview */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-lg">CID Information</CardTitle>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <CardDescription className="font-mono text-xs sm:text-sm break-all">
-                      {cidInfo.cid}
-                    </CardDescription>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(cidInfo.cid)}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  {cidInfo.pinned ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleUnpin}
-                      disabled={isLoading}
-                      className="w-full sm:w-auto"
-                    >
-                      <PinOff className="h-4 w-4 mr-2" />
-                      Unpin
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handlePin}
-                      disabled={isLoading}
-                      className="w-full sm:w-auto"
-                    >
-                      <Pin className="h-4 w-4 mr-2" />
-                      Pin
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <HardDrive className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm font-medium">Cache Status</span>
-                  </div>
-                  <div className="text-xl sm:text-2xl font-bold">
-                    {cidInfo.cached ? 'Cached' : 'Not Cached'}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {cidInfo.pinned ? 'Pinned' : 'Not Pinned'}
-                  </p>
-                </div>
-
-                {cidInfo.cacheDate && (
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-green-500" />
-                      <span className="text-sm font-medium">Cache Date</span>
-                    </div>
-                    <div className="text-lg font-bold">
-                      {formatDate(cidInfo.cacheDate)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      TTL: {cidInfo.ttl || 0}s
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Globe className="h-4 w-4 text-purple-500" />
-                    <span className="text-sm font-medium">Source</span>
-                  </div>
-                  <div
-                    className={`text-lg font-bold ${getSourceColor(cidInfo.source)}`}
-                  >
-                    {getSourceDisplayName(cidInfo.source, cidInfo.cid)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Content origin
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Activity className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm font-medium">Actions</span>
-                  </div>
-                  <div className="flex flex-col space-y-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        window.open(
-                          `${WALCACHE_BASE_URL}/cdn/${cidInfo.cid}`,
-                          '_blank',
-                        )
-                      }
-                      className="w-full"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View Content
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        copyToClipboard(
-                          `${WALCACHE_BASE_URL}/cdn/${cidInfo.cid}`,
-                        )
-                      }
-                      className="w-full"
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      {copySuccess ? 'Copied!' : 'Copy URL'}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Blob Metadata */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Blob Metadata</CardTitle>
-              <CardDescription>
-                Technical details about the content
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Content Type</span>
-                  </div>
-                  <div className="text-lg font-bold">
-                    {cidInfo.contentType || 'application/octet-stream'}
-                  </div>
-                  <p className="text-xs text-muted-foreground">MIME type</p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <HardDrive className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Size</span>
-                  </div>
-                  <div className="text-lg font-bold">
-                    {formatBytes(cidInfo.size || 0)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">File size</p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Download className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Gateway Status</span>
-                  </div>
-                  <div className="text-lg font-bold">
-                    {cidInfo.cached ? 'Available' : 'Not Cached'}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    CDN availability
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Statistics */}
-          {cidInfo.stats && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Usage Statistics</CardTitle>
-                <CardDescription>
-                  Request patterns and performance metrics
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Total Requests
-                    </span>
-                    <div className="text-xl sm:text-2xl font-bold">
-                      {formatNumber(cidInfo.stats.requests)}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Hit Rate
-                    </span>
-                    <div className="text-xl sm:text-2xl font-bold">
-                      {formatPercentage(cidInfo.stats.hitRate)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {cidInfo.stats.hits} hits, {cidInfo.stats.misses} misses
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Avg Latency
-                    </span>
-                    <div className="text-xl sm:text-2xl font-bold">
-                      {formatLatency(cidInfo.stats.avgLatency)}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Total Size
-                    </span>
-                    <div className="text-xl sm:text-2xl font-bold">
-                      {formatBytes(cidInfo.stats.totalSize)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      First Access
-                    </span>
-                    <div className="text-base sm:text-lg font-semibold">
-                      {formatDate(cidInfo.stats.firstAccess)}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Last Access
-                    </span>
-                    <div className="text-base sm:text-lg font-semibold">
-                      {formatDate(cidInfo.stats.lastAccess)}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* No Stats Message */}
-          {!cidInfo.stats && (
-            <Card>
-              <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">
-                  No usage statistics available for this CID.
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Statistics will appear after the first request to this
-                  content.
-                </p>
-              </CardContent>
-            </Card>
-          )}
+        <div className="flex items-center justify-center h-32">
+          <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       )}
+
+      {/* Error */}
+      {error && !isLoading && (
+        <div
+          className={`rounded-lg border px-4 py-3 ${
+            isNotSyncedError(error)
+              ? 'border-chart-2/30 bg-chart-2/5'
+              : 'border-destructive/20 bg-destructive/5'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <Clock
+              className={`h-4 w-4 mt-0.5 ${isNotSyncedError(error) ? 'text-chart-2' : 'text-destructive'}`}
+            />
+            <div className="flex-1 space-y-2">
+              <p
+                className={`text-[13px] font-medium ${isNotSyncedError(error) ? 'text-chart-2' : 'text-destructive'}`}
+              >
+                {isNotSyncedError(error)
+                  ? 'Blob not synced yet — this usually takes 1-2 minutes after upload.'
+                  : error}
+              </p>
+              <Button
+                onClick={handleRetry}
+                variant="outline"
+                size="sm"
+                className="h-7 text-[12px]"
+              >
+                <RefreshCw
+                  className={`h-3 w-3 mr-1 ${isLoading ? 'animate-spin' : ''}`}
+                />
+                Retry {retryCount > 0 && `(${retryCount})`}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
+      {cidInfo && !isLoading && (
+        <div className="space-y-6">
+          {/* CID header */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium ${
+                    cidInfo.cached
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {cidInfo.cached ? 'Cached' : 'Not cached'}
+                </span>
+                {cidInfo.pinned && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-chart-2/10 text-chart-2 text-[11px] font-medium">
+                    <Pin className="h-2.5 w-2.5" /> Pinned
+                  </span>
+                )}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <code className="text-[13px] font-mono text-foreground/80 break-all">
+                  {cidInfo.cid}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(cidInfo.cid, 'cid')}
+                  className="shrink-0 p-1 rounded text-muted-foreground hover:text-foreground"
+                  aria-label="Copy CID"
+                >
+                  {copySuccess === 'cid' ? (
+                    <Check className="h-3 w-3 text-primary" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              {cidInfo.pinned ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => unpinCID(cidInfo.cid)}
+                  className="h-7 text-[12px]"
+                >
+                  <PinOff className="h-3 w-3 mr-1" /> Unpin
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => pinCID(cidInfo.cid)}
+                  className="h-7 text-[12px]"
+                >
+                  <Pin className="h-3 w-3 mr-1" /> Pin
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[12px]"
+                onClick={() =>
+                  window.open(
+                    `${WALCACHE_BASE_URL}/cdn/${cidInfo.cid}`,
+                    '_blank',
+                  )
+                }
+              >
+                <ExternalLink className="h-3 w-3 mr-1" /> View
+              </Button>
+            </div>
+          </div>
+
+          {/* Metadata table */}
+          <div className="rounded-lg border border-border overflow-hidden">
+            <table className="w-full text-[13px]">
+              <tbody>
+                {[
+                  [
+                    'Content type',
+                    cidInfo.contentType || 'application/octet-stream',
+                  ],
+                  ['Size', formatBytes(cidInfo.size || 0)],
+                  ['Source', getSourceLabel(cidInfo.source, cidInfo.cid)],
+                  ...(cidInfo.cacheDate
+                    ? [['Cached since', formatDate(cidInfo.cacheDate)]]
+                    : []),
+                  ...(cidInfo.ttl ? [['TTL', `${cidInfo.ttl}s`]] : []),
+                ].map(([label, value], i) => (
+                  <tr
+                    key={label}
+                    className={i > 0 ? 'border-t border-border' : ''}
+                  >
+                    <td className="px-4 py-2.5 text-muted-foreground w-40">
+                      {label}
+                    </td>
+                    <td className="px-4 py-2.5 font-medium text-foreground">
+                      {value}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Stats grid */}
+          {cidInfo.stats && (
+            <div className="space-y-3">
+              <h3 className="text-[13px] font-medium text-foreground">
+                Usage statistics
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                <StatItem
+                  label="Total requests"
+                  value={formatNumber(cidInfo.stats.requests)}
+                />
+                <StatItem
+                  label="Hit rate"
+                  value={formatPercentage(cidInfo.stats.hitRate)}
+                  sub={`${cidInfo.stats.hits} hits / ${cidInfo.stats.misses} misses`}
+                />
+                <StatItem
+                  label="Avg latency"
+                  value={formatLatency(cidInfo.stats.avgLatency)}
+                />
+                <StatItem
+                  label="Total served"
+                  value={formatBytes(cidInfo.stats.totalSize)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-6 pt-2">
+                <StatItem
+                  label="First access"
+                  value={formatDate(cidInfo.stats.firstAccess)}
+                />
+                <StatItem
+                  label="Last access"
+                  value={formatDate(cidInfo.stats.lastAccess)}
+                />
+              </div>
+            </div>
+          )}
+
+          {!cidInfo.stats && (
+            <div className="text-center py-8 text-[13px] text-muted-foreground">
+              No usage data yet. Statistics appear after the first request.
+            </div>
+          )}
+
+          {/* CDN URL copy */}
+          <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-card">
+            <code className="text-[12px] font-mono text-muted-foreground flex-1 truncate">
+              {WALCACHE_BASE_URL}/cdn/{cidInfo.cid}
+            </code>
+            <button
+              onClick={() =>
+                copyToClipboard(
+                  `${WALCACHE_BASE_URL}/cdn/${cidInfo.cid}`,
+                  'url',
+                )
+              }
+              className="shrink-0 px-2.5 py-1 rounded text-[12px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              {copySuccess === 'url' ? 'Copied' : 'Copy URL'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StatItem({
+  label,
+  value,
+  sub,
+}: {
+  label: string
+  value: string
+  sub?: string
+}) {
+  return (
+    <div className="space-y-0.5">
+      <div className="text-[12px] text-muted-foreground">{label}</div>
+      <div className="text-lg font-bold text-foreground tabular-nums tracking-tight">
+        {value}
+      </div>
+      {sub && <div className="text-[11px] text-muted-foreground/70">{sub}</div>}
     </div>
   )
 }

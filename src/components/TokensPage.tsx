@@ -7,13 +7,9 @@ import {
   CheckCircle,
   Copy,
   Database,
-  Eye,
-  EyeOff,
   Key,
   Loader2,
   Plus,
-  Settings,
-  Shield,
   Trash2,
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
@@ -30,13 +26,6 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Badge } from './ui/badge'
 import { Alert, AlertDescription } from './ui/alert'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select'
 import type { ApiToken } from '../store/authStore'
 
 interface CreateTokenForm {
@@ -55,7 +44,7 @@ export const TokensPage = () => {
 }
 
 function TokensContent() {
-  const { user, tokens, createToken, loadTokens, revokeToken, loading, error } =
+  const { tokens, createToken, loadTokens, revokeToken, loading, error } =
     useAuthStore()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showTokenModal, setShowTokenModal] = useState<string | null>(null)
@@ -67,15 +56,11 @@ function TokensContent() {
     handleSubmit,
     formState: { errors },
     reset,
-    setValue,
-    watch,
   } = useForm<CreateTokenForm>({
     defaultValues: {
       permissions: ['READ_CDN'],
     },
   })
-
-  const watchedPermissions = watch('permissions')
 
   useEffect(() => {
     loadTokens()

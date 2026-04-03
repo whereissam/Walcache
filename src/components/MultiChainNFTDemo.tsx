@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { WALCACHE_BASE_URL } from '@/config/env'
 import {
   Activity,
-  AlertTriangle,
   Clock,
   Copy,
   Database,
@@ -113,7 +112,6 @@ export function MultiChainNFTDemo() {
     fetchCacheStats,
     fetchCIDStats,
     cidInfo,
-    isLoading,
   } = useWalcacheStore()
 
   // Real latency tracking
@@ -310,37 +308,37 @@ export function MultiChainNFTDemo() {
             {cacheStats && (
               <>
                 <div className="text-center p-3 border rounded-lg">
-                  <div className="text-sm font-medium mb-1">Memory Cache</div>
+                  <div className="text-sm font-medium mb-1">Total Entries</div>
                   <div className="text-xl sm:text-2xl font-bold mb-1">
-                    {cacheStats.memory.keys}
+                    {cacheStats.total_entries}
                   </div>
                   <div
                     className={`text-xs px-2 py-1 rounded ${
-                      cacheStats.memory.hitRate > 70
+                      cacheStats.hit_rate > 70
                         ? 'bg-green-100 text-green-800'
-                        : cacheStats.memory.hitRate > 40
+                        : cacheStats.hit_rate > 40
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-red-100 text-red-800'
                     }`}
                   >
-                    {cacheStats.memory.hitRate.toFixed(1)}% hit rate
+                    {cacheStats.hit_rate.toFixed(1)}% hit rate
                   </div>
                 </div>
 
                 <div className="text-center p-3 border rounded-lg">
-                  <div className="text-sm font-medium mb-1">Redis Cache</div>
+                  <div className="text-sm font-medium mb-1">Pinned</div>
                   <div className="text-xl sm:text-2xl font-bold mb-1">
-                    {cacheStats.redis.keys}
+                    {cacheStats.pinned_entries}
                   </div>
                   <div className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
-                    {(cacheStats.redis.memory / 1024).toFixed(1)} KB used
+                    {cacheStats.memory_usage_mb.toFixed(1)} MB used
                   </div>
                 </div>
 
                 <div className="text-center p-3 border rounded-lg">
-                  <div className="text-sm font-medium mb-1">Status</div>
+                  <div className="text-sm font-medium mb-1">Redis</div>
                   <div className="text-xl sm:text-2xl font-bold mb-1">
-                    {cacheStats.using.toUpperCase()}
+                    {cacheStats.redis_connected ? 'CONNECTED' : 'MEMORY'}
                   </div>
                   <div className="text-xs px-2 py-1 rounded bg-purple-100 text-purple-800">
                     Active Backend
