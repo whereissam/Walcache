@@ -14,3 +14,5 @@ uploads/
 frontend.log
 .cta.json
 cdn-server/data/
+.gstack/
+.claude/

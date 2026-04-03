@@ -308,6 +308,9 @@ export interface CIDInfo {
   pinned: boolean
   cacheDate?: string
   ttl?: number
+  contentType?: string
+  size?: number
+  source?: string
 }
 
 /**
