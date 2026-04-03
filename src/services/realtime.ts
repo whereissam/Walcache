@@ -3,35 +3,27 @@ import { WALCACHE_API_URL } from '@/config/env'
 import { useWalcacheStore } from '../store/walcacheStore'
 import { useAuthStore } from '../store/authStore'
 
+type StatusListener = (status: { isConnected: boolean; reconnectAttempts: number }) => void
+
 export class RealtimeService {
-  private ws: WebSocket | null = null
+  private ws: EventSource | null = null
   private reconnectInterval: NodeJS.Timeout | null = null
   private heartbeatInterval: NodeJS.Timeout | null = null
-  private isConnected = false
+  private _isConnected = false
   private reconnectAttempts = 0
   private maxReconnectAttempts = 5
   private reconnectDelay = 1000
-
-  constructor() {
-    // Removed auto-connect - connections now managed by components
-  }
+  private listeners = new Set<StatusListener>()
+  private consumerCount = 0
 
   public connect() {
-    if (this.ws) {
-      console.log('Already connected or connecting')
-      return
-    }
+    this.consumerCount++
+    if (this.ws) return
 
     const authStore = useAuthStore.getState()
-
-    if (!authStore.isAuthenticated) {
-      console.log('Not authenticated, skipping WebSocket connection')
-      return
-    }
+    if (!authStore.isAuthenticated) return
 
     try {
-      // For now, we'll use Server-Sent Events instead of WebSocket
-      // since the backend doesn't have WebSocket support yet
       this.setupServerSentEvents()
     } catch (error) {
       console.error('Failed to connect to real-time service:', error)
@@ -41,22 +33,17 @@ export class RealtimeService {
 
   private setupServerSentEvents() {
     const authStore = useAuthStore.getState()
+    if (!authStore.token) return
 
-    if (!authStore.token) {
-      console.log('No auth token available')
-      return
-    }
-
-    // Create EventSource for real-time updates
     const eventSource = new EventSource(
       `${WALCACHE_API_URL}/realtime?token=${authStore.token}`,
     )
 
     eventSource.onopen = () => {
-      console.log('Real-time connection established')
-      this.isConnected = true
+      this._isConnected = true
       this.reconnectAttempts = 0
       this.startHeartbeat()
+      this.notifyListeners()
     }
 
     eventSource.onmessage = (event) => {
@@ -68,95 +55,72 @@ export class RealtimeService {
       }
     }
 
-    eventSource.onerror = (error) => {
-      console.error('Real-time connection error:', error)
-      this.isConnected = false
+    eventSource.onerror = () => {
+      this._isConnected = false
       eventSource.close()
+      this.notifyListeners()
       this.scheduleReconnect()
     }
 
-    // Store reference for cleanup
-    this.ws = eventSource as any
+    this.ws = eventSource
   }
 
-  private handleRealtimeUpdate(data: any) {
+  private handleRealtimeUpdate(data: Record<string, unknown>) {
     const walcacheStore = useWalcacheStore.getState()
 
     switch (data.type) {
       case 'metrics_update':
-        // Update global stats without loading state
         walcacheStore.fetchGlobalStats()
         break
-
       case 'cid_stats_update':
-        if (data.cid && walcacheStore.currentCID === data.cid) {
+        if (typeof data.cid === 'string' && walcacheStore.currentCID === data.cid) {
           walcacheStore.fetchCIDStats(data.cid)
         }
         break
-
       case 'cache_stats_update':
-        // Update cache stats
         walcacheStore.fetchCacheStats()
         break
-
       case 'usage_alert':
-        // Handle usage alerts for user dashboard
+      case 'token_usage_update': {
         const authStore = useAuthStore.getState()
         if (authStore.isAuthenticated) {
-          authStore.loadDashboard()
+          if (data.type === 'usage_alert') authStore.loadDashboard()
+          else authStore.loadTokens()
         }
         break
-
-      case 'token_usage_update':
-        // Update token usage stats
-        const authStore2 = useAuthStore.getState()
-        if (authStore2.isAuthenticated) {
-          authStore2.loadTokens()
-        }
-        break
-
-      default:
-        console.log('Unknown real-time update type:', data.type)
+      }
     }
   }
 
   private startHeartbeat() {
     this.heartbeatInterval = setInterval(() => {
-      if (this.isConnected) {
-        // Send heartbeat or check connection
-        this.ping()
+      if (this._isConnected && this.ws && this.ws.readyState === EventSource.CLOSED) {
+        this._isConnected = false
+        this.notifyListeners()
+        this.scheduleReconnect()
       }
-    }, 30000) // 30 seconds
-  }
-
-  private ping() {
-    // For SSE, we can't send messages, so we'll just check if connection is alive
-    if (this.ws && this.ws.readyState === EventSource.CLOSED) {
-      this.isConnected = false
-      this.scheduleReconnect()
-    }
+    }, 30000)
   }
 
   private scheduleReconnect() {
-    if (this.reconnectInterval) {
-      clearInterval(this.reconnectInterval)
-    }
-
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('Max reconnection attempts reached')
-      return
-    }
+    if (this.reconnectInterval) clearInterval(this.reconnectInterval)
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) return
 
     this.reconnectAttempts++
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
 
-    console.log(
-      `Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`,
-    )
-
     this.reconnectInterval = setTimeout(() => {
+      this.consumerCount-- // connect() will re-increment
       this.connect()
     }, delay)
+  }
+
+  public release() {
+    this.consumerCount--
+    if (this.consumerCount <= 0) {
+      this.consumerCount = 0
+      this.disconnect()
+    }
   }
 
   public disconnect() {
@@ -164,38 +128,49 @@ export class RealtimeService {
       this.ws.close()
       this.ws = null
     }
-
     if (this.reconnectInterval) {
       clearInterval(this.reconnectInterval)
       this.reconnectInterval = null
     }
-
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval)
       this.heartbeatInterval = null
     }
-
-    this.isConnected = false
+    this._isConnected = false
     this.reconnectAttempts = 0
+    this.consumerCount = 0
+    this.notifyListeners()
   }
 
   public getConnectionStatus() {
     return {
-      isConnected: this.isConnected,
+      isConnected: this._isConnected,
       reconnectAttempts: this.reconnectAttempts,
     }
   }
+
+  public onStatusChange(listener: StatusListener): () => void {
+    this.listeners.add(listener)
+    return () => { this.listeners.delete(listener) }
+  }
+
+  private notifyListeners() {
+    const status = this.getConnectionStatus()
+    this.listeners.forEach((fn) => fn(status))
+  }
 }
 
-// Create singleton instance
+// Singleton
 export const realtimeService = new RealtimeService()
 
-// Hook for React components
+// React hook — pushes connection status into React state
 export const useRealtimeConnection = () => {
   const { isAuthenticated } = useAuthStore()
+  const [status, setStatus] = React.useState(realtimeService.getConnectionStatus())
 
-  // Auto-connect/disconnect based on auth state
   React.useEffect(() => {
+    const unsubscribe = realtimeService.onStatusChange(setStatus)
+
     if (isAuthenticated) {
       realtimeService.connect()
     } else {
@@ -203,49 +178,43 @@ export const useRealtimeConnection = () => {
     }
 
     return () => {
-      realtimeService.disconnect()
+      unsubscribe()
+      realtimeService.release()
     }
   }, [isAuthenticated])
 
-  return realtimeService.getConnectionStatus()
+  return status
 }
 
-// Polling fallback for when real-time connection is not available
+// Polling fallback
 export class PollingService {
   private intervals: Array<NodeJS.Timeout> = []
   private isPolling = false
 
   start() {
     if (this.isPolling) return
-
     this.isPolling = true
+
     const walcacheStore = useWalcacheStore.getState()
     const authStore = useAuthStore.getState()
 
-    // Poll global stats every 30 seconds
     const globalStatsInterval = setInterval(() => {
       walcacheStore.fetchGlobalStats()
     }, 30000)
 
-    // Poll current CID stats every 15 seconds
     const cidStatsInterval = setInterval(() => {
       if (walcacheStore.currentCID) {
         walcacheStore.fetchCIDStats(walcacheStore.currentCID)
       }
     }, 15000)
 
-    // Poll user dashboard every 60 seconds
     const dashboardInterval = setInterval(() => {
       if (authStore.isAuthenticated) {
         authStore.loadDashboard()
       }
     }, 60000)
 
-    this.intervals.push(
-      globalStatsInterval,
-      cidStatsInterval,
-      dashboardInterval,
-    )
+    this.intervals.push(globalStatsInterval, cidStatsInterval, dashboardInterval)
   }
 
   stop() {
@@ -256,6 +225,3 @@ export class PollingService {
 }
 
 export const pollingService = new PollingService()
-
-// REMOVED AUTO-START - This was causing memory leak!
-// Polling will now only start when explicitly called from components

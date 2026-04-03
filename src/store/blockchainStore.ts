@@ -1,8 +1,6 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import {
-  BlockchainIntegrator,
-} from '../../packages/sdk/src/blockchain.js'
+import { BlockchainIntegrator } from '../../packages/sdk/src/blockchain.js'
 import type { SupportedChain } from '../../packages/sdk/src/types.js'
 import { getCDNClient } from './blobStore'
 import { useBlobStore } from './blobStore'
@@ -106,11 +104,14 @@ export const useBlockchainStore = create<BlockchainState>()(
         }))
 
         try {
-          const txHash = await blockchainIntegrator.registerBlob(
+          const results = await blockchainIntegrator.registerBlobMultiChain(
             blobId,
-            metadata,
-            chain,
+            metadata.size || 0,
+            metadata.contentType || 'application/octet-stream',
+            metadata.cdnUrl || '',
+            metadata.contentHash || '',
           )
+          const txHash = results[chain] ?? undefined
 
           set((state) => ({
             registrationProgress: {
@@ -137,13 +138,19 @@ export const useBlockchainStore = create<BlockchainState>()(
           throw new Error('Blockchain integrator not initialized')
         }
 
-        const txHash = await blockchainIntegrator.registerBlobBatch(
-          blobs.map((b) => b.blobId),
-          blobs.map((b) => b.metadata),
-          chain,
-        )
-
-        return txHash
+        // Register each blob individually on the specified chain
+        let lastTxHash: string | undefined
+        for (const blob of blobs) {
+          const result = await blockchainIntegrator.registerBlobMultiChain(
+            blob.blobId,
+            blob.metadata.size || 0,
+            blob.metadata.contentType || 'application/octet-stream',
+            blob.metadata.cdnUrl || '',
+            blob.metadata.contentHash || '',
+          )
+          lastTxHash = result[chain] ?? undefined
+        }
+        return lastTxHash
       },
 
       verifyBlobOnChain: async (blobId, chain) => {
@@ -153,14 +160,15 @@ export const useBlockchainStore = create<BlockchainState>()(
         }
 
         try {
-          const result = await blockchainIntegrator.verifyBlob(blobId, chain)
+          const result =
+            await blockchainIntegrator.verifyBlobExistsAnyChain(blobId)
           return {
             blobId,
             chain,
-            verified: result.verified,
-            transactionHash: result.transactionHash,
-            uploader: result.uploader,
-            timestamp: result.timestamp,
+            verified: result.exists,
+            transactionHash: undefined,
+            uploader: undefined,
+            timestamp: undefined,
           }
         } catch (error) {
           return {
@@ -218,17 +226,18 @@ export const useBlockchainStore = create<BlockchainState>()(
         return multiChainStatus
       },
 
-      getBlobRegistrationStatus: async (blobId, chain) => {
+      getBlobRegistrationStatus: async (blobId, _chain) => {
         const { blockchainIntegrator } = get()
         if (!blockchainIntegrator) {
           throw new Error('Blockchain integrator not initialized')
         }
 
         try {
-          const result = await blockchainIntegrator.verifyBlob(blobId, chain)
+          const result =
+            await blockchainIntegrator.verifyBlobExistsAnyChain(blobId)
           return {
-            registered: result.verified,
-            txHash: result.transactionHash,
+            registered: result.exists,
+            txHash: undefined,
           }
         } catch {
           return { registered: false }

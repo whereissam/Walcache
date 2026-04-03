@@ -21,14 +21,6 @@ interface TuskyFile {
   vaultId: string
 }
 
-interface UploadProgress {
-  id: string
-  fileName: string
-  progress: number
-  status: 'uploading' | 'completed' | 'error'
-  error?: string
-}
-
 // Query keys
 export const vaultKeys = {
   all: ['vaults'] as const,

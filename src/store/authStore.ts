@@ -11,6 +11,7 @@ export interface User {
   subscriptionExpires?: string
   createdAt: string
   lastLogin?: string
+  permissions?: Array<string>
 }
 
 export interface ApiToken {
@@ -224,7 +225,11 @@ export const useAuthStore = create<AuthState>()(
 
         checkAuth: async () => {
           const { token } = get()
-          if (!token) return
+          if (!token) {
+            // Clear stale isAuthenticated flag from persisted state
+            set({ isAuthenticated: false, user: null })
+            return
+          }
 
           try {
             const response = await fetch(`${API_BASE_URL}/users/profile`, {

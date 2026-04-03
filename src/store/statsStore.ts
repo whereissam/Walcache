@@ -46,6 +46,9 @@ export interface CIDInfo {
   pinned: boolean
   cacheDate?: string
   ttl?: number
+  contentType?: string
+  size?: number
+  source?: string
 }
 
 interface StatsState {
@@ -79,7 +82,7 @@ const getAuthToken = () => {
 
 export const useStatsStore = create<StatsState>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       // Initial state
       cidStats: {},
       globalStats: null,

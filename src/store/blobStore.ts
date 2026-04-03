@@ -178,7 +178,13 @@ export const useBlobStore = create<BlobState>()(
         }
       },
 
-      listUploads: async (params = {}) => {
+      listUploads: async (
+        params: {
+          limit?: number
+          vault_id?: string
+          status?: 'processing' | 'completed' | 'failed'
+        } = {},
+      ) => {
         set({ isLoading: true, error: null })
         try {
           const result = await cdnClient.listUploads(params)

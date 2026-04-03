@@ -16,7 +16,7 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { WALCACHE_BASE_URL, WALCACHE_API_URL } from '@/config/env'
 import { useAuthStore } from './authStore'
-import { useBlobStore, getCDNClient } from './blobStore'
+import { useBlobStore } from './blobStore'
 import { useBlockchainStore } from './blockchainStore'
 import type {
   BlobResource,
@@ -291,7 +291,10 @@ export const useWalcacheStore = create<WalcacheState>()(
       listBlobs: async (params?) => {
         const blobs = await useBlobStore.getState().listBlobs(params)
         const blobsMap = blobs.reduce(
-          (acc, b) => { acc[b.id] = b; return acc },
+          (acc, b) => {
+            acc[b.id] = b
+            return acc
+          },
           {} as Record<string, BlobResource>,
         )
         set((state) => ({ blobs: { ...state.blobs, ...blobsMap } }))
@@ -348,7 +351,10 @@ export const useWalcacheStore = create<WalcacheState>()(
           }))
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to fetch CID stats',
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to fetch CID stats',
             isLoading: false,
           })
         }
@@ -372,7 +378,10 @@ export const useWalcacheStore = create<WalcacheState>()(
           })
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to fetch global stats',
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to fetch global stats',
             isLoading: false,
           })
         }
@@ -388,7 +397,10 @@ export const useWalcacheStore = create<WalcacheState>()(
           set({ cacheStats: data })
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to fetch cache stats',
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to fetch cache stats',
           })
         }
       },
@@ -416,7 +428,8 @@ export const useWalcacheStore = create<WalcacheState>()(
           get().fetchGlobalStats()
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to preload CIDs',
+            error:
+              error instanceof Error ? error.message : 'Failed to preload CIDs',
             isLoading: false,
           })
         }
@@ -425,7 +438,9 @@ export const useWalcacheStore = create<WalcacheState>()(
       pinCID: async (cid) => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch(`${API_BASE}/pin/${cid}`, { method: 'POST' })
+          const response = await fetch(`${API_BASE}/pin/${cid}`, {
+            method: 'POST',
+          })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
@@ -442,7 +457,9 @@ export const useWalcacheStore = create<WalcacheState>()(
       unpinCID: async (cid) => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch(`${API_BASE}/pin/${cid}`, { method: 'DELETE' })
+          const response = await fetch(`${API_BASE}/pin/${cid}`, {
+            method: 'DELETE',
+          })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
@@ -450,7 +467,8 @@ export const useWalcacheStore = create<WalcacheState>()(
           get().fetchCIDStats(cid)
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to unpin CID',
+            error:
+              error instanceof Error ? error.message : 'Failed to unpin CID',
             isLoading: false,
           })
         }
@@ -459,7 +477,9 @@ export const useWalcacheStore = create<WalcacheState>()(
       clearCache: async () => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch(`${API_BASE}/cache/clear`, { method: 'POST' })
+          const response = await fetch(`${API_BASE}/cache/clear`, {
+            method: 'POST',
+          })
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
@@ -474,7 +494,8 @@ export const useWalcacheStore = create<WalcacheState>()(
           get().fetchGlobalStats()
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to clear cache',
+            error:
+              error instanceof Error ? error.message : 'Failed to clear cache',
             isLoading: false,
           })
         }
@@ -496,7 +517,8 @@ export const useWalcacheStore = create<WalcacheState>()(
           set({ vaults: data.vaults, isLoading: false })
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to fetch vaults',
+            error:
+              error instanceof Error ? error.message : 'Failed to fetch vaults',
             isLoading: false,
           })
         }
@@ -523,7 +545,8 @@ export const useWalcacheStore = create<WalcacheState>()(
           }))
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to create vault',
+            error:
+              error instanceof Error ? error.message : 'Failed to create vault',
             isLoading: false,
           })
         }
@@ -533,7 +556,9 @@ export const useWalcacheStore = create<WalcacheState>()(
         set({ isLoading: true, error: null })
         try {
           const params = vaultId ? `?vaultId=${vaultId}` : ''
-          const response = await fetch(`${WALCACHE_BASE_URL}/upload/files${params}`)
+          const response = await fetch(
+            `${WALCACHE_BASE_URL}/upload/files${params}`,
+          )
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
@@ -541,7 +566,8 @@ export const useWalcacheStore = create<WalcacheState>()(
           set({ files: data.files, isLoading: false })
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to fetch files',
+            error:
+              error instanceof Error ? error.message : 'Failed to fetch files',
             isLoading: false,
           })
         }
@@ -582,7 +608,8 @@ export const useWalcacheStore = create<WalcacheState>()(
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}))
             throw new Error(
-              errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+              errorData.message ||
+                `HTTP ${response.status}: ${response.statusText}`,
             )
           }
 
@@ -651,7 +678,8 @@ export const useWalcacheStore = create<WalcacheState>()(
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}))
             throw new Error(
-              errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+              errorData.message ||
+                `HTTP ${response.status}: ${response.statusText}`,
             )
           }
           set((state) => ({
@@ -661,7 +689,8 @@ export const useWalcacheStore = create<WalcacheState>()(
           await get().fetchVaults()
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to delete file',
+            error:
+              error instanceof Error ? error.message : 'Failed to delete file',
             isLoading: false,
           })
           throw error
@@ -711,7 +740,8 @@ export const useWalcacheStore = create<WalcacheState>()(
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
           throw new Error(
-            errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+            errorData.message ||
+              `HTTP ${response.status}: ${response.statusText}`,
           )
         }
         return response.json()
@@ -733,7 +763,9 @@ export const useWalcacheStore = create<WalcacheState>()(
         useBlockchainStore.getState().initializeBlockchainIntegrator(configs)
       },
       registerBlobOnChain: (blobId, metadata, chain) => {
-        return useBlockchainStore.getState().registerBlobOnChain(blobId, metadata, chain)
+        return useBlockchainStore
+          .getState()
+          .registerBlobOnChain(blobId, metadata, chain)
       },
       registerBlobBatch: (blobs, chain) => {
         return useBlockchainStore.getState().registerBlobBatch(blobs, chain)
@@ -742,7 +774,9 @@ export const useWalcacheStore = create<WalcacheState>()(
         return useBlockchainStore.getState().verifyBlobOnChain(blobId, chain)
       },
       verifyMultiChain: async (blobId, chains?) => {
-        const result = await useBlockchainStore.getState().verifyMultiChain(blobId, chains)
+        const result = await useBlockchainStore
+          .getState()
+          .verifyMultiChain(blobId, chains)
         set((state) => ({
           verificationResults: {
             ...state.verificationResults,
@@ -752,10 +786,14 @@ export const useWalcacheStore = create<WalcacheState>()(
         return result
       },
       getBlobRegistrationStatus: (blobId, chain) => {
-        return useBlockchainStore.getState().getBlobRegistrationStatus(blobId, chain)
+        return useBlockchainStore
+          .getState()
+          .getBlobRegistrationStatus(blobId, chain)
       },
       uploadAndRegisterOnChain: (file, chain, vaultId?) => {
-        return useBlockchainStore.getState().uploadAndRegisterOnChain(file, chain, vaultId)
+        return useBlockchainStore
+          .getState()
+          .uploadAndRegisterOnChain(file, chain, vaultId)
       },
     }),
     { name: 'wcdn-store' },

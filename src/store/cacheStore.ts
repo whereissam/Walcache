@@ -28,7 +28,7 @@ const getAuthToken = () => {
 
 export const useCacheStore = create<CacheState>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       // Initial state
       isLoading: false,
       error: null,
