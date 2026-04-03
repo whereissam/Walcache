@@ -73,14 +73,11 @@ export class SignedUrlService {
 
     const [payloadBase64, signature] = parts
 
-    // Verify signature
+    // Verify signature (length check first to avoid timingSafeEqual RangeError)
     const expectedSignature = this.sign(payloadBase64)
-    if (
-      !crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(expectedSignature),
-      )
-    ) {
+    const sigBuf = Buffer.from(signature)
+    const expectedBuf = Buffer.from(expectedSignature)
+    if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
       return null
     }
 
@@ -100,8 +97,9 @@ export class SignedUrlService {
       return null
     }
 
-    // Check IP restriction if set
-    if (payload.ip && clientIp && payload.ip !== clientIp) {
+    // Check IP restriction: if token has IP restriction, deny when IP doesn't match
+    // (including when client IP is unknown — fail-closed)
+    if (payload.ip && payload.ip !== clientIp) {
       return null
     }
 

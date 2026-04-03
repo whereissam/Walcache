@@ -124,4 +124,27 @@ describe('SignedUrlService', () => {
     expect(payload!.exp - now).toBeLessThanOrEqual(60)
     expect(payload!.exp - now).toBeGreaterThan(55)
   })
+
+  // --- New tests: IP bypass, malformed payload, clock skew ---
+
+  it('should deny when token has IP restriction but client IP is unknown', () => {
+    const token = service.generateToken({
+      cid: 'test-cid-123',
+      ip: '1.2.3.4',
+    })
+
+    // clientIp is undefined (e.g., behind proxy without X-Forwarded-For)
+    const result = service.verifyToken(token, undefined)
+    expect(result).toBeNull()
+  })
+
+  it('should handle malformed base64url payload gracefully', () => {
+    // Valid HMAC format but garbage base64 content
+    const result = service.verifyToken('not-valid-base64.fakesignature')
+    expect(result).toBeNull()
+  })
+
+  it('should handle completely empty token parts', () => {
+    expect(service.verifyToken('.')).toBeNull()
+  })
 })

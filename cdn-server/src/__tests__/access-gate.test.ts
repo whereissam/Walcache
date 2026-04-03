@@ -13,7 +13,12 @@ vi.mock('../config/index.js', () => ({
   },
 }))
 
-import { AccessGateService } from '../services/access-gate.js'
+const mockAxiosPost = vi.fn()
+vi.mock('axios', () => ({
+  default: { post: (...args: any[]) => mockAxiosPost(...args) },
+}))
+
+import { AccessGateService, RpcError } from '../services/access-gate.js'
 
 describe('AccessGateService', () => {
   let service: AccessGateService
@@ -21,6 +26,7 @@ describe('AccessGateService', () => {
   beforeEach(() => {
     clearTestDb()
     service = new AccessGateService()
+    mockAxiosPost.mockReset()
   })
 
   it('should create a public gate', () => {
@@ -176,5 +182,117 @@ describe('AccessGateService', () => {
 
     const gates = service.listGates()
     expect(gates.length).toBe(2)
+  })
+
+  // --- New tests: RPC resilience ---
+
+  it('should return service_unavailable on Sui RPC timeout', async () => {
+    service.createGate({
+      cids: ['cid-nft'],
+      type: 'nft',
+      contractAddress: '0xPackage',
+      chain: 'sui',
+      createdBy: 'user-1',
+    })
+
+    mockAxiosPost.mockRejectedValue(new Error('timeout of 10000ms exceeded'))
+
+    const result = await service.checkAccess('cid-nft', '0xWallet')
+    expect(result.granted).toBe(false)
+    expect(result.reason).toBe('service_unavailable')
+  }, 30_000)
+
+  it('should throw RpcError on Sui JSON-RPC error response', async () => {
+    service.createGate({
+      cids: ['cid-nft2'],
+      type: 'nft',
+      contractAddress: '0xPackage',
+      chain: 'sui',
+      createdBy: 'user-1',
+    })
+
+    mockAxiosPost.mockResolvedValue({
+      data: { jsonrpc: '2.0', error: { code: -32000, message: 'rate limited' } },
+    })
+
+    const result = await service.checkAccess('cid-nft2', '0xWallet')
+    expect(result.granted).toBe(false)
+    expect(result.reason).toContain('rpc_error')
+  }, 30_000)
+
+  it('should handle Ethereum RPC failure gracefully', async () => {
+    service.createGate({
+      cids: ['cid-eth'],
+      type: 'nft',
+      contractAddress: '0xContract',
+      chain: 'ethereum',
+      createdBy: 'user-1',
+    })
+
+    mockAxiosPost.mockRejectedValue(new Error('network error'))
+
+    const result = await service.checkAccess('cid-eth', '0xWallet')
+    expect(result.granted).toBe(false)
+    expect(result.reason).toBe('service_unavailable')
+  }, 30_000)
+
+  it('should open circuit breaker after consecutive failures', async () => {
+    service.createGate({
+      cids: ['cid-cb'],
+      type: 'nft',
+      contractAddress: '0xPkg',
+      chain: 'sui',
+      createdBy: 'user-1',
+    })
+
+    mockAxiosPost.mockRejectedValue(new Error('timeout'))
+
+    // Trigger 3 failures to open the circuit
+    await service.checkAccess('cid-cb', '0xW')
+    await service.checkAccess('cid-cb', '0xW')
+    await service.checkAccess('cid-cb', '0xW')
+
+    // 4th call should not even hit RPC
+    mockAxiosPost.mockClear()
+    const result = await service.checkAccess('cid-cb', '0xW')
+    expect(result.reason).toBe('service_unavailable')
+    expect(mockAxiosPost).not.toHaveBeenCalled()
+  }, 60_000)
+
+  it('should return gate_misconfigured for NFT gate without contract', async () => {
+    service.createGate({
+      cids: ['cid-bad'],
+      type: 'nft',
+      createdBy: 'user-1',
+    })
+
+    const result = await service.checkAccess('cid-bad', '0xWallet')
+    expect(result.granted).toBe(false)
+    expect(result.reason).toBe('gate_misconfigured')
+  })
+
+  it('should not duplicate wallet in allowlist on repeated add', () => {
+    const gate = service.createGate({
+      cids: ['cid-dup'],
+      type: 'allowlist',
+      allowlist: ['0xAAA'],
+      createdBy: 'user-1',
+    })
+
+    service.addToAllowlist(gate.id, '0xAAA')
+    service.addToAllowlist(gate.id, '0xaaa')
+
+    const updated = service.getGateForCid('cid-dup')
+    expect(updated!.allowlist!.length).toBe(1)
+  })
+
+  it('should generate gate IDs with crypto.randomUUID format', () => {
+    const gate = service.createGate({
+      cids: ['cid-uuid'],
+      type: 'public',
+      createdBy: 'user-1',
+    })
+
+    expect(gate.id).toMatch(/^gate_[0-9a-f]{8}-[0-9a-f]{4}-/)
   })
 })

@@ -42,9 +42,10 @@ export async function accessGateRoutes(fastify: FastifyInstance) {
         return reply.status(201).send(gate)
       } catch (error) {
         if (error instanceof z.ZodError) {
-          return reply
-            .status(400)
-            .send({ error: 'Validation error', details: error.errors })
+          return reply.status(400).send({
+            error: 'Invalid request parameters',
+            details: process.env.NODE_ENV !== 'production' ? error.errors : undefined,
+          })
         }
         throw error
       }
